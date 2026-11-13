@@ -1,90 +1,56 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=100.103.45.18
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1794588285;
-	b=jwFrkDCMOFb3vhgW+H51SJ0S+yVoTfOjQfJjHKVyKV5N2c/IK3Cw/362BBHrynmJWatc
-	 z6qA3eaGy+VJ/p5XXjkre57IuZ9KgwK67OM0/rCmn2BAojQpxEtp56UHtogQFcGeNve5L
-	 JhT4p9cQ3V0yT11da8vc4B6xJVqA1mhzlmgaedKRIK1QIru5OnqpJ3o1b2IYiFRCul8ON
-	 IWrPgadFuqiM5oadiIQytBHvAtYjQyjQbyyoTbQWHj47K30O5J4l2JyGFdqCt+j4vpq/P
-	 SbSc938Bs7f8KYKfj9m0XselhORHiVAToElbTMcztCCvU+64DVULAspFotsjj5++x7Q==
+	t=1794591880;
+	b=BgHr+4MyiYPayk9+dWJXM8xZFkJxNzONcQ5mOLHrZAi2TMCZcqDhG0B4RPfVx6v8Vdjr
+	 gqPiWRNjtyOQIrj3S6QlD8+1JC2rlN8y/ZNeNeEbJfyWd2JddQqAA6ggdhPDhSOujeTNi
+	 50Q06QNrIELvSYIgGViMNPAQ1aOVRUI06S3a/66WyBVmEEzzSvOCdeu2z5Q44zzQRHFXa
+	 wQJFNWJxjZ2j7Sp0Vwq+S8fXWyifr5SgQvtXVR0Fy8c8wbc3hSn7qIPLGbEmLeSGtM4vS
+	 FR+wsw/4z9phVm/M2LuJ4l9481rtBCFUVMd6T0cJseaxsr6HhEk/8Ln2VZd7PfYxhxg==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1794588285;
-	h=DMARC-Filter:DKIM-Signature:Received:X-MC-Unique:
-	 X-Mimecast-MFC-AGG-ID:Received:Received:Received:Received:Date:From:
-	 To:Cc:Subject:Message-ID:References:MIME-Version:In-Reply-To:
-	 X-Scanned-By:X-Mimecast-Spam-Score:X-Mimecast-MFC-PROC-ID:
-	 X-Mimecast-Originator:Content-Type:Content-Disposition:
-	 Content-Transfer-Encoding;
-	bh=uBOM/iKzLTFQ6RoAGp2AYG5OqmMu2aQzWdTXv+yCfks=;
-	b=c2ziOAXCYzNakVz8njHPkbwhO0Sw/t7Z7ZyUymJP3HOmbN8dK/5/VSXgHFQMvvgiwW8w
-	 Qxep8UP5vPEwl4+/SuCYxAi22M0Kidsy4e0+WGtxaA5AESsI2D6oHOlPPwe6GXhqK40dI
-	 9auMTmBP/glgdwiP1wEi6HH46O+ybAo3zxlMqks1XyyoUUj7fE6zCSGmpvux56KTwI6ym
-	 f6/TbEvL9QLT3LAxlXk+r/lLGO9mNgLDSTivJ/4jxItNm+fBYV/b81a40wkAavgwz7Zwj
-	 1ukgHyLlxskZXG3hKSt4KWKIaTp6Tz1khhhjzvEF9CtGJtW0Rn1fxv5ZNdU/oDbA8xg==
+	a=rsa-sha256; c=relaxed/relaxed; t=1794591880;
+	h=Received:DKIM-Signature:Date:From:To:Cc:Subject:Message-ID:
+	 References:MIME-Version:Content-Type:Content-Disposition:In-Reply-To;
+	bh=e0IGkExqpfRXz81t32m0yM/iXDREFvyAEohwMvSxTqk=;
+	b=3xkpoQFDaXeiag9rgEOCjFpQeVdgzQSdurZDPcZHHCe8PTiwicpy22UC+SwY2ZS3qxPj
+	 xS4tk28JbmjC/CdbzLstCIPHkTzBLApjEEkbDmx3h9hrFkuV4CJDzwC441UW65DJicbhf
+	 evidcom8+YOgdbZdu5JwjWzSmiHts6ZsD/PjPoE/DTcP6tQ59grXZlQjYt2cE4JL8dusC
+	 Gl71ztc72rJDZBoFEgh7ux/2ezl8BcuDPqXQa62E5QgARTgOUqCSd1FAm5D18JvpLz89h
+	 o33Gpsnt8AbFEM418bJ/Au6I+AUgBLfeo0tnhM6VPktJWwOu3Wbxnbuvq6G8hxXrmRQ==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dmarc=pass header.from=redhat.com;
-	spf=pass smtp.mailfrom=redhat.com;
-	dkim=pass header.d=redhat.com header.i=@redhat.com header.a=rsa-sha256 header.s=mimecast20190719 header.b=ZgebcBih;
-	arc=none smtp.remote-ip=170.10.133.124
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b="IwRG/u8p";
+	arc=none smtp.remote-ip=100.103.45.18
+Received: from smtp.kernel.org (quasi.space.kernel.org [100.103.45.18])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
+	 key-exchange X25519 server-signature ECDSA (prime256v1))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8A655606A887
-	for <dm-devel@lists.linux.dev>; Fri, 13 Nov 2026 16:44:44 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 8A655606A887
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id CF058606BD28;
+	Fri, 13 Nov 2026 17:44:40 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.a=rsa-sha256 header.s=mimecast20190719 header.b=ZgebcBih
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1794588283;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=uBOM/iKzLTFQ6RoAGp2AYG5OqmMu2aQzWdTXv+yCfks=;
-	b=ZgebcBih18qrJAWR7Kt81iz68ZF+gy0LblULadKP7Uw+701HicWVY69yYnhS0XDB8SOctw
-	p2+xe1VuQxmJutC9XGxUHGCk8Coqkj35WWHhc6s34uaL4IOWmGCbxEW+4ePefQkx2HaV+y
-	t2jJp2CxfI27RVAypuqZeaT1FIbVlns=
-Received: from mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-654-o4Bt6OSkP_-2zwEegNrs8A-1; Fri,
- 13 Nov 2026 11:44:38 -0500
-X-MC-Unique: o4Bt6OSkP_-2zwEegNrs8A-1
-X-Mimecast-MFC-AGG-ID: o4Bt6OSkP_-2zwEegNrs8A_1794588276
-Received: from mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.93])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 8EA1E1955F41;
-	Fri, 13 Nov 2026 16:44:36 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (bmarzins-01.fast.eng.rdu2.dc.redhat.com [10.6.23.12])
-	by mx-prod-int-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 391B518004FE;
-	Fri, 13 Nov 2026 16:44:36 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.17.1) with ESMTPS id 6ADGiZdC2030415
-	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
-	Fri, 13 Nov 2026 11:44:35 -0500
-Received: (from bmarzins@localhost)
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.18.1/Submit) id 6ADGiYok2030414;
-	Fri, 13 Nov 2026 11:44:34 -0500
-Date: Fri, 13 Nov 2026 11:44:34 -0500
-From: Benjamin Marzinski <bmarzins@redhat.com>
-To: Martin Wilck <mwilck@suse.com>
-Cc: Brian Bunker <brian@purestorage.com>, Hannes Reinecke <hare@suse.com>,
-        Christophe Varoqui <christophe.varoqui@opensvc.com>,
-        dm-devel@lists.linux.dev
-Subject: Re: udev / multipath-tools: WWID determination with SG_IO vs. sysfs
-Message-ID: <avc-ctvpTR9COos5@redhat.com>
-References: <20261109185556.27139-1-brian@purestorage.com>
- <214d18ebabeca8318352dfa5456bc5b37cdefdeb.camel@suse.com>
- <20261111174259.41911-1-brian@purestorage.com>
- <cad66f75079fe0a89150e304d753527f140c67d9.camel@suse.com>
- <20261111230535.12947-1-brian@purestorage.com>
- <83f73b9cb1506eb80220759e3e0aae18648f80c4.camel@suse.com>
- <avYaaRagjQOdhnyj@redhat.com>
- <b087c205fa86ccda6743ebcdafb7e5340234a4af.camel@suse.com>
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=IwRG/u8p
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 263491F000C4;
+	Fri, 13 Nov 2026 17:44:40 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
+	s=k20260515; t=1794591880;
+	bh=e0IGkExqpfRXz81t32m0yM/iXDREFvyAEohwMvSxTqk=;
+	h=Date:From:To:Cc:Subject:References:In-Reply-To;
+	b=IwRG/u8pa5pjUTx2Q5RKagWBSX1ftYNPmJWhXWycK1yH44UM4q7MPcj/lgvpAZWSE
+	 rJHF+Sdo6zWWNGlHZHrZ7ZnMTapwaJDXleedH4V61JMOaIqr8d1Cw4YxxMiHJfZA/V
+	 1az4qjc78V2wTSzfuhB3bSbfGWp2/fNNRjoi/zAfKRU9DlQ4C9FyjGb2fNfy5aUxG4
+	 o8LQ+ghwnpmyoIRtIvkxP/UDbRhiSOKGgVqGXP5DOfE164MgZRir672UGUrwfU8cFQ
+	 tHDSZysZ3eTHheBkQ41AW0dJc7Y6LGUQ+26h5wMVELJhUQ9QPwcK+Yx12T5tJDDk7Z
+	 dx+M1xmlQg2KA==
+Date: Fri, 13 Nov 2026 12:44:39 -0500
+From: Mike Snitzer <snitzer@kernel.org>
+To: Christoph Hellwig <hch@infradead.org>, mpatocka@redhat.com
+Cc: Keith Busch <kbusch@meta.com>, axboe@kernel.dk,
+	dm-devel@lists.linux.dev, bmarzins@redhat.com,
+	Keith Busch <kbusch@kernel.org>, linux-block@vger.kernel.org
+Subject: Re: block: let a stacking device inherit its members' DMA alignment
+Message-ID: <avdMhzSVQbRJIRLF@kernel.org>
+References: <20260709161519.1559723-1-kbusch@meta.com>
+ <20260709161519.1559723-2-kbusch@meta.com>
+ <atpBVtPqGDWZ2AFo@kernel.org>
+ <aumxcHVjVonjs6OV@infradead.org>
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Post: <mailto:dm-devel@lists.linux.dev>
@@ -94,55 +60,45 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 List-Owner: <mailto:dm-devel+owner@lists.linux.dev>
 Precedence: list
 MIME-Version: 1.0
-In-Reply-To: <b087c205fa86ccda6743ebcdafb7e5340234a4af.camel@suse.com>
-X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.93
-X-Mimecast-Spam-Score: 0
-X-Mimecast-MFC-PROC-ID: MMhMksLmw5Iphb63_ENejntyIFP4U-M0P5zAYdTTbGY_1794588276
-X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset=iso-8859-1
+Content-Type: text/plain; charset=us-ascii
 Content-Disposition: inline
-Content-Transfer-Encoding: 8bit
+In-Reply-To: <aumxcHVjVonjs6OV@infradead.org>
 
-On Thu, Nov 12, 2026 at 09:47:54PM +0100, Martin Wilck wrote:
-> On Thu, 2026-11-12 at 14:58 -0500, Benjamin Marzinski wrote:
-> > On Thu, Nov 12, 2026 at 08:00:58PM +0100, Martin Wilck wrote:
-> > 
-> >  
-> > > Brian's patch would add more such ioctls and thus increase the
-> > > likelihood of observing a stall. To be observed.
+On Tue, Nov 03, 2026 at 02:03:28AM -0800, Christoph Hellwig wrote:
+> On Thu, Oct 22, 2026 at 01:01:10PM -0400, Mike Snitzer wrote:
+> > On Thu, Jul 09, 2026 at 09:15:17AM -0700, Keith Busch wrote:
+> > > From: Keith Busch <kbusch@kernel.org>
 > > > 
+> > > All device mappers that want to override the dma_alignment do so.
+> 
+> Don't start a patch description by quoting another mail.
+> 
+> > Direct I/O from memory every member accepts is therefore rejected at
+> > the stacking device, and callers that check the advertised alignment
+> > (for instance through STATX_DIOALIGN) fall back to buffered I/O.
 > > 
-> > This is true, and unlike the existing recheck_wwids use and the
-> > prioritizer, it won't be called right after the path checker
-> > determined
-> > a path to be up. We do also do SG_IO ioctls in pathinfo when DI_IOCTL
-> > is
-> > set (when we're adding a path, reconfiguring multipath, or
-> > initializing
-> > a partial path). In that case we do check if the path is up according
-> > to
-> > sysfs first, but we don't call the checker.
+> > Leave dma_alignment at zero in blk_set_stacking_limits() so that the
+> > stacked value is the strictest of the members'.  blk_validate_limits()
+> > still applies the SECTOR_SIZE - 1 default when nothing was stacked,
+> > such as for a table with no devices.  Targets that process the data
+> > themselves and need logical-block-aligned memory already set
+> > dma_alignment in their io_hints (dm-crypt, dm-integrity, dm-verity,
+> > dm-log-writes), and NVMe multipath sets its own.
 > 
-> So, would you prefer making it conditional on something else but
-> "recheck_wwid"?
-
-Since recheck_wwid is set, we could just limit this new
-check_path_wwid_change() check in ev_add_path() to paths that are up.
-uev_add_path() will run the path checker before we get here. If the path
-isn't up, recheck_wwid guarantees that we will do the check when the
-path is up.
-
-That should make this no more risky than the existing recheck_wwid
-calls.
-
--Ben
- 
-> Martin
+> Chances are very high that this will introduce bugs somewhere,
+> as a lot of drivers are historically not ready to deal with lower
+> alignments, and will creeat nasty exploitable bugs.
 > 
-> -- 
-> Dr. Martin Wilck <mwilck@suse.com>
-> SUSE Software Solutions Germany GmbH, Frankenstr. 146, 90461 Nürnberg,
-> Germany
-> Geschäftsführer: Stefan Gaiser, Jochen Jaser, Abhinav Puri (HRB
-> 36809,AG Nürnberg)
+> So you'll need to audit each driver that wants to relax this
+> individually, and then override the value for them.  Alternatively
+> we could start with 0 in the block layer, but then you need to
+> lift the current setting into each caller first, and only remove
+> them one-by-one with a commit per driver explaining why that is safe
+> (and sensible).
+> 
 
+Yeap, important work needed outside of DM for sure.  Mikulas, after DM,
+are you willing to do this mechanical audit/change to the block
+subsystem in general? ;)
+
+Mike
