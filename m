@@ -1,44 +1,44 @@
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=100.103.45.18
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1794685026;
-	b=LPL6eyb98Fe+wKU1H3NGs441KLQAism4V2Or9/POYHnW2rFu0IoN1DBWw4Fi0vDA68WL
-	 anjXknt+bQ4TxJWOyq2+jzaPNZ0ojZ4QNchSU8kOeeEr6/UMKU15HxrlrN+LjqZli6Tnq
-	 Lquwn1XT9/lxDDUqE0wD7AMu0cE3Au5uaDYqO3EkEKbvpwWU1oD8QXxJQ8SJdQ4UHnGCh
-	 SdIUhULSJcXuSFGD88w+JMAZezlNFIBBSb4vDL9OP3ZNlZPGKa4vyy3xSyKEW8rFdb+Nb
-	 WjyqisoSl091xrbhSkI42kzeenP15ue89GXczReQPg8ZbjXhiR+iVEP8ZHxItRlrSQA==
+	t=1794685030;
+	b=b/X2YppUXnzr0MLBtL9DtZJgBQ1Qijx3IOMy5eDD1yqvF94divgo55K4h0uL70k5CZCW
+	 lvQmM0c4qCi5ZwrKDxikHK0/2h5B8/8imOJZSB6b7+Yh39T3wijo9IVRC/Szz7KHQBXvT
+	 sEI0sw0YpYw+ZSoCDoFblbAMQFx0PxyqAepgFimqMc8mgKqtMITTm/J6D1RNH0O0pZixX
+	 jrpTxXCEi/9WGGF2PcMi8g6Ow4U8uDWYFP9gXWOlmkGWPIDeZFmlFlWLsy8w8SLmJxrhF
+	 g4tqzsBV57Lun+hjJ1A7TNEK9pRErplddjmjl+VkSpsIwyLfKVwz11NeX3uLLhYvJHg==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1794685026;
+	a=rsa-sha256; c=relaxed/relaxed; t=1794685030;
 	h=Received:DKIM-Signature:From:To:Cc:Subject:Date:Message-ID:X-Mailer:
-	 MIME-Version:Content-Transfer-Encoding;
-	bh=XneqJcXXDs1SDzljrHLo5NmhOYzTo2Lb8/Pv0fFjlRc=;
-	b=XOUxEwy0hp6jAh7hwdS5qD9GdpWvIsnksL8QugelClw++Tp6aq313WXOk7J6Hg65iKqJ
-	 /nk3aRZAg7/QJ/EvOs+v4nxoQhhcJ/pHY2JP6dwGdu0uzsif33yDBM1HEdhT4OHjJKMQG
-	 ADVkwOcHgV3OzGZZdGB8h/6ei4hl6VUBrQnHoWVFlvCQkn9rCKXpXLvAx//QehAhr1l+r
-	 oQwQ7up7JGktd5vIR3rmf7kzKOT2eq/u+98bZuSbmKE1HEMPi5LRBGDx7ZXo3NjOAA6EA
-	 FIllE5vCcosjNL5vXiaQKs9+xyb46484RezVBwlCheycNzzS314rJlORNgGmsKSySCA==
+	 In-Reply-To:References:MIME-Version:Content-Transfer-Encoding;
+	bh=I0LV/JQpN8yDGYTTWcI8HQY8CmcG+PtzomAV8QbPhzo=;
+	b=A0kIDkP3vT4/lYDtQIzkHu1WsJezNzLMUYWjglMeltPWv/WDthMsj2UqvA7C79pM6IaU
+	 wDyxEcN2jOYXlpFDiTWWeI5LYwddf6fcNYMFYgNBIDtOnAjbAJkQzXnb25XoQBIg3iMfr
+	 Wkt3po6z5Rv4j7yxpJ/Z81DR5Deq+e+UHPw8jcLZQejU5opkgjBAKHaBFae5t6R1NadOs
+	 i2UaqN/+iQm22C7zXny0EUQ3wZPx8moeVffwlQRJ9zPuvyYIPOwuqdZvnTomzrpxdMMc4
+	 0Y2QHRP6dSFr+Q1uE+vAA+BlArpZhNfdFweGHmpiUHo6QFDWIKzyUkx1rJ1xxuYmDJQ==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=ZGvn9b+E;
+	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=I8M7ZqcX;
 	arc=none smtp.remote-ip=100.103.45.18
 Received: from smtp.kernel.org (quasi.space.kernel.org [100.103.45.18])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with UTF8SMTPS id A9A4E606A323;
-	Sat, 14 Nov 2026 19:37:06 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with UTF8SMTPS id 3FD60606A88A;
+	Sat, 14 Nov 2026 19:37:10 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=ZGvn9b+E
-Received: by smtp.kernel.org (Postfix) with UTF8SMTPSA id 7F5541F000C4;
-	Sat, 14 Nov 2026 19:37:05 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=I8M7ZqcX
+Received: by smtp.kernel.org (Postfix) with UTF8SMTPSA id 35DA71F000C9;
+	Sat, 14 Nov 2026 19:37:09 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
-	s=k20260515; t=1794685026;
-	bh=XneqJcXXDs1SDzljrHLo5NmhOYzTo2Lb8/Pv0fFjlRc=;
-	h=From:To:Cc:Subject:Date;
-	b=ZGvn9b+ERMnTRFnA/PdLKCjFSduLqh7oholh9nZekcdlH1xxJqnT4IJDxA/m6Ej8i
-	 lb+G7w5dVHHp483lUdvtkvU83zbyoAa+xENfFkg+tCWm/FlOdub0l/usU7tvoxdRYo
-	 WQhCh2w2niI+u+8AUbcQKEGlM/G8gighctRJcJuRd92G4RQ4skmXI+7oe9BOUVhmYE
-	 yKwRKcaTRxU8rGLXbD4cFYirs+ifzkY2IZXDjN6Y5EFoLJB46novD42+r7LVE9fbDy
-	 6tkyVjc+Ut0lBphV7nfiZuxSP64CWdeTCH+5m70LBDHqGuGGJuH/H4+jPaXddEPQGb
-	 bqerfqzg9+fEA==
+	s=k20260515; t=1794685029;
+	bh=I0LV/JQpN8yDGYTTWcI8HQY8CmcG+PtzomAV8QbPhzo=;
+	h=From:To:Cc:Subject:Date:In-Reply-To:References;
+	b=I8M7ZqcXPaYP+mdRZNhZxMYywPZJiUvQb+iwmSYQzDymdOdCzutZNYY6iv7UAsLlU
+	 nkWOay5VHOv8GIiILtN1Gn0rByfzGhcthv+PFQXY8SQj15bp29vuvoOoMvIobKQBxY
+	 Ovilwdvw1CMKMxql3+68f5fJCK2OfhNsIU2rB4Mh93Rlx76jJubbwBfwGtiwQxQz8w
+	 1DkLel2vyVYIEaA2nrs9QONzWYUMuh/MGUx8sUp19ovIn3J2hJq1yGbheMoVPNDwHB
+	 qXFXivGOpOlF0sFNj39/AhCvUVIIT4cyVza+onJQwUx7IEg2/YARGsZqnXRKf8Cn/6
+	 UlG5OP0dsHgmw==
 From: Jarkko Sakkinen <jarkko@kernel.org>
 To: David Howells <dhowells@redhat.com>
 Cc: Jarkko Sakkinen <jarkko@kernel.org>,
@@ -88,11 +88,14 @@ Cc: Jarkko Sakkinen <jarkko@kernel.org>,
 	"Theodore Y. Ts'o" <tytso@mit.edu>,
 	Vasily Gorbik <gor@linux.ibm.com>,
 	Yanteng Si <si.yanteng@linux.dev>,
-	Yonghong Song <yonghong.song@linux.dev>
-Subject: [PATCH v13 0/7] KEYS: Replace assoc_array with rhashtable
-Date: Sat, 14 Nov 2026 21:36:24 +0200
-Message-ID: <20261114193631.731615-1-jarkko@kernel.org>
+	Yonghong Song <yonghong.song@linux.dev>,
+	stable@vger.kernel.org
+Subject: [PATCH v13 1/7] s390/cert_store: Pin the user session keyring
+Date: Sat, 14 Nov 2026 21:36:25 +0200
+Message-ID: <20261114193631.731615-2-jarkko@kernel.org>
 X-Mailer: git-send-email 2.47.3
+In-Reply-To: <20261114193631.731615-1-jarkko@kernel.org>
+References: <20261114193631.731615-1-jarkko@kernel.org>
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Post: <mailto:dm-devel@lists.linux.dev>
@@ -104,222 +107,98 @@ Precedence: list
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-The keyrings subsystem is the sole user of assoc_array. It has over 1700
-lines of code, no test suite, and a long history of bugs, with LLMs now
-finding more.
+The user session keyring stays alive only because the session keyring is
+pinned by current_cred().
 
-This unfortunate outcome has evolved over time by large from the shortage
-of in-kernel callers, time bandwidth and 3rd party contributors.  What the
-keyrings subsystem needs is just a generic key-value store, which performs
-well with sparse key sets. Replace assoc_array with an rhashtable-backed
-keyring index and remove assoc_array from the kernel.
+Pin the reference at:
 
-CHANGES
-=======
+1. find_cs_keyring()
+2. cleanup_cs_keys()
+3. create_cs_keyring()
 
-v13:
-- s390/cert_store: Hold key reference across key_unlink(), and ignore -ENOENT.
-- s390/cert_store: Add "s390/cert_store: Read-lock keyring semaphore in
-  invalidate_keyring_keys()".
-
-v12:
-- Fixed Sashiko reported issues in s390/cert_store patches.
-
-v11:
-- RCU-safe iterator for keyring_read().
-- Addresses s390 issues. I won't carry them for long in the series.
-
-v10:
-- No changes since the previous round. This is a sanity check round
-  given the lack of feedback to v9. I'll apply these patch very soon,
-  unless nothing (relevant) comes up fast.
-
-v9:
-- Replace __free(kfree) with explicit cleanup so early goto out paths
-  cannot bypass initialization of the link pointer. Preserve kleave()
-  tracing on all exit paths.
-
-v8:
-- Fixed broken rebase.
-- Restructured __key_link_begin() a bit as a response to a minor
-  complaint from Sashiko.
-- Fixed a minor glitch in __key_link_begin(): now also first invariant
-  invokes kleave() on failure.
-
-v7:
-- Rebased.
-
-v6:
-- Eric Biggers: Set .insecure_elasticity = true in keyring_link_params and
-  drop the -EBUSY retry loop in __key_link_begin().
-- Addeded Reviewed-by's from Eric Bigger and Ignat Korchagin.
-
-v5:
-- Eric Biggers: Include <linux/jhash.h> explicitly in keyring.c.
-- Eric Biggers: Document why hashing type/domain_tag pointers with SipHash
-  and truncating the digest to 32 bits are safe.
-- Eric Biggers: Rework the commit message for "KEYS: Replace assoc_array
-  with rhashtable", including behavioral and operational changes.
-- Retry rhashtable_insert_fast() on transient -EBUSY in __key_link_begin().
-
-v4:
-- Eric Biggers: Correct the kerneldoc summary for keyring_is_empty().
-- Eric Biggers: Truncate keyring_index_key hash to u32 and drop index_id.
-- Eric Biggers, David Howells: Use a proper struct instead of a two-element
-  array to pass the edits.
-- Eric Biggers: __keyring_link(): Call key_put() in the rollback of
-  rhashtable_replace_fast().
-- Eric Biggers: Retract from using __free(kfree) in keyring_get_index().
-- Eric Biggers: Reuse keyring_link_key() in keyring_obj_cmpfn().
-- Eric Biggers: Document why keyring_index_free() uses queue_rcu_work().
-- Eric Biggers: Fix the commit message for "KEYS: Replace assoc_array with
-  rhashtable".
-
-v3:
-- Since David is away for the next week I decided to address the
-  low hanging fruit that I reported myself.
-- Unified and sanitized function and variable naming and removed
-  unnecessary asymmetry e.g., by renaming keyring_remove_all_links
-  as keyring_index_free, 'links' as 'index' and '_edit' as 'edit'.
-- Flattened the implementation by refactoring out some useless
-  wrappers and other constructs.
-- Addressed continuation after triggered WARN_ON() on at the three
-  sites that I've described in my email response to the previous
-  patch set version.
-- Reworked keyring_read() so that it triggers the scheduler between
-  the iterations.
-- Dropped "Assisted-by: LLM" tag because checkpatch.pl told me so.
-
-v2:
-- Tried to address all the issues pointed out by David and Eric. Tell me
-  if something was ignored, as that would be an unintentional mishap.
-- Updated and trimmed the source code comments.
-- For assoc_array_edit I decided to go with two-element pointer array,
-  which shifts a bit what David suggested.
-- Dropped is_keyring flag. It was so obvious call so I mention it here
-  just in case because too obvious maxes out my self-doubt ;-)
-- Used cleanup.h primitives where I possibly could especially in order
-  to make fallible initializations more bug-resistant.
-- The already-ack'd bug fixes are included but will be dropped as soon
-  as I've sent them over to Linus.
-
-VERSIONS
-========
-
-- v12:
-  https://lore.kernel.org/keyrings/20261114164139.429814-1-jarkko@kernel.org/
-- v11:
-  https://lore.kernel.org/keyrings/20261114161211.376859-1-jarkko@kernel.org/
-- v10:
-  https://lore.kernel.org/keyrings/20261113161836.3587552-1-jarkko@kernel.org/
-- v9:
-  https://lore.kernel.org/keyrings/20261110053323.2936729-1-jarkko@kernel.org/k
-- v8:
-  https://lore.kernel.org/keyrings/20261110044043.2608600-1-jarkko@kernel.org/
-- v7:
-  https://lore.kernel.org/keyrings/20261110033738.2495880-1-jarkko@kernel.org/
-- v6:
-  https://lore.kernel.org/keyrings/20261107195605.3929659-1-jarkko@kernel.org/
-- v5:
-  https://lore.kernel.org/keyrings/20261105031401.956609-1-jarkko@kernel.org/
-- v4:
-  https://lore.kernel.org/keyrings/20261029232437.2581640-1-jarkko@kernel.org/
-- v3:
-  https://lore.kernel.org/keyrings/20261025001105.1824178-1-jarkko@kernel.org/
-- v2:
-  https://lore.kernel.org/keyrings/20261023120953.1206778-1-jarkko@kernel.org/
-- v1:
-  https://lore.kernel.org/keyrings/20261016215326.4110064-1-jarkko@kernel.org/
-
-Cc: bpf@vger.kernel.org
-Cc: dm-devel@lists.linux.dev
-Cc: fsverity@lists.linux.dev
-Cc: keyrings@vger.kernel.org
-Cc: linux-doc@vger.kernel.org
-Cc: linux-kernel@vger.kernel.org
-Cc: linux-kselftest@vger.kernel.org
-Cc: linux-security-module@vger.kernel.org
-Cc: Alasdair Kergon <agk@redhat.com>
-Cc: Alexander Gordeev <agordeev@linux.ibm.com>
-Cc: Alexei Starovoitov <ast@kernel.org>
-Cc: Alex Shi <alexs@kernel.org>
-Cc: Anastasia Eskova <anastasia.eskova@ibm.com>
-Cc: Andrew Morton <akpm@linux-foundation.org>
-Cc: Andrii Nakryiko <andrii@kernel.org>
-Cc: Benjamin Marzinski <bmarzins@redhat.com>
-Cc: Christian Borntraeger <borntraeger@linux.ibm.com>
-Cc: Daniel Borkmann <daniel@iogearbox.net>
 Cc: David Howells <dhowells@redhat.com>
-Cc: Dongliang Mu <dzm91@hust.edu.cn>
-Cc: Eduard Zingerman <eddyz87@gmail.com>
-Cc: Emil Tsalapatis <emil@etsalapatis.com>
-Cc: Eric Biggers <ebiggers@kernel.org>
-Cc: Ignat Korchagin <ignat@linux.win>
-Cc: Heiko Carstens <hca@linux.ibm.com>
-Cc: Ihor Solodrai <ihor.solodrai@linux.dev>
-Cc: James Bottomley <James.Bottomley@HansenPartnership.com>
-Cc: James Morris <jmorris@namei.org>
-Cc: Jarkko Sakkinen <jarkko@kernel.org>
-Cc: Jiri Olsa <jolsa@kernel.org>
-Cc: Jonathan Corbet <corbet@lwn.net>
-Cc: Kumar Kartikeya Dwivedi <memxor@gmail.com>
-Cc: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: Martin KaFai Lau <martin.lau@linux.dev>
-Cc: Mike Snitzer <snitzer@kernel.org>
-Cc: Mikulas Patocka <mpatocka@redhat.com>
-Cc: Mimi Zohar <zohar@linux.ibm.com>
-Cc: Paul Moore <paul@paul-moore.com>
-Cc: Peter Oberparleiter <oberpar@linux.ibm.com>
-Cc: Randy Dunlap <rdunlap@infradead.org>
-Cc: Roberto Sassu <roberto.sassu@huawei.com>
-Cc: "Serge E. Hallyn" <serge@hallyn.com>
-Cc: Shuah Khan <skhan@linuxfoundation.org>
-Cc: Song Liu <song@kernel.org>
-Cc: Sven Schnelle <svens@linux.ibm.com>
-Cc: "Theodore Y. Ts'o" <tytso@mit.edu>
-Cc: Vasily Gorbik <gor@linux.ibm.com>
-Cc: Yanteng Si <si.yanteng@linux.dev>
-Cc: Yonghong Song <yonghong.song@linux.dev>
+Cc: stable@vger.kernel.org # v6.1+
+Fixes: 8cf57d7217c3 ("s390: add support for user-defined certificates")
+Signed-off-by: Jarkko Sakkinen <jarkko@kernel.org>
+---
+ arch/s390/kernel/cert_store.c | 27 +++++++++++++++++++++++----
+ 1 file changed, 23 insertions(+), 4 deletions(-)
 
-Jarkko Sakkinen (7):
-  s390/cert_store: Pin the user session keyring
-  s390/cert_store: Return an owned reference from find_cs_keyring()
-  s390/cert_store: Skip keys that disappeared during invalidation
-  s390/cert_store: Read-lock keyring semaphore in
-    invalidate_keyring_keys()
-  KEYS: Introduce keyring_is_empty()
-  KEYS: Replace assoc_array with rhashtable
-  lib: Remove assoc_array
-
- Documentation/core-api/assoc_array.rst        |  564 ------
- Documentation/core-api/index.rst              |    1 -
- .../zh_CN/core-api/assoc_array.rst            |  473 -----
- .../translations/zh_CN/core-api/index.rst     |    1 -
- arch/s390/kernel/cert_store.c                 |   60 +-
- drivers/md/dm-verity-verify-sig.c             |    2 +-
- fs/verity/signature.c                         |    2 +-
- include/keys/keyring-type.h                   |    1 -
- include/linux/assoc_array.h                   |   88 -
- include/linux/assoc_array_priv.h              |  178 --
- include/linux/key-type.h                      |    1 -
- include/linux/key.h                           |   29 +-
- kernel/bpf/keys.c                             |    2 +-
- lib/Kconfig                                   |   14 -
- lib/Makefile                                  |    1 -
- lib/assoc_array.c                             | 1724 -----------------
- security/keys/Kconfig                         |    1 -
- security/keys/internal.h                      |   14 +-
- security/keys/key.c                           |   22 +-
- security/keys/keyring.c                       | 1016 +++++-----
- security/keys/request_key.c                   |    8 +-
- .../dm-verity/test-dm-verity-keyring.sh       |    2 +-
- 22 files changed, 541 insertions(+), 3663 deletions(-)
- delete mode 100644 Documentation/core-api/assoc_array.rst
- delete mode 100644 Documentation/translations/zh_CN/core-api/assoc_array.rst
- delete mode 100644 include/linux/assoc_array.h
- delete mode 100644 include/linux/assoc_array_priv.h
- delete mode 100644 lib/assoc_array.c
-
---
+diff --git a/arch/s390/kernel/cert_store.c b/arch/s390/kernel/cert_store.c
+index 998f2da56175..bb218b42a2c9 100644
+--- a/arch/s390/kernel/cert_store.c
++++ b/arch/s390/kernel/cert_store.c
+@@ -307,7 +307,6 @@ static struct key *get_user_session_keyring(void)
+ 			   PTR_ERR(us_keyring_ref));
+ 		return ERR_PTR(-ENOKEY);
+ 	}
+-	key_ref_put(us_keyring_ref);
+ 	return key_ref_to_ptr(us_keyring_ref);
+ }
+ 
+@@ -352,11 +351,17 @@ static int invalidate_keyring_keys(struct key *keyring)
+ static struct key *find_cs_keyring(void)
+ {
+ 	key_ref_t cs_keyring_ref;
++	struct key *us_keyring;
+ 	struct key *cs_keyring;
+ 
+-	cs_keyring_ref = keyring_search(make_key_ref(get_user_session_keyring(), true),
++	us_keyring = get_user_session_keyring();
++	if (IS_ERR(us_keyring))
++		return NULL;
++
++	cs_keyring_ref = keyring_search(make_key_ref(us_keyring, true),
+ 					&key_type_keyring, CERT_STORE_KEYRING_NAME,
+ 					false);
++	key_put(us_keyring);
+ 	if (!IS_ERR(cs_keyring_ref)) {
+ 		cs_keyring = key_ref_to_ptr(cs_keyring_ref);
+ 		key_ref_put(cs_keyring_ref);
+@@ -373,6 +378,7 @@ static struct key *find_cs_keyring(void)
+ 
+ static void cleanup_cs_keys(void)
+ {
++	struct key *us_keyring;
+ 	struct key *cs_keyring;
+ 
+ 	cs_keyring = find_cs_keyring();
+@@ -390,20 +396,33 @@ static void cleanup_cs_keys(void)
+ 	keyring_clear(cs_keyring);
+ 	key_invalidate(cs_keyring);
+ 	key_put(cs_keyring);
+-	key_unlink(get_user_session_keyring(), cs_keyring);
++
++	us_keyring = get_user_session_keyring();
++	if (IS_ERR(us_keyring))
++		return;
++
++	key_unlink(us_keyring, cs_keyring);
++	key_put(us_keyring);
+ }
+ 
+ static struct key *create_cs_keyring(void)
+ {
+ 	static struct key *cs_keyring;
++	struct key *us_keyring;
+ 
+ 	/* Cleanup previous cs_keyring and all associated keys if any. */
+ 	cleanup_cs_keys();
++
++	us_keyring = get_user_session_keyring();
++	if (IS_ERR(us_keyring))
++		return NULL;
++
+ 	cs_keyring = keyring_alloc(CERT_STORE_KEYRING_NAME, GLOBAL_ROOT_UID,
+ 				   GLOBAL_ROOT_GID, current_cred(),
+ 				   (KEY_POS_ALL & ~KEY_POS_SETATTR) | KEY_USR_VIEW | KEY_USR_READ,
+ 				   KEY_ALLOC_NOT_IN_QUOTA | KEY_ALLOC_SET_KEEP,
+-				   NULL, get_user_session_keyring());
++				   NULL, us_keyring);
++	key_put(us_keyring);
+ 	if (IS_ERR(cs_keyring)) {
+ 		pr_dbf_msg("Can't allocate cert_store keyring");
+ 		return NULL;
+-- 
 2.47.3
 
