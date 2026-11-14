@@ -1,44 +1,44 @@
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=100.103.45.18
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1794685041;
-	b=tCgjSl/m4LZlE/zEm2o8lsRlITSZh83+k4z+locpfQGe++lzpmzftdxbOLhY0wofz1GH
-	 Gcc0LhXVGS2XzwA0P7eA5q6E7eZxBjGwkUL5lGOw4WRVUgwUhRN3P2VRvPoeZ/IS9uU6n
-	 UaY0Q9rfrm1uX8MKHC2lUyMJZT0YymrvmmUYWXtDfwRdiXJrQtWglTt+Awt3jQvtpkLqR
-	 rSreHEvbiNMHLFYc0JjlN6FSoyAVdfg8WKW16DuE6o0I/xrHoUeRr6V+0AvLXDMvblmgf
-	 vcxkYM77qNmq1WzMDoxlxdDJaScWrEx9QlcPpFMhZZ3Y5GTac2xBZOZjZXJDjjvqpAw==
+	t=1794685045;
+	b=kW7tE5UI5kfuNzodlP+6uw958K8rRuX2AiDYViF/X28OwQIJWt6IjNLUJfk3ing4kgLg
+	 EtnJf6Qw0qbPGsUdsjnMqOpOi4Ll1xR25mK7hbMRsO5kCR5WJn3KBikZpgWj3ZYgGGSPZ
+	 8EWFUQQ+moNmxuh5VPdm4262E43Ny/hbMG81dOk7X7dURm9V+1LzVrs5qYmV/RqKtSJRx
+	 EEpG0Rzj869CcC0KOHgbZoWQke63KXRKwOijFV9CQR0+kHb6LpOp0VfmU4rm61o8WGz+5
+	 5lYRZCIrvhS8LSkhlFtFp7kg9fVG3Tcp3VH4AYxvFEkypsIfXTxvS8g391uVF63OgIA==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1794685041;
+	a=rsa-sha256; c=relaxed/relaxed; t=1794685045;
 	h=Received:DKIM-Signature:From:To:Cc:Subject:Date:Message-ID:X-Mailer:
 	 In-Reply-To:References:MIME-Version:Content-Transfer-Encoding;
-	bh=K9K7bqq7xK+KT7MgV6hqZn0DRh0a3ePkLyyaTd2Fqn8=;
-	b=VOokwV0rf1hcKMKuPpzbk3uYyaxiwFXhBo7n+OJGJIvYXhm+Mh3F8sAeV1L2osxvnqZH
-	 hSScUI5p/JRtRqN0yuzYFS8hU9Z+vZLnhwQW2cAB5ZPWE+xV/O1Zlv9pjhs+riSX4DeO6
-	 gLwc7JfMg/jNwmA0WVXzgXpspNXhYLXUeIyYFJGPQYVeZLR6aC1GNIZ9pLqqF1XwEdQ0c
-	 M70+ltoF1A4fOoRiXGQBrNxNC8wtPTWF/j5YYQBPll7A2/cLeyyZen3wlnk0BgEQLZ3VI
-	 qCDr34P+Hke9/kZx7Y1M2EASqNGrugY6Tpyrmjsi7u4t38G/7ckR4Mx4A7ZSEws+cVA==
+	bh=1vAd48PROWC1DL7Ri9U//2H4TkpRv3p3sVkb4Xn4KlA=;
+	b=Ih2aeEFNyOggFxUjikSj1QOTkOaJ269tfwXTzA1rFL9yewIIh0YXEfEiPzYCJU3r46ww
+	 R6Ro3BdO8ZlzE7PUCL2PQ+AV0YpTU2iyKfDzOiKKDDcxUuzHLAcXoifrgHukr+BOjtSmx
+	 hYjC/f5ot7mZcsXy4joPHtDo8SP2l7a3uuL5UgCSg5tS8BVlM/F7M1eugsqpERwxtbrPI
+	 tiKXWaK4+qoFMvgOr5u3DLrYJ0VgShxrYo7xsfuspHptPsvH2rjkFO4YLudlcQ/FfFz9Y
+	 ajVODn3KnNCJmcfCMZHSdO30Z62NW4pcLlI2IeZ1uiR8zLYY/Ww5Om8gLKFQ0/nt3Fw==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=SHpcVMrS;
+	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=cupj42GA;
 	arc=none smtp.remote-ip=100.103.45.18
 Received: from smtp.kernel.org (quasi.space.kernel.org [100.103.45.18])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with UTF8SMTPS id B09A4606A89F;
-	Sat, 14 Nov 2026 19:37:21 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with UTF8SMTPS id B946660A261E;
+	Sat, 14 Nov 2026 19:37:25 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=SHpcVMrS
-Received: by smtp.kernel.org (Postfix) with UTF8SMTPSA id A30101F000C6;
-	Sat, 14 Nov 2026 19:37:20 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=cupj42GA
+Received: by smtp.kernel.org (Postfix) with UTF8SMTPSA id 8224D1F000C4;
+	Sat, 14 Nov 2026 19:37:24 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
-	s=k20260515; t=1794685041;
-	bh=K9K7bqq7xK+KT7MgV6hqZn0DRh0a3ePkLyyaTd2Fqn8=;
+	s=k20260515; t=1794685045;
+	bh=1vAd48PROWC1DL7Ri9U//2H4TkpRv3p3sVkb4Xn4KlA=;
 	h=From:To:Cc:Subject:Date:In-Reply-To:References;
-	b=SHpcVMrSi7UbyrGVVXGvlWEc8UDn2o4HmbUkyBepV6cxUgSUdVSCfK0yfibs5GEoG
-	 rzWn74sw+VxL+A48nKkHQXtkNcHfsly/B+vDo5SbWI9HkpphA9HeSjz+ANAfRVAIfU
-	 BSy2x2Api8pZRFazGQi9VashXZfmT9zNwVfmijfy8XZOxS8b59mFQdG8T+msUZJH4r
-	 P+jy7yvbsFkyS2jrWVCqqj3Ha8jzzdBpZIyDCIMwcfzCAq1TIQ/qa2YaseW73556pE
-	 79SIgCapUPJoYePABLOE9jyz0b7JtUSjWJeh1AXqdRHMT1fGb3u/1cqnITohFqmQKU
-	 Tv+BZGjWJ86eA==
+	b=cupj42GA99PYiuQAkrJO28AoJlzAt9uh/cbLE7AZP3qGSey87ZfmtVzVn0ZgNA/aX
+	 ZDI/fhy3GQYDJll48AworU+g/QgjaL0QCk4Ejl6MANA8EK8setazBBia/9xT5Hf2YD
+	 hTWbHU6jjFjBVmZlDtTYFYJuKRpfGUBCf0W5Ui0P67AEP39OCiCZru8LMMcWwusWb+
+	 3Z6EaPnownuW/hrRtZ4X1mlqUJwz6A5dRSWKQN3a69wpt0AOasqI/63Fgw9NXV55VD
+	 +6D+xxdnyv+3g7SNb0CtJIqW8VYZjxSHnL1Qh9ODKBfaGr5zk8x1CeFohiI7NR8Hzm
+	 8oy6H4DdHwtKw==
 From: Jarkko Sakkinen <jarkko@kernel.org>
 To: David Howells <dhowells@redhat.com>
 Cc: Jarkko Sakkinen <jarkko@kernel.org>,
@@ -88,11 +88,10 @@ Cc: Jarkko Sakkinen <jarkko@kernel.org>,
 	"Theodore Y. Ts'o" <tytso@mit.edu>,
 	Vasily Gorbik <gor@linux.ibm.com>,
 	Yanteng Si <si.yanteng@linux.dev>,
-	Yonghong Song <yonghong.song@linux.dev>,
-	stable@vger.kernel.org
-Subject: [PATCH v13 4/7] s390/cert_store: Read-lock keyring semaphore in invalidate_keyring_keys()
-Date: Sat, 14 Nov 2026 21:36:28 +0200
-Message-ID: <20261114193631.731615-5-jarkko@kernel.org>
+	Yonghong Song <yonghong.song@linux.dev>
+Subject: [PATCH v13 5/7] KEYS: Introduce keyring_is_empty()
+Date: Sat, 14 Nov 2026 21:36:29 +0200
+Message-ID: <20261114193631.731615-6-jarkko@kernel.org>
 X-Mailer: git-send-email 2.47.3
 In-Reply-To: <20261114193631.731615-1-jarkko@kernel.org>
 References: <20261114193631.731615-1-jarkko@kernel.org>
@@ -107,42 +106,106 @@ Precedence: list
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-key_type->read() requires the caller to hold key->sem for reading.
-Acquire keyring->sem across the two key_type_keyring.read() calls in
-invalidate_keyring_keys() so the keyring cannot be modified between the
-size query and the payload read.
+Introduce keyring_is_empty() in order to decouple for BPF, dm-verity and
+fs-verity how keyring internally manages the keys.
 
-Cc: David Howells <dhowells@redhat.com>
-Cc: stable@vger.kernel.org # v6.6+
-Fixes: 8cf57d7217c3 ("s390: add support for user-defined certificates")
+Reviewed-by: Eric Biggers <ebiggers@kernel.org>
+Reviewed-by: Ignat Korchagin <ignat@linux.win>
 Signed-off-by: Jarkko Sakkinen <jarkko@kernel.org>
 ---
- arch/s390/kernel/cert_store.c | 6 +++++-
- 1 file changed, 5 insertions(+), 1 deletion(-)
+ drivers/md/dm-verity-verify-sig.c                      |  2 +-
+ fs/verity/signature.c                                  |  2 +-
+ include/linux/key.h                                    |  1 +
+ kernel/bpf/keys.c                                      |  2 +-
+ security/keys/keyring.c                                | 10 ++++++++++
+ .../selftests/dm-verity/test-dm-verity-keyring.sh      |  2 +-
+ 6 files changed, 15 insertions(+), 4 deletions(-)
 
-diff --git a/arch/s390/kernel/cert_store.c b/arch/s390/kernel/cert_store.c
-index bec95991edae..7d339fe2f6fc 100644
---- a/arch/s390/kernel/cert_store.c
-+++ b/arch/s390/kernel/cert_store.c
-@@ -319,13 +319,17 @@ static int invalidate_keyring_keys(struct key *keyring)
- 	struct key *current_key;
- 	int rc;
+diff --git a/drivers/md/dm-verity-verify-sig.c b/drivers/md/dm-verity-verify-sig.c
+index 0c65c7a31da8..bd5143aae4fa 100644
+--- a/drivers/md/dm-verity-verify-sig.c
++++ b/drivers/md/dm-verity-verify-sig.c
+@@ -153,7 +153,7 @@ int verity_verify_root_hash(const void *root_hash, size_t root_hash_len,
+ 	if (ret != -ENOKEY && ret != -EKEYREJECTED)
+ 		return ret;
  
-+	down_read(&keyring->sem);
- 	keyring_payload_len = key_type_keyring.read(keyring, NULL, 0);
- 	num_keys = keyring_payload_len / sizeof(key_serial_t);
- 	key_array = kzalloc_objs(key_serial_t, num_keys);
--	if (!key_array)
-+	if (!key_array) {
-+		up_read(&keyring->sem);
- 		return -ENOMEM;
-+	}
+-	if (dm_verity_keyring->keys.nr_leaves_on_tree &&
++	if (!keyring_is_empty(dm_verity_keyring) &&
+ 	    dm_verity_keyring->restrict_link)
+ 		ret = verify_pkcs7_signature(root_hash, root_hash_len,
+ 					     sig_data, sig_len,
+diff --git a/fs/verity/signature.c b/fs/verity/signature.c
+index 2f49c5d9d987..b45b39b829b2 100644
+--- a/fs/verity/signature.c
++++ b/fs/verity/signature.c
+@@ -70,7 +70,7 @@ int fsverity_verify_signature(const struct fsverity_info *vi,
+ 		return 0;
+ 	}
  
- 	rc = key_type_keyring.read(keyring, (char *)key_array, keyring_payload_len);
-+	up_read(&keyring->sem);
- 	if (rc != keyring_payload_len) {
- 		pr_dbf_msg("Couldn't read keyring payload");
- 		goto out;
+-	if (fsverity_keyring->keys.nr_leaves_on_tree == 0) {
++	if (keyring_is_empty(fsverity_keyring)) {
+ 		/*
+ 		 * The ".fs-verity" keyring is empty, due to builtin signatures
+ 		 * being supported by the kernel but not actually being used.
+diff --git a/include/linux/key.h b/include/linux/key.h
+index 420412aab926..9ff10b780865 100644
+--- a/include/linux/key.h
++++ b/include/linux/key.h
+@@ -439,6 +439,7 @@ extern int restrict_link_reject(struct key *keyring,
+ 				struct key *restriction_key);
+ 
+ extern int keyring_clear(struct key *keyring);
++bool keyring_is_empty(const struct key *keyring);
+ 
+ extern key_ref_t keyring_search(key_ref_t keyring,
+ 				struct key_type *type,
+diff --git a/kernel/bpf/keys.c b/kernel/bpf/keys.c
+index bffc356839ac..24e0416abc99 100644
+--- a/kernel/bpf/keys.c
++++ b/kernel/bpf/keys.c
+@@ -29,7 +29,7 @@ struct bpf_key *bpf_lookup_keyring(void)
+ 
+ 	if (!bpf_keyring)
+ 		return NULL;
+-	if (!READ_ONCE(bpf_keyring->keys.nr_leaves_on_tree) ||
++	if (keyring_is_empty(bpf_keyring) ||
+ 	    !READ_ONCE(bpf_keyring->restrict_link))
+ 		return NULL;
+ 
+diff --git a/security/keys/keyring.c b/security/keys/keyring.c
+index 357f56360810..3d12dc4b5974 100644
+--- a/security/keys/keyring.c
++++ b/security/keys/keyring.c
+@@ -443,6 +443,16 @@ static void keyring_destroy(struct key *keyring)
+ 	assoc_array_destroy(&keyring->keys, &keyring_assoc_array_ops);
+ }
+ 
++/**
++ * keyring_is_empty - Check whether a keyring is empty
++ * @keyring: The keyring to check.
++ */
++bool keyring_is_empty(const struct key *keyring)
++{
++	return READ_ONCE(keyring->keys.nr_leaves_on_tree) == 0;
++}
++EXPORT_SYMBOL(keyring_is_empty);
++
+ /*
+  * Describe a keyring for /proc.
+  */
+diff --git a/tools/testing/selftests/dm-verity/test-dm-verity-keyring.sh b/tools/testing/selftests/dm-verity/test-dm-verity-keyring.sh
+index 1f9601ef22f8..792449d356cf 100755
+--- a/tools/testing/selftests/dm-verity/test-dm-verity-keyring.sh
++++ b/tools/testing/selftests/dm-verity/test-dm-verity-keyring.sh
+@@ -746,7 +746,7 @@ test_keyring_inactive_when_empty() {
+     log_info "TEST: Verify dm-verity keyring is inactive when sealed empty"
+ 
+     # When keyring_unsealed=0, the keyring is sealed immediately while empty
+-    # This means it should NOT be used for verification (nr_leaves_on_tree=0)
++    # An empty keyring should NOT be used for verification.
+ 
+     log_info "Keyring state (should be empty and sealed):"
+     list_keyring_keys
 -- 
 2.47.3
 
