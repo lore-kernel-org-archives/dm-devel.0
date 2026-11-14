@@ -1,77 +1,45 @@
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=100.103.45.18
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1794675698;
-	b=gbJG25ZmPgGzxdyT5pPWFhA87jFWKkFmnqKMP32NAc1JhEswZQFrN0kjrSB+T8cpGxXA
-	 DOzZVmgTKhdvoCM7S46OfBsCyJjT3MLCrR33mazbXutRhaMWZL550VBfF2Y6A9xuysBa9
-	 pY1/YqVIFTe3OGobj5hyOx3umhSbFhH8FaO5CpB9T0kP3zqB4OPKUG9Ld8vR9C5Wqapj+
-	 Ttg+U0jZ4HKlY1C65MzkPLzLYANJ6uL5Yoj5qy1G89KBKyks0aUKfwNAcRi9cAVs1S+iC
-	 ajH8BzyY1thGR5jabavQe3VSTT1hCD1JWKbK8b0Z5Ew+ZapgulqcR9hXapxwXSA2+rg==
+	t=1794675860;
+	b=aKdHbWQoc4hmoFElUnRYnklauLS2pXm1+6WHO3KwGDySGxXRmZz/SafUBOL9NzJl8vf/
+	 AFdNGSgbOioZHjo98TUkYHmSN07+gYE45CND/S6+6afPh+lJU+0EIY32KaVQnRjiLo3iQ
+	 lG/81mqIxIc5ieD+HIhpFgXx5nE013FEhK246gCI+p9Vw9jLum5XfKuKjlLWHZmSghAos
+	 cS/LDe9mxmDhXlGc2r2zkF8/DImuITndVsRzc590QduXd9P8CpAp5Xayd+dOsHyYIassZ
+	 LUJI/JlCDtstwlbSxj73Iq4pwr2uipsOqKuoPOsrqwSmy96HL38ds0jPpb3oIbgLk8w==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1794675698;
-	h=Received:DKIM-Signature:Message-ID:From:Subject:Reply-To:To:Cc:
-	 In-Reply-To:References:Content-Type:Content-Transfer-Encoding:Date;
-	bh=bm80fs2NeC70k7e6B2ZN8qEEqza+vKslbAZ0gAfzt7U=;
-	b=ngImPP9LmXAz+U8xI4gsAefeycEm9ffQp5/J7PzNrzNLpkXoAZQLRi1gmtnd2F9psYp9
-	 iu+jpN9Rtlij35s9KKtV6cvBWz2T5p0aU/zmX56wQAru2B0Y8yYIdeBNfUaZ20PIEL/MD
-	 dZXc7ykvhi4/r75ytYb/uGzVcIs636qgnvxMm6yHD6fFLkBstkopvCNwVGAqQuOGnUUqv
-	 bC8jA7eIBq2Fg8F4iPgZzALArVtAQqZl1IlgHLhIb3AYKIqLOBtCq7Gay7fhkMe3EolCF
-	 nXDW2li1p2vlVcs5ePpmqYF4eRdXEqJOvCFz+fOd3GGMibN6Uvb6ElXM6K/7y9Gqv9w==
+	a=rsa-sha256; c=relaxed/relaxed; t=1794675860;
+	h=Received:DKIM-Signature:Content-Type:MIME-Version:Message-Id:
+	 In-Reply-To:References:Subject:From:To:Cc:Date;
+	bh=P3R1fxnK2fHEw6kEa18V4jQ4Zete2japEw/6tUn8fvc=;
+	b=MVmz9s6+bcJewF9H/erwWGw7+LZBlO8MQCqMK+ToQLyY5Wc8H0xlCsNsqUGd0bbDKcUZ
+	 TYI8ls78yu0H96fxGFEt8Oef95K++hr4a+Y8HAXrcsY0yYEOhba7igUKEJg+EkPhYddAc
+	 0NMdsOyXkGnbZY4MHSyUyGBN4eZfAJ59EGtrm+atjw5Ih4Ax3/YbyChWhhNkYsV4v3kqp
+	 fhaDw+Ze0HfcMbIbFyvY6k6Xb+A1J7Y+ygPgX3KUuZcT1CU4z7Dy4ZCmew5lMj3GbY+MD
+	 ecFjqmvLVUL9npn4uufHnXUxGAqcLwtZ9hP7GCVvJezla2pkzL3EEPhh8QAlVEsCFAw==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=CtChy+Gk;
+	dkim=fail reason="signature verification failed" header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=RrIO2nnn;
 	arc=none smtp.remote-ip=100.103.45.18
 Received: from smtp.kernel.org (quasi.space.kernel.org [100.103.45.18])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7D89A606A323;
-	Sat, 14 Nov 2026 17:01:38 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 16FCB606A330;
+	Sat, 14 Nov 2026 17:04:19 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=CtChy+Gk
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id E60901F000C8;
-	Sat, 14 Nov 2026 17:01:34 +0000 (UTC)
+	dkim=fail reason="signature verification failed" (2048-bit key) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=RrIO2nnn
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 1CB051F000C4;
+	Sat, 14 Nov 2026 17:04:15 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
-	s=k20260515; t=1794675698;
-	bh=bm80fs2NeC70k7e6B2ZN8qEEqza+vKslbAZ0gAfzt7U=;
-	h=From:Subject:Reply-To:To:Cc:In-Reply-To:References:Date;
-	b=CtChy+GkcKyQoOyaTV5M0d3dJ8crDGkKs0cvnZErF1XGLS2mw/OtrKo+ztrI6ZsQE
-	 aViwIOZdq65SOeyLvb9DlfPgjRCkM1ZIC5Cr9Md0XwVgD/hxwx7T27tD05NAPzHyIT
-	 1LbTKUd3ALnVTGvAtBWKLWb1YCkDABLNompgZJDVCj/Idpphp5bAlEaxsjnAMlOk/0
-	 GCHlH+4JeyRn2clECzKFkG3+3be65TRXiZX8Y+poGwYCwJ+QPayho5GlFAjemjxeFr
-	 IuIrJi2FhBJjJRqHpJN/T8W3Ztsj95UlkbfzhpjyK98r7qtgOZ/7PfyWykeO6duIID
-	 p1Mu7+Cr23cFg==
-Message-ID: <sashiko-outbox-214809@kernel.org>
-From: sashiko-bot@kernel.org
-Subject: Re: [PATCH v12 3/6] s390/cert_store: Skip keys that disappeared
- during invalidation
-Reply-To: sashiko-reviews@lists.linux.dev
-To: "Jarkko Sakkinen" <jarkko@kernel.org>, "David Howells" <dhowells@redhat.com>
-Cc: bpf@vger.kernel.org, dm-devel@lists.linux.dev, fsverity@lists.linux.dev, keyrings@vger.kernel.org, linux-security-module@vger.kernel.org, "Alasdair
- Kergon" <agk@redhat.com>, "Alexander Gordeev" <agordeev@linux.ibm.com>, "Alexei
- Starovoitov" <ast@kernel.org>, "Alex Shi" <alexs@kernel.org>, "Anastasia
- Eskova" <anastasia.eskova@ibm.com>, "Andrew Morton" <akpm@linux-foundation.org>, "Andrii
- Nakryiko" <andrii@kernel.org>, "Benjamin Marzinski" <bmarzins@redhat.com>, "Christian
- Borntraeger" <borntraeger@linux.ibm.com>, "Daniel Borkmann" <daniel@iogearbox.net>, "Dongliang
- Mu" <dzm91@hust.edu.cn>, "Eduard Zingerman" <eddyz87@gmail.com>, "Emil
- Tsalapatis" <emil@etsalapatis.com>, "Eric Biggers" <ebiggers@kernel.org>, "Ignat
- Korchagin" <ignat@linux.win>, "Heiko Carstens" <hca@linux.ibm.com>, "Ihor
- Solodrai" <ihor.solodrai@linux.dev>, "James Bottomley" <James.Bottomley@HansenPartnership.com>, "James
- Morris" <jmorris@namei.org>, "Jiri Olsa" <jolsa@kernel.org>, "Jonathan
- Corbet" <corbet@lwn.net>, "Kumar Kartikeya Dwivedi" <memxor@gmail.com>, "Linus
- Torvalds" <torvalds@linux-foundation.org>, "Martin KaFai Lau" <martin.lau@linux.dev>, "Mike
- Snitzer" <snitzer@kernel.org>, "Mikulas Patocka" <mpatocka@redhat.com>, "Mimi
- Zohar" <zohar@linux.ibm.com>, "Paul Moore" <paul@paul-moore.com>, "Peter
- Oberparleiter" <oberpar@linux.ibm.com>, "Randy Dunlap" <rdunlap@infradead.org>, "Roberto
- Sassu" <roberto.sassu@huawei.com>, "Serge E. Hallyn" <serge@hallyn.com>, "Shuah
- Khan" <skhan@linuxfoundation.org>, "Song Liu" <song@kernel.org>, "Sven
- Schnelle" <svens@linux.ibm.com>, =?utf-8?b?VGhlb2RvcmUgWS4gVHMnbw==?= <tytso@mit.edu>, "Vasily
- Gorbik" <gor@linux.ibm.com>, "Yanteng Si" <si.yanteng@linux.dev>, "Yonghong
- Song" <yonghong.song@linux.dev>
-In-Reply-To: <20261114164139.429814-4-jarkko@kernel.org>
-References: <20261114164139.429814-1-jarkko@kernel.org>
- <20261114164139.429814-4-jarkko@kernel.org>
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: quoted-printable
-Date: Sat, 14 Nov 2026 17:01:34 +0000
+	s=k20260515; t=1794675859;
+	bh=P3R1fxnK2fHEw6kEa18V4jQ4Zete2japEw/6tUn8fvc=;
+	h=In-Reply-To:References:Subject:From:To:Cc:Date;
+	b=RrIO2nnnCtVuyU/3tU5BytDg8ykluxl0TSYiZA5BT1lRK8o2OWF3fBeB1rSbWbl3f
+	 oGMj5qdXl4Zp2XJuE0GBqah0MoZlbi2OsX01yaNb7uKlHlcY5HcFjvntxwxzB5hex1
+	 Cpn/WU29mb0mmZKZCwijaMvEVfH9YFJ+c4G21hFpOj+tC70+6R+KOgFnq2WfJXVarj
+	 2c+9TWR3EVBBCVH6l3zW2dr9RVyrv1sYjE2ZjziajRktF8WWiiO96gC8DBEiJy6DJn
+	 akiQhO2HK7LBWcznqKceUuWopzvuCqgvBCrWt7w4fLnrVTq1SqD8nXjvkhXR9vBCSb
+	 l6G1S4bCu59cA==
+Content-Type: multipart/mixed; boundary="===============3120634351969932012=="
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Post: <mailto:dm-devel@lists.linux.dev>
@@ -80,84 +48,85 @@ List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 List-Owner: <mailto:dm-devel+owner@lists.linux.dev>
 Precedence: list
+MIME-Version: 1.0
+Message-Id: <a75e29128bdce3037d830cd6f269f27e01a680e943df2db427a12c99971bc8be@mail.kernel.org>
+In-Reply-To: <20261114161211.376859-6-jarkko@kernel.org>
+References: <20261114161211.376859-6-jarkko@kernel.org>
+Subject: Re: [PATCH v11 5/6] KEYS: Replace assoc_array with rhashtable
+From: bot+bpf-ci@kernel.org
+To: jarkko@kernel.org,dhowells@redhat.com
+Cc: jarkko@kernel.org,bpf@vger.kernel.org,dm-devel@lists.linux.dev,fsverity@lists.linux.dev,keyrings@vger.kernel.org,linux-doc@vger.kernel.org,linux-kernel@vger.kernel.org,linux-kselftest@vger.kernel.org,linux-security-module@vger.kernel.org,agk@redhat.com,agordeev@linux.ibm.com,ast@kernel.org,alexs@kernel.org,anastasia.eskova@ibm.com,akpm@linux-foundation.org,andrii@kernel.org,bmarzins@redhat.com,borntraeger@linux.ibm.com,daniel@iogearbox.net,dzm91@hust.edu.cn,eddyz87@gmail.com,emil@etsalapatis.com,ebiggers@kernel.org,ignat@linux.win,hca@linux.ibm.com,ihor.solodrai@linux.dev,James.Bottomley@HansenPartnership.com,jmorris@namei.org,jolsa@kernel.org,corbet@lwn.net,memxor@gmail.com,torvalds@linux-foundation.org,martin.lau@linux.dev,snitzer@kernel.org,mpatocka@redhat.com,zohar@linux.ibm.com,paul@paul-moore.com,oberpar@linux.ibm.com,rdunlap@infradead.org,roberto.sassu@huawei.com,serge@hallyn.com,skhan@linuxfoundation.org,song@kernel.org,svens@linux.ibm.com,tytso@mit.edu,gor@linux.ibm.com,
+ si.yanteng@linux.dev,yonghong.song@linux.dev,ast@kernel.org,andrii@kernel.org,daniel@iogearbox.net,martin.lau@kernel.org,eddyz87@gmail.com,yonghong.song@linux.dev,mason@kernel.org,ihor.solodrai@linux.dev
+Date: Sat, 14 Nov 2026 17:04:15 +0000 (UTC)
 
-Thank you for your contribution! Sashiko AI review found 2 potential
-issues to consider:
-- [Medium] s390/cert_store: incomplete handling of unlinked keys in
-  invalidate_keyring_keys()
-- [Low] s390/cert_store: commit message claims key_lookup() returns NULL
---
+--===============3120634351969932012==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
 
-commit 725043b976271178c0635971476e80ff473d9670
-Author: Jarkko Sakkinen <jarkko@kernel.org>
+> KEYS: Replace assoc_array with rhashtable
 
-s390/cert_store: Skip keys that disappeared during invalidation
+TL;DR: Not a bug today, but the new keyring_read() comment says the semaphore
+isn't needed; without it, a missed key could possibly leak uninitialized
+kvmalloc() bytes to user space. Comment should say the read lock matters.
 
-This commit updates invalidate_keyring_keys() to initialize rc to 0 and
-skip keys when key_lookup() returns an error pointer during keyring
-invalidation.
+> diff --git a/security/keys/keyring.c b/security/keys/keyring.c
+> --- a/security/keys/keyring.c
+> +++ b/security/keys/keyring.c
 
-> key_lookup() can return NULL for an unlinked key. Skip such keys instead.
+[ ... ]
 
-[Severity: Low]
-Is this commit message description accurate?  CONFIG_CERT_STORE depends on
-CONFIG_KEYS, and when CONFIG_KEYS is enabled, key_lookup() returns
-ERR_PTR(-ENOKEY) rather than NULL (which matches the IS_ERR(current_key)
-check in the diff).
+>  /*
+>   * Read a list of key IDs from the keyring's contents in binary form
+>   *
+> - * The keyring's semaphore is read-locked by the caller.  This prevents someone
+> - * from modifying it under us - which could cause us to read key IDs multiple
+> - * times.
+> + * The walk is RCU-protected, so the keyring's semaphore is not required.  A
+> + * keyring modified concurrently may list a key twice or miss one, but it can
+> + * never have a link freed under the walk.
+>   */
+>  static long keyring_read(const struct key *keyring,
+>  			 char *buffer, size_t buflen)
 
-> diff --git a/arch/s390/kernel/cert_store.c b/arch/s390/kernel/cert_store.c
-> index 0a10b31d68af3..03391b379dad3 100644
-> --- a/arch/s390/kernel/cert_store.c
-> +++ b/arch/s390/kernel/cert_store.c
-> @@ -331,8 +331,13 @@ static int invalidate_keyring_keys(struct key *keyri=
-ng)
->  		goto out;
->  	}
-> =20
-> +	rc =3D 0;
-> +
->  	for (key_index =3D 0; key_index < num_keys; key_index++) {
->  		current_key =3D key_lookup(key_array[key_index]);
-> +		if (IS_ERR(current_key))
-> +			continue;
-> +
->  		pr_dbf_msg("Invalidating key %08x", current_key->serial);
-> =20
->  		key_invalidate(current_key);
+This isn't a bug today, but is the new comment accurate about the
+semaphore not being required?
 
-[Severity: Medium]
-Does skipping only key_lookup() failures still leave unlinked keys unhandled
-later in invalidate_keyring_keys()?
+keyring_read() writes serials while walking the list, and then computes the
+returned length separately from the link count:
 
-When a key is unlinked from a keyring, dropping its reference is deferred to
-an RCU callback (or another reference may exist), so key_lookup() still
-succeeds; key_invalidate(current_key) also schedules keyring_gc(), which can
-unlink current_key before key_unlink() runs:
+    ret = keyring_iterate(keyring, keyring_read_iterator, &ctx);
+    ...
+    ret = keyring_nr_links(keyring) * sizeof(key_serial_t);
 
-arch/s390/kernel/cert_store.c:invalidate_keyring_keys() {
-	...
-		key_invalidate(current_key);
-		key_put(current_key);
-		rc =3D key_unlink(keyring, current_key);
-		if (rc) {
-			pr_dbf_msg("Couldn't unlink key %08x: %d", current_key->serial, rc);
-			break;
-		}
-}
+keyctl_read_key() kvmalloc()s key_data without zeroing it and copies back
+exactly ret bytes when ret <= buflen:
 
-In either case, key_unlink() returns -ENOENT, aborting the loop before the
-remaining keys in key_array are invalidated and causing cleanup_cs_keys() to
-fall back to unregister_key_type(&key_type_cert_store_key).  Note also that
-key_put(current_key) drops the caller's reference before key_unlink() and
-current_key->serial are used.
+    key_data = kvmalloc(key_data_len, GFP_KERNEL);
+    ret = __keyctl_read_key(key, key_data, key_data_len);
+    ...
+    if (copy_to_user(buffer, key_data, ret))
 
-Similarly, if a key is unlinked between the two key_type_keyring.read() cal=
-ls
-earlier in invalidate_keyring_keys(), the second call returns a smaller byte
-count than keyring_payload_len and jumps to out without invalidating the
-remaining keys, returning 0 if the last key was unlinked or a positive byte
-count otherwise.
+Both callers of ->read, __keyctl_read_key() and read_sed_opal_key(), hold
+down_read(&key->sem), and every writer of index->list and index->nr
+(__key_link(), __key_unlink(), keyring_gc(), keyring_clear(),
+keyring_revoke()) holds down_write() on the same semaphore, so the walk
+always writes exactly nr serials.
 
---=20
-Sashiko AI review =C2=B7 https://sashiko.dev/#/patchset/20261114164139.4298=
-14-1-jarkko@kernel.org?part=3D3
+Without the semaphore, a walk that misses a key, as the comment allows
+(for example a link prepended with list_add_rcu() after the walk has passed
+the head), would leave keyring_nr_links() larger than the number of serials
+written.  Could the uninitialized tail of the kvmalloc() buffer then be
+copied to user space?
+
+The old comment described the requirement correctly.  Could the new comment
+say that the caller's read lock on the semaphore is what keeps the returned
+length consistent with the serials written?
+
+
+---
+AI reviewed your patch. Please fix the bug or email reply why it's not a bug.
+See: https://github.com/kernel-patches/vmtest/blob/master/ci/claude/README.md
+
+CI run summary: https://github.com/kernel-patches/bpf/actions/runs/43615900108
+--===============3120634351969932012==--
