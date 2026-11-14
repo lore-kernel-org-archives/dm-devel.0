@@ -1,44 +1,44 @@
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=100.103.45.18
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1794674515;
-	b=xPySmv2W7P9scswhyZY139l9zSXLe4pE2Kf3CrvJb+uwNIz2A0fcf7TQZ/Ui3vWgyjRg
-	 tJfqROArzHTttA+3KmigkbhvCm0afL/SWkhMsX3QPe7mOPCHT6XhPFCKGFZYEp5M5wx+L
-	 wupa9qOUIVn7GCY4EvWwW9K22ztRPQQ3zgBeQvQT9S9N7DJM/F9ASv0imTPcRSLX3qYFY
-	 nV7NkLUqFQgQgwShzOnXXkW5DbsMJYrMJyfO9faRSjhmgjFesYngpxIfyWDuOQHVOXkeE
-	 is2CNBuf6i7MO+U2D3MjnGrs0w4rXInCrXf7Xa8CpV8tAQAel+3B3IeyND54hyYX5/A==
+	t=1794674512;
+	b=2u1W/qhCIxapaB/SJs2cgrXupuvioWzAPEVeYaeMg/34mubpGwRcW8QWbiKVNRx0aL2L
+	 Ujl9VyC+CDxteZW0kAOe69CIQu5tsKRtdkzeAxCugSuqPt4F5cZqvTpCDFdRjIhrBtf8D
+	 WweUgyp3JKyWnDIQNEt/OHzBxV+sug2G7pk7rtEiujFhMED60kBB3iNLCsZTXsvGgks59
+	 FpCbgGN9Dmb4kfdEr0lxk1TUXmP+nea+mHKuRPU4fSDDjFaEZR984Ef0AdpgpkACRM+7y
+	 FypNJJ8NI0H2WeovyIlLTbpqVHbv2NDWMwz5NBEoRTSzxiddmaScEVn6lls38ZxLD7Q==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1794674515;
+	a=rsa-sha256; c=relaxed/relaxed; t=1794674512;
 	h=Received:DKIM-Signature:From:To:Cc:Subject:Date:Message-ID:X-Mailer:
 	 In-Reply-To:References:MIME-Version:Content-Transfer-Encoding;
-	bh=wtntVWCmOd4/XWlAfSZf6wHdSPZhz7QPwsNN7uqUuIw=;
-	b=cdVIRNznPjMWIUHf5N0lSmVcePWS8+s99qizBnbDomuJFWG1KLXfpCr/elCgTsJ/lhZy
-	 r9LkW8NUv0CS6/blZthl2I6S1WOzgMT6kstLtARXlB7uWlnnBVcEFJ1EEZhFolo5z9j/n
-	 lxwAAUyEFUHwwmooLLw7jcoAAA5KmjB4xAoJ6DeiUsSemZRtZSxsKH2DrL0Dxfqb3FXL8
-	 cIq04PzIPclvWiMzuvXW2CEb+CDXAqsNiC7Ql8KbqXM3+1NSdCSkUy5AbLA6QiiMDX8Q2
-	 oRtKfZtdWD/8MEJTxD+9Dmc5cpIVwSAqrxsyXQfEEYDTyUYMcu1Fc4vbAxgQvDn5A7g==
+	bh=QGLMHkLcEdF2cQ9KeUVnz9Zxaf64JhgkVwoMNMb4SIk=;
+	b=U/YL+Lq/qA1VYrKzr0B5qlkTQkWpGbObFxO3T03oNv18hZ0bGTVs4DqpVl5w8p0rzKIe
+	 Ns08vaEEKVGUVpQ8xvv7T+ArwlLzQ/1BZgcpyJPd+e5yUkIuIgroqFomGDTCVOkRSQUhK
+	 d+zj9ViVdsJJYIKp14jkLBFBFaGuexkJ2yUc22981Y7N95fq6ltMi3gj0fmMHnTlew2LH
+	 Agvcy0jO0LNAyHNLFTeCMRJTmdXwYQJPAVz2Qx/egpPeE3A9T26GBWvySrYFAB7aQB8g8
+	 dP/eCeo00zk+lP3Tc8httmx4sYLDWicCUTuMqTtHqCiJErflztoIg429FfY4mX+BH7Q==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=jlt8pkqz;
+	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=NZ0MGD8t;
 	arc=none smtp.remote-ip=100.103.45.18
 Received: from smtp.kernel.org (quasi.space.kernel.org [100.103.45.18])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with UTF8SMTPS id 989DB606A32E;
-	Sat, 14 Nov 2026 16:41:55 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with UTF8SMTPS id 227FB606A33D;
+	Sat, 14 Nov 2026 16:41:51 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=jlt8pkqz
-Received: by smtp.kernel.org (Postfix) with UTF8SMTPSA id BC82F1F000C5;
-	Sat, 14 Nov 2026 16:41:54 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=NZ0MGD8t
+Received: by smtp.kernel.org (Postfix) with UTF8SMTPSA id E75CB1F000C4;
+	Sat, 14 Nov 2026 16:41:50 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
-	s=k20260515; t=1794674515;
-	bh=wtntVWCmOd4/XWlAfSZf6wHdSPZhz7QPwsNN7uqUuIw=;
+	s=k20260515; t=1794674511;
+	bh=QGLMHkLcEdF2cQ9KeUVnz9Zxaf64JhgkVwoMNMb4SIk=;
 	h=From:To:Cc:Subject:Date:In-Reply-To:References;
-	b=jlt8pkqz2BQn0K8phAaK0vhWhzEI/CvfIumAnasE3ro+GZeoy3IWk5ec5gKx8Lnrp
-	 xA+qYInfI5/ncXAquh9toxnOrqHOR3zAm7E136czd0jEJo4snAR1Vvz94dfOA/Zp2L
-	 u8cUSIZGil4ct8o2R3JhJe4g4weitJabbHegpxJRfA6QONvWyC2uq8J1VhlUez2Zld
-	 C0Sy68fYVawO/kX3+2WPHSAO9aln9gtG4mAfN8wvIVksBunTe4JNIlylMc/fXyft7N
-	 usfwTmCu4Av4E0pcEEtJ4+maCrEzEpp/6nAa0QAtJVDhTNlDhnN7A+jSk898cTV4ar
-	 o7njKrwFuh1OQ==
+	b=NZ0MGD8t01kk72mCJla/VVrWoluaDqTOvP6SZ+Y+60ujxKtpisUbPaW9j45PMkVuJ
+	 1qZ6hC352EpUHaxEgHm/Rwog7d/VBwdivckNXcWXyHLa3i4NI8TNmGZY5BQChkg8Y5
+	 CAauqkYQth8kWaZ1IjTOG/KAoN19CnLkkgxVsULLf9YAvyBHAmEeS0NGIyWGTcPchJ
+	 Kqx/MEOEhpelH35lyojH6W/CVJzffZjo8mxjaLaKNn4d9tYzVPUBqqz5I57i/NqCOE
+	 P61fGmOQ5fS5mGwq1sW8XlACbos//PXxoi6gAUJLqscp7rTCQOeM1CE2PQ15+zpr5q
+	 mWxKDjtEBhaqQ==
 From: Jarkko Sakkinen <jarkko@kernel.org>
 To: David Howells <dhowells@redhat.com>
 Cc: Jarkko Sakkinen <jarkko@kernel.org>,
@@ -90,9 +90,9 @@ Cc: Jarkko Sakkinen <jarkko@kernel.org>,
 	Yanteng Si <si.yanteng@linux.dev>,
 	Yonghong Song <yonghong.song@linux.dev>,
 	stable@vger.kernel.org
-Subject: [PATCH v12 3/6] s390/cert_store: Skip keys that disappeared during invalidation
-Date: Sat, 14 Nov 2026 18:41:36 +0200
-Message-ID: <20261114164139.429814-4-jarkko@kernel.org>
+Subject: [PATCH v12 2/6] s390/cert_store: Return an owned reference from find_cs_keyring()
+Date: Sat, 14 Nov 2026 18:41:35 +0200
+Message-ID: <20261114164139.429814-3-jarkko@kernel.org>
 X-Mailer: git-send-email 2.47.3
 In-Reply-To: <20261114164139.429814-1-jarkko@kernel.org>
 References: <20261114164139.429814-1-jarkko@kernel.org>
@@ -107,34 +107,77 @@ Precedence: list
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-key_lookup() can return NULL for an unlinked key. Skip such keys instead.
+Return an owned reference from find_cs_keyring() so that it will not get
+dropped.
 
 Cc: David Howells <dhowells@redhat.com>
 Cc: stable@vger.kernel.org # v6.6+
 Fixes: 8cf57d7217c3 ("s390: add support for user-defined certificates")
 Signed-off-by: Jarkko Sakkinen <jarkko@kernel.org>
 ---
- arch/s390/kernel/cert_store.c | 5 +++++
- 1 file changed, 5 insertions(+)
+ arch/s390/kernel/cert_store.c | 21 +++++++++------------
+ 1 file changed, 9 insertions(+), 12 deletions(-)
 
 diff --git a/arch/s390/kernel/cert_store.c b/arch/s390/kernel/cert_store.c
-index 0a10b31d68af..03391b379dad 100644
+index bb218b42a2c9..0a10b31d68af 100644
 --- a/arch/s390/kernel/cert_store.c
 +++ b/arch/s390/kernel/cert_store.c
-@@ -331,8 +331,13 @@ static int invalidate_keyring_keys(struct key *keyring)
- 		goto out;
- 	}
- 
-+	rc = 0;
+@@ -362,17 +362,13 @@ static struct key *find_cs_keyring(void)
+ 					&key_type_keyring, CERT_STORE_KEYRING_NAME,
+ 					false);
+ 	key_put(us_keyring);
+-	if (!IS_ERR(cs_keyring_ref)) {
+-		cs_keyring = key_ref_to_ptr(cs_keyring_ref);
+-		key_ref_put(cs_keyring_ref);
+-		goto found;
+-	}
++	if (!IS_ERR(cs_keyring_ref))
++		return key_ref_to_ptr(cs_keyring_ref);
 +
- 	for (key_index = 0; key_index < num_keys; key_index++) {
- 		current_key = key_lookup(key_array[key_index]);
-+		if (IS_ERR(current_key))
-+			continue;
-+
- 		pr_dbf_msg("Invalidating key %08x", current_key->serial);
+ 	/* Search default locations: thread, process, session keyrings */
+ 	cs_keyring = request_key(&key_type_keyring, CERT_STORE_KEYRING_NAME, NULL);
+ 	if (IS_ERR(cs_keyring))
+ 		return NULL;
+-	key_put(cs_keyring);
+-found:
+ 	return cs_keyring;
+ }
  
- 		key_invalidate(current_key);
+@@ -395,14 +391,16 @@ static void cleanup_cs_keys(void)
+ 
+ 	keyring_clear(cs_keyring);
+ 	key_invalidate(cs_keyring);
+-	key_put(cs_keyring);
+ 
+ 	us_keyring = get_user_session_keyring();
+-	if (IS_ERR(us_keyring))
++	if (IS_ERR(us_keyring)) {
++		key_put(cs_keyring);
+ 		return;
++	}
+ 
+ 	key_unlink(us_keyring, cs_keyring);
+ 	key_put(us_keyring);
++	key_put(cs_keyring);
+ }
+ 
+ static struct key *create_cs_keyring(void)
+@@ -729,13 +727,12 @@ static int fill_cs_keyring(void)
+ 		goto cleanup_keys;
+ 
+ 	rc = add_certificates_to_keyring(vcssb, cs_keyring);
++	key_put(cs_keyring);
+ 	if (rc)
+-		goto cleanup_cs_keyring;
++		goto cleanup_keys;
+ 
+ 	goto out;
+ 
+-cleanup_cs_keyring:
+-	key_put(cs_keyring);
+ cleanup_keys:
+ 	cleanup_cs_keys();
+ out:
 -- 
 2.47.3
 
