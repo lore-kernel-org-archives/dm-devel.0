@@ -1,76 +1,43 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=174.142.148.226
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1794690101;
-	b=XiKcnfuocL14xBaOxN+RiO7g81dG+MhZ6/Zn9hgh72LzexPmztV0LwZOz0GNI7Kt8uZN
-	 KdbQQbj70tomAGsPt07rBxgHzHbyFWgK/3oChh+Zie673ZJOXxkWi7WXgaRm6qF3qx8d9
-	 /qjGowftNwPA+tr9HiYVbRLj3It6+mgKFQQQGRKOn9FPUi7QDmAhezOS5ZNmjnXL4VssN
-	 Ogo+zKeEZMIkWjMnU6VPM1JqiQgxtve6oWxeJhPgLpW3IpEH1IiJU7Psl4Kgpf2z8uGin
-	 CLlUSZn6irSDV+6W3SlxzpzCMqNUR9WuVJ9JtpqBtpARnlQRWjvX8InGNepAwRXrcEg==
+	t=1794738955;
+	b=0BEkfAc0l3xnu+cV5EojV7VqSX1qDqVvMJ18c+PEMY6XASJA38Iy4p0rbrxPJ0Zq6HsF
+	 F80qTIcVj4cUYO+6mO1d+zQVV8j8KMNQjuFR9iZsBK299tWl8THG5B5ZJwY+fZXujcIS4
+	 s83cdnjVDQHQVaXGIDHPdfGs/ohRUEht5lZd5fbIJSYsf1TpMu0xvQuq85xTRYraTR8uG
+	 CmuBJV4I/PP84mXfrvccCv1tg9Wnk2yBb+7U+8PzZBC3M1IDfZOWjzaTuV6VX2bdmB/0e
+	 /m0Ron6u5EpguRi4F5yWstZWh7vaj0tCxlzqqL+0I4/jjHJ9aU+628CvluDcohWZeaQ==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1794690101;
-	h=DMARC-Filter:DKIM-Signature:X-MC-Rep:Received:X-MC-Unique:
-	 X-Mimecast-MFC-AGG-ID:Received:Received:Date:From:To:cc:Subject:
-	 In-Reply-To:Message-ID:References:MIME-Version:X-Scanned-By:
-	 X-Mimecast-MFC-PROC-ID:X-Mimecast-Originator:Content-Type;
-	bh=W36WF/9m32YwszJFJtP4N6eElBtazo+wbR9k9iqRXpE=;
-	b=pP4OfgmQc4h4aCcqCS+J8M+8xI5JI6Ox2IPqOAWqLC/pCjfjdwYDQlTWdxmsPiqyspm1
-	 xcRMP8F64ohWHOYq9ss19lt14ArMMaus4u1NngXUtL4ILGSuI3NOyJcdAWYVlM/pjdB0p
-	 wv9caOCTs5hx3h92YAPAibs5Lz3YcN03UL4a2p8clscGrv8aVa+W1gpj1Bt4/fKb1jD+L
-	 I+NynqnfCKpib1PMMk9zZVzYDHgj9DGyKMy/Dc51j44qrLVb4lHFzFxwxd8wHx8WU/kQL
-	 wVVEtrKFBXOhRTnRdcvLRsFVIG3kh6YYfl8kppmDBJZDNJzs8AS+Dnp9PwkusUxW4TA==
+	a=rsa-sha256; c=relaxed/relaxed; t=1794738955;
+	h=DMARC-Filter:Received:Date:From:To:Cc:Subject:Message-ID:References:
+	 MIME-Version:Content-Type:Content-Disposition:In-Reply-To;
+	bh=Nhl2t4L6TkxzXfInRClWp4avrcdnLduLOcL5y1yZrzU=;
+	b=VgW6LFfyY1gowyOXcFdoyUi8o5OCv56/jlv54QM2KTkUrN08I9haEmpTZc9lCjcsS6+T
+	 v8cSI/8alTWfKRC4yPfPbcHX7Lw0otxloVjgy+phgR+k0N2gk21XDw6yAUBVI+X3mzUjx
+	 X99iRqOpHJDEUFuOneu6GODjPT1wdhg7BWRJl04YQyTgHTAC98YZ4JZLJngijauS5Eg5D
+	 nWHO4tDJo4rjWG4zkV/FBTcJh5af0Gzqcrzmp5/gOgasnMpm1Og6+PvJsW738CNIj4WuT
+	 95239FebVlKf/KYgSrdQOuMAftY3CcIrjoclnJUgOdo3++Gmh4s3/M+ZHhZWEB8pGBg==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dmarc=pass header.from=redhat.com;
-	spf=pass smtp.mailfrom=redhat.com;
-	dkim=pass header.d=redhat.com header.i=@redhat.com header.a=rsa-sha256 header.s=mimecast20190719 header.b="APwN1/2U";
-	arc=none smtp.remote-ip=170.10.133.124
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
-	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 35919606A327
-	for <dm-devel@lists.linux.dev>; Sat, 14 Nov 2026 21:01:40 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 35919606A327
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.a=rsa-sha256 header.s=mimecast20190719 header.b=APwN1/2U
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1794690100;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=W36WF/9m32YwszJFJtP4N6eElBtazo+wbR9k9iqRXpE=;
-	b=APwN1/2UJQXrC6fC04TLgg6PSWC4+11L/67xdJQeDZIqL/O6jWme2BOMh2ib+QjP7/ZP+G
-	Y3zNrYyou39v15uYP+IyLvb281cYHu6tr2hZtNljxaM31mrGgPaNY+gCg3pmSP6d2OPsmh
-	/X65Vgz/qEEKbIo1JiTasvCBBJ+wB+8=
-X-MC-Rep: binary re single
-Received: from mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-70-bk35ufeUMt6PX4spgoE_Fw-1; Sat,
- 14 Nov 2026 16:01:36 -0500
-X-MC-Unique: bk35ufeUMt6PX4spgoE_Fw-1
-X-Mimecast-MFC-AGG-ID: bk35ufeUMt6PX4spgoE_Fw_1794690095
-Received: from mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.4])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 74810180049F;
-	Sat, 14 Nov 2026 21:01:34 +0000 (UTC)
-Received: from mpatocka-thinkpadx1carbongen12.rmtcz.csb (headnet04.pony-001.prod.iad2.dc.redhat.com [10.2.32.116])
-	by mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id D37A530000E5;
-	Sat, 14 Nov 2026 21:01:31 +0000 (UTC)
-Date: Sat, 14 Nov 2026 22:01:29 +0100 (CET)
-From: Mikulas Patocka <mpatocka@redhat.com>
-To: Mike Snitzer <snitzer@kernel.org>
-cc: Keith Busch <kbusch@kernel.org>, Christoph Hellwig <hch@infradead.org>, 
-    Keith Busch <kbusch@meta.com>, axboe@kernel.dk, dm-devel@lists.linux.dev, 
-    bmarzins@redhat.com, linux-block@vger.kernel.org
-Subject: Re: block: let a stacking device inherit its members' DMA
- alignment
-In-Reply-To: <avdNg7ckyt6-M8si@kernel.org>
-Message-ID: <f1831833-335b-5b63-95b9-9eac893accb4@redhat.com>
-References: <20260709161519.1559723-1-kbusch@meta.com> <20260709161519.1559723-2-kbusch@meta.com> <atpBVtPqGDWZ2AFo@kernel.org> <aumxcHVjVonjs6OV@infradead.org> <auoab2ewQZGDpRi3@kbusch-mbp> <avdNg7ckyt6-M8si@kernel.org>
+	dmarc=none header.from=umail.furryterror.org;
+	spf=pass smtp.mailfrom=drax.hungrycats.org;
+	arc=none smtp.remote-ip=174.142.148.226
+Received: from drax.kayaks.hungrycats.org (drax.kayaks.hungrycats.org [174.142.148.226])
+	by smtp.subspace.kernel.org (Postfix) with ESMTP id C816D606A31A
+	for <dm-devel@lists.linux.dev>; Sun, 15 Nov 2026 10:35:54 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org C816D606A31A
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=umail.furryterror.org
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=drax.hungrycats.org
+Received: by drax.kayaks.hungrycats.org (Postfix, from userid 1002)
+	id CE9EE1CD7E13; Sun, 15 Nov 2026 05:35:47 -0500 (EST)
+Date: Sun, 15 Nov 2026 05:35:47 -0500
+From: Zygo Blaxell <ce3g8jdj@umail.furryterror.org>
+To: Alexey Kuznetsov <axet@me.com>
+Cc: linux-btrfs@vger.kernel.org, linux-block@vger.kernel.org,
+	dm-devel@lists.linux.dev
+Subject: Re: [RFC PATCH 1/1] btrfs: track physical bad extents, fast-fail,
+ persist, and relocate
+Message-ID: <avmLAy52vfyJ5qze@hungrycats.org>
+References: <20261112134703.38510-1-nondet@yandex.ru>
+ <20261112134703.38510-2-nondet@yandex.ru>
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Post: <mailto:dm-devel@lists.linux.dev>
@@ -80,96 +47,181 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 List-Owner: <mailto:dm-devel+owner@lists.linux.dev>
 Precedence: list
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.4
-X-Mimecast-MFC-PROC-ID: SSc9hCRRepuhi-mWAUuoCeRyEsfTxCqp9sR-3lyKBp8_1794690095
-X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <20261112134703.38510-2-nondet@yandex.ru>
 
+On Thu, Nov 12, 2026 at 08:47:03AM -0500, Alexey Kuznetsov wrote:
+> Feedback wanted on: on-disk representation (device-tree items vs a
+> dedicated tree vs extending RST), per-sector vs per-bio failure, whether
+> the I/O path should record errors or only scrub/userspace, how to
+> coordinate with device replace and balance, and whether an incompat bit
+> is the right compatibility mechanism for a feature that changes read
+> semantics.
 
+Thanks for putting this together.  I'm not sure why btrfs needs to be
+involved at all, though.
 
-On Fri, 13 Nov 2026, Mike Snitzer wrote:
+The btrfs error-handling model already assumes a drive that remaps bad
+sectors in firmware.  A read hits a bad sector and gets EIO (or a csum
+mismatch), btrfs reads another copy, and writes the good data back to
+the failed location.  That write is where the drive moves the sector to
+a spare.  From then on the LBA is good again, and the filesystem never
+needs to know where the bad media is.  The model breaks only when the
+drive can't remap anymore, because its spares are used up or because
+its firmware won't do it.
 
-> On Tue, Nov 03, 2026 at 10:31:27AM -0700, Keith Busch wrote:
-> > On Tue, Nov 03, 2026 at 02:03:28AM -0800, Christoph Hellwig wrote:
-> > > On Thu, Oct 22, 2026 at 01:01:10PM -0400, Mike Snitzer wrote:
-> > > > On Thu, Jul 09, 2026 at 09:15:17AM -0700, Keith Busch wrote:
-> > > > > From: Keith Busch <kbusch@kernel.org>
-> > > > > 
-> > > > > All device mappers that want to override the dma_alignment do so.
-> > > 
-> > > Don't start a patch description by quoting another mail.
-> > > 
-> > > > Direct I/O from memory every member accepts is therefore rejected at
-> > > > the stacking device, and callers that check the advertised alignment
-> > > > (for instance through STATX_DIOALIGN) fall back to buffered I/O.
-> > > > 
-> > > > Leave dma_alignment at zero in blk_set_stacking_limits() so that the
-> > > > stacked value is the strictest of the members'.  blk_validate_limits()
-> > > > still applies the SECTOR_SIZE - 1 default when nothing was stacked,
-> > > > such as for a table with no devices.  Targets that process the data
-> > > > themselves and need logical-block-aligned memory already set
-> > > > dma_alignment in their io_hints (dm-crypt, dm-integrity, dm-verity,
-> > > > dm-log-writes), and NVMe multipath sets its own.
-> > > 
-> > > Chances are very high that this will introduce bugs somewhere,
-> > > as a lot of drivers are historically not ready to deal with lower
-> > > alignments, and will creeat nasty exploitable bugs.
-> > > 
-> > > So you'll need to audit each driver that wants to relax this
-> > > individually, and then override the value for them.  Alternatively
-> > > we could start with 0 in the block layer, but then you need to
-> > > lift the current setting into each caller first, and only remove
-> > > them one-by-one with a commit per driver explaining why that is safe
-> > > (and sensible).
-> > 
-> > I suppose it would be safer to have each stacking driver that can
-> > tolerate lower alignment granularity explicitly override the limit to 0
-> > to inherit whatever the stacking members require. For md-raid,
-> > that's not too bad as it can set lim.dma_alignment = 0 in
-> > raid0_set_limits() after md_init_stacking_limits(). But other device
-> > mappers don't have a way to override it so I guess something has to
-> > happen in dm_calculate_queue_limits() to allow this option.
-> 
-> DM devices have the ability to change limits really well, both in DM
-> core and the individual DM targets using .io_hints hook in their
-> target_type struct.  Mikulas knows what is needed for DM.
-> 
-> Mike
+So the missing piece is exactly a device that behaves like that firmware
+when the real firmware doesn't.  Put stock btrfs on top of it and nothing
+in btrfs has to change.  It also works for every other filesystem, swap,
+and raw users, which an in-btrfs list can't do.
 
-The problem is that the limits may change. I.e. for example, you can have 
-a linear device on the top of a disk that allows unaligned bio vectors, 
-you take a snapshot of the device, and suddenly, the dm device stops 
-supporting unaligned bio vectors.
+The patch shows how hard it is to do this inside the filesystem.  I had
+a LLM read it against v6.12 (I haven't run it, because it has problems
+too severe to be worth testing), and the mirror redirect, read fast-fail
+and persistence all have problems that come from btrfs trying to remap
+underneath itself.  The LLM found:
 
-There would be a race condition:
-1. you check queue limits, see that it supports unaligned vectors
-2. you construct a bio with unaligned vectors
-3. you reload the dm table with a target that doesn't support unaligned 
-vectors
-4. you submit the bio
-5. the bio with unaligned vectors is delivered to a target that doesn't 
-support them and misbehaves on them (for example, dm-raid1 used to 
-livelock if it received unaligned vectors, and other targets may misbehave 
-as well because they were written in the era when all vectors were 
-aligned)
+  - The write redirect in btrfs_map_block() tests the bad list against
+    *length, which at that point is the distance to the end of the
+    chunk.  For RAID1/RAID1C3/RAID1C4/DUP, one confirmed sector diverts
+    every write below it in the chunk.  The read check uses the real
+    bio length, so the diverted copy keeps old data that reads can
+    still reach.  On nodatasum files that's stale data returned
+    without an error.  The filesystem still believes those blocks are
+    mirrored.
 
-So, if we want to support unaligned vectors in dm, we must make sure that 
-device mapper never misbehaves on unaligned bio vector, regardless of 
-which dm target is used.
+  - btrfs_map_repair_block() goes through the same redirect, so repair
+    writes land on the healthy copy, and the "skip repair write" checks
+    never see the bad device.
 
-Auditing and rewriting all the targets to support unaligned vectors 
-doesn't seem practical.
+  - Fast-fail returns true after a bio split, so the remainder of the
+    bbio is never submitted and the reader hangs.  Every fast-fail also
+    increments read_io_errs without doing any I/O.
 
-One possibility how to support it would be to make per-target flag whether 
-the target accepts unaligned vectors. Then, we would have a per-table flag 
-that is true if all the targets in the table support unaligned vectors.
+  - Device replace reuses the devid, so the new disk inherits the old
+    disk's bad ranges at the next mount.  The incompat bit is cleared
+    when one device's list empties, even if other devices still have
+    ranges.
 
-Then, if dm receives a bio and the table doesn't have the flag set, we 
-would check the alignment of bio vectors in the dm core and terminate the 
-bio with BLK_STS_INVAL without giving it to the target.
+  - The existing test doesn't detect the bugs.  It only writes at the
+    bad offset, and it compares the file right after sync, so it reads
+    the page cache rather than either disk copy.
 
-I just don't know how much this extra walk through the bio vector would 
-degrade performance for the common case (i.e. no unaligned vectors).
+  - There are inaccuracies on free space tracking for metadata (with
+    remapped blocks removed) that can cause a filesystem abort.
 
-Mikulas
+  - The LLM found more issues, but I'll stop here.
 
+While these problems could be fixed, none of these problems exist if
+the remapping happens below the filesystem and supports existing btrfs
+write error handling.
+
+Currently only CMR spinning drives support badblocks-style LBA-based
+remap lists.  Other storage types don't have stable LBA-to-physical
+mappings, and a badblock-style remap list doesn't work on these devices.
+Users with healthy CMR drives that have not exhausted their remap sectors
+also gain nothing from this patch.  By doing the sector remapping in
+the dm layer, the runtime cost is paid only by those who use the layer.
+
+What I'd want from a dm-quarantine kernel target:
+
+The target detects failures on the lower device itself, and keeps the
+remap table on the device.  There are two kinds of failure to handle,
+because a drive with no spares left often accepts the write and fails
+on the read:
+
+  - A write fails on the lower device: allocate a reserve block, write
+    the data there, add the mapping, and complete the bio successfully.
+
+  - A read fails on the lower device: mark the block pending and return
+    EIO.  The next write to a pending block goes straight to a new
+    reserve block.  A later successful read of a pending block removes
+    it from the pending list, since the error was never confirmed.
+
+That's the same thing drives do with their pending sector list, and with
+btrfs on top, the next write is the repair write from the good copy.
+
+Because a block is only remapped when it is written, the reserve copy
+always holds data the filesystem wrote.  That avoids the problem of
+remapping an in-use sector to a reserve block full of garbage, and
+nothing needs to be salvaged first.
+
+The remap unit should be the lower device's logical block size, so
+there's never a read-modify-write through a bad sector.
+
+The table has to be crash-consistent with the data.  A remapped write must
+not be reported durable before its mapping is.  Committing table changes
+on FLUSH/FUA, the way dm-thin and dm-cache do with dm-persistent-data,
+gives the right semantics.  Keep two copies of the table so that a bad
+sector under it isn't fatal.
+
+Reserve allocations never move.  New defects should take the next
+free reserve block, and existing mappings stay put.  The current dmq
+build_table() doesn't do this.  It assigns reserve offsets in sorted
+order every time the table is rebuilt, and the map file doesn't record
+them, so adding a bad range below an existing one silently points every
+later remap at different reserve sectors.  That needs fixing even in
+the userspace-only dm-linear version.
+
+The target's header goes at the start of the lower device, with the
+reserved sectors at the end, making the upper device shorter than
+the lower device by the size of the reserved area.  The filesystem's
+superblock locations are remapped like bad sectors, with the superblocks
+copied to the upper device, and zeroed out on the lower device.  Then udev
+and btrfs device scan find the filesystem only on the dm device and never
+through the raw device, so they won't bypass the remap.  The current dmq
+doesn't hide the lower device's superblocks.  The same trick converts
+an existing filesystem in place, as discussed in the GitHub issue.
+
+Modern drives ship with tens of thousands of spare sectors.  Anyone who
+wants to keep using a drive whose own remap table is full has already
+grown more defects than that, so a reasonable default reserve size is
+about 256 MiB.
+
+When the remap table is full, failing the write with EIO is the only
+option.  That's what drive firmware does too.  It's not harmless on
+btrfs: when a write error hits an ordered extent and no write to a
+mirror or parity stripe succeeded, the ordered extent is silently
+deleted, and data that write(2) already reported as written is lost.
+The difference from firmware is that a kernel module can add more
+reserve.  Shrink the upper device and take more space from the top end
+of the lower device, so the reserve area grows downward.  The target
+should raise an event when free reserve drops below a threshold, like
+dm-thin's low_water_mark, so userspace can shrink the filesystem and
+extend the reserve before the table fills.
+
+The table should be a log that userspace can read and act on, not just
+a private mapping.  Every remap, pending entry and failure is recorded,
+and the admin can intervene: inspect the entries, clear a pending
+block, force a remap ahead of time from a badblocks scan, or retire a
+remap.  Counters for remapped, pending and failed blocks cover the
+summary.
+
+btrfs scrub does need a different approach to error reporting, but
+not the one in the patch.  Scrub can't write errors to the device
+tree on a read-only filesystem, especially on a filesystem that goes
+read-only because of its write errors.  dmesg isn't a substitute either:
+it's rate-limited, so a scratch on the disk yields only a fraction
+of the affected files per scrub run.  I outlined another method in
+btrfs-progs#836 [1]: btrfs collects error events (physical address, error
+type, repair result, block type) in ring buffers that userspace fetches
+through a sysfs file, with blocking reads so a daemon can listen all
+the time.  Userspace resolves the addresses to files, and can feed the
+same events into the dm target's bad block remapping table.  Nothing is
+written to the filesystem, so it works on a read-only mount, and it
+catches errors outside of scrub too.  If the buffer overruns, the reader
+should be told how many events were lost, so it knows to scrub again.
+
+dm-quarantine as posted is mostly dm-linear plus dm-error with runtime
+messages, and the messages are a problem.  dmq reloads it as suspend,
+load an empty table, resume, then send the ranges, so for a moment a
+mounted filesystem sees no remaps.  Messages are fine as the
+intervention interface, as long as they change the on-device log
+rather than a table that only exists until the next reload.
+
+So my suggestion is to drop the btrfs patch, fix at least the two
+dmq issues above for the dm-linear version, and put the effort into a
+remapping target with an on-device table.
+
+[1] https://github.com/kdave/btrfs-progs/issues/836
