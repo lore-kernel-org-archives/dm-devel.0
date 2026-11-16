@@ -1,90 +1,88 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=100.103.45.18
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=170.10.133.124
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1794857849;
-	b=qC2n0l0/D9NEbLFuPaa7rEBMjBrRJE5f81UA9L4rmQ5DxHVpzw+R8Rt2g/pL57TZGnuq
-	 HMDkPbifPaeQCoEIMTNQnNLNZm05SuxuOGPNYfRaJzKM6FzYbCSsVu2+DoPLkQU2Kg94a
-	 Lpzb9MOyP7JBJuMa+WWr0M9T9EWOuDCo87H37rPvwx8sDAfX2p+OaRSDti7kV2RH0Wnz4
-	 hz7iHTMOo/dZ6UU3repRI9pFiBEb16pQx0ov0KCAffMlyrRPRXzJi3VBnx5uYbQxHsJCk
-	 mrtcYgHgOUgzEK9ghpDWVISwl+FBQV0KKppcxXKHi7g0F78MxhEVImU7tP7aO6ftVMw==
+	t=1794858372;
+	b=2bLQPRTs8OsuqnHG4iZWY+/JfjZsWkXcrduCwIfHS2OAMWkDH8aBK46texEtfF1S8dhs
+	 VlGHk1B+Fr3FAmEiFFdtmNA7z6E6+D0g9s82NKDoxT5RPIWKktSvWMAV+NEaGgSNn6VvN
+	 XETVekI7D4qSAlxSYmFMCzYhDWYn8ML3n0OvAJm1l0x58EyltAHBdQois8EvrwIMh99XJ
+	 2mCzEY1rzWzOD3TzmrWhh4hBR7WNHwbvRLnCmx9RKJ1Ku2c/RAjmPOwZFL1DThihYLpUV
+	 hcUTcq2SZ/a9Rzyj0mvYN/nI58aRdDhsZQFZGF1A5Lt2EsYt1tpyQg1YUMTEXGA8wYw==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1794857849;
-	h=Received:DKIM-Signature:Date:From:To:Cc:Subject:Message-ID:
-	 References:MIME-Version:Content-Type:Content-Disposition:In-Reply-To;
-	bh=VgCzYve1kCS7waE1BrpxdQm3V/eHAwNUjgHqRgoaPno=;
-	b=vwUKjBe6g3WKNZn6U4j9Xs+dIgfuF8IScy8RLjl/CC+pzjbXzErbHdkr/ch84XfHBYSC
-	 ud7X1hJYI0eBoK64BodJhFy0e1dLCnuB4JeEMzdlYEUWZjCwlnMwkXtGYV9Dfbj2MsgZy
-	 Cu8XY5j+ukKiiEXWj2aCegeZxhWJSe5M7OIZCYkY7E1sn+LQKl/3LnJkKLRpfaytMGWL5
-	 +EY/crBEbulg/cwoijowuU4Mtsme0fxFbPHByXEBJ0Nr7S+tpJKJNNl2jBR36MFaJHyGY
-	 /AhcmQskc56kY2k0JabCfFt5lRNYE63T51z2wM1gdWXthj1/qWG+0dUuQSADfn3js8w==
+	a=rsa-sha256; c=relaxed/relaxed; t=1794858372;
+	h=DMARC-Filter:DKIM-Signature:Received:X-MC-Unique:
+	 X-Mimecast-MFC-AGG-ID:Received:Received:Received:Received:Date:From:
+	 To:Cc:Subject:Message-ID:References:MIME-Version:In-Reply-To:
+	 X-Scanned-By:X-Mimecast-Spam-Score:X-Mimecast-MFC-PROC-ID:
+	 X-Mimecast-Originator:Content-Type:Content-Disposition:
+	 Content-Transfer-Encoding;
+	bh=PY1XTm1QUotiSuYUkwshcOHiWqiNawsH3MYUexOBGbk=;
+	b=xgy/pObvpZHUGkobyyDaLxIVmQlA0fJ7r6hgQR/ARbiSxxf/L/FoU1asmlcCDHJz0PAZ
+	 aCjQYk70p1fRwsEcm0fVPohnUXEs7fpRz+DBJrkkfRI7tlt/Lk4U70VfkD2eFso1KPSR4
+	 HQMo1OMFBwG2TkTxMg4l+GV5ecmP35BY73QJNmVywksx/j0KcnbtuahC2rs7CqiaTH5up
+	 UO1LBOqyLGvhsqcsAteGMikuIJRa7Rr+cUwG9IZKFF7wXC58sfK87ghvvmqDfaMTPGS8s
+	 ZAWWAouOhSbo6UVc5CGm+5uktG52udyYU+ifI1ltpcV2ExzXil60HiZpDuFH3fw8+rA==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=b7wz07DI;
-	arc=none smtp.remote-ip=100.103.45.18
-Received: from smtp.kernel.org (quasi.space.kernel.org [100.103.45.18])
+	dmarc=pass header.from=redhat.com;
+	spf=pass smtp.mailfrom=redhat.com;
+	dkim=pass header.d=redhat.com header.i=@redhat.com header.a=rsa-sha256 header.s=mimecast20190719 header.b="Vd84DCz/";
+	arc=none smtp.remote-ip=170.10.133.124
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature ECDSA (prime256v1))
+	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with UTF8SMTPS id 71FAA606A31C;
-	Mon, 16 Nov 2026 19:37:29 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id AC5D4606A31C
+	for <dm-devel@lists.linux.dev>; Mon, 16 Nov 2026 19:46:11 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org AC5D4606A31C
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=b7wz07DI
-Received: by smtp.kernel.org (Postfix) with UTF8SMTPSA id 4FC681F000C4;
-	Mon, 16 Nov 2026 19:37:28 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
-	s=k20260515; t=1794857849;
-	bh=VgCzYve1kCS7waE1BrpxdQm3V/eHAwNUjgHqRgoaPno=;
-	h=Date:From:To:Cc:Subject:References:In-Reply-To;
-	b=b7wz07DIP3vgML0qQDMBFxUuiC4snWIOw82w+o5jNvTrQ2OKmd+Wxll3WmKLyu8gm
-	 P+J6xBmRadl6GGcHpghMpaeNyR1XJOugm9rPcnyWkrqsZxmBplcyECQhZ9P+EtobWX
-	 Rk6HMNPUu2uwL9ax63LNFbdL5fP++OFem7Y9Z39EzPlypQLyK2/wsnM4BexEGJctel
-	 cQk0Hi9zMIcmY7dkRij4b9xUaMe6t1zcdf4NRBR96IU1L4wxFOWrkRiCkvyOoA+zBQ
-	 +jYU44Afao8OqsXN+tZA1xGezP2kgG0E3UPPeKcI44WxZzcj33bHL22tztp1Zl/CsA
-	 3Koaue1vujUGw==
-Date: Mon, 16 Nov 2026 21:37:25 +0200
-From: Jarkko Sakkinen <jarkko@kernel.org>
-To: Heiko Carstens <hca@linux.ibm.com>
-Cc: David Howells <dhowells@redhat.com>, bpf@vger.kernel.org,
-	dm-devel@lists.linux.dev, fsverity@lists.linux.dev,
-	keyrings@vger.kernel.org, linux-doc@vger.kernel.org,
-	linux-kernel@vger.kernel.org, linux-kselftest@vger.kernel.org,
-	linux-security-module@vger.kernel.org,
-	Alasdair Kergon <agk@redhat.com>,
-	Alexander Gordeev <agordeev@linux.ibm.com>,
-	Alexei Starovoitov <ast@kernel.org>, Alex Shi <alexs@kernel.org>,
-	Anastasia Eskova <anastasia.eskova@ibm.com>,
-	Andrew Morton <akpm@linux-foundation.org>,
-	Andrii Nakryiko <andrii@kernel.org>,
-	Benjamin Marzinski <bmarzins@redhat.com>,
-	Christian Borntraeger <borntraeger@linux.ibm.com>,
-	Daniel Borkmann <daniel@iogearbox.net>,
-	Dongliang Mu <dzm91@hust.edu.cn>,
-	Eduard Zingerman <eddyz87@gmail.com>,
-	Emil Tsalapatis <emil@etsalapatis.com>,
-	Eric Biggers <ebiggers@kernel.org>,
-	Ignat Korchagin <ignat@linux.win>,
-	Ihor Solodrai <ihor.solodrai@linux.dev>,
-	James Bottomley <James.Bottomley@hansenpartnership.com>,
-	James Morris <jmorris@namei.org>, Jiri Olsa <jolsa@kernel.org>,
-	Jonathan Corbet <corbet@lwn.net>,
-	Kumar Kartikeya Dwivedi <memxor@gmail.com>,
-	Linus Torvalds <torvalds@linux-foundation.org>,
-	Martin KaFai Lau <martin.lau@linux.dev>,
-	Mike Snitzer <snitzer@kernel.org>,
-	Mikulas Patocka <mpatocka@redhat.com>,
-	Mimi Zohar <zohar@linux.ibm.com>, Paul Moore <paul@paul-moore.com>,
-	Peter Oberparleiter <oberpar@linux.ibm.com>,
-	Randy Dunlap <rdunlap@infradead.org>,
-	Roberto Sassu <roberto.sassu@huawei.com>,
-	"Serge E. Hallyn" <serge@hallyn.com>,
-	Shuah Khan <skhan@linuxfoundation.org>, Song Liu <song@kernel.org>,
-	Sven Schnelle <svens@linux.ibm.com>,
-	"Theodore Y. Ts'o" <tytso@mit.edu>,
-	Vasily Gorbik <gor@linux.ibm.com>,
-	Yanteng Si <si.yanteng@linux.dev>,
-	Yonghong Song <yonghong.song@linux.dev>
-Subject: Re: [PATCH v13 0/7] KEYS: Replace assoc_array with rhashtable
-Message-ID: <avtbdRYtBl3fsXBF@kernel.org>
-References: <20261114193631.731615-1-jarkko@kernel.org>
- <20261116120722.99807Ac6-hca@linux.ibm.com>
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.a=rsa-sha256 header.s=mimecast20190719 header.b=Vd84DCz/
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1794858370;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=PY1XTm1QUotiSuYUkwshcOHiWqiNawsH3MYUexOBGbk=;
+	b=Vd84DCz/RR67SJpNSVc/YDnIlzYhqNgMRGw6NGFQdTNgNkxKuL7efjOTXoBKtXeLF/oWH3
+	pln8Snreh1/zxbWbSz8Re1O44WIkuRBcAxsYm0iFUg3eeH0od5MvzBb9blW1fjaJkfzf/H
+	yq0SBd0tYUsWcHfPlK71wWtKoL2JBlQ=
+Received: from mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-322-V4TAySTsM_a9W5eRLdHZwA-1; Mon,
+ 16 Nov 2026 14:46:07 -0500
+X-MC-Unique: V4TAySTsM_a9W5eRLdHZwA-1
+X-Mimecast-MFC-AGG-ID: V4TAySTsM_a9W5eRLdHZwA_1794858366
+Received: from mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.4])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id C768C180060B;
+	Mon, 16 Nov 2026 19:46:05 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (bmarzins-01.fast.eng.rdu2.dc.redhat.com [10.6.23.12])
+	by mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 6065D3001DAC;
+	Mon, 16 Nov 2026 19:46:05 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.17.1) with ESMTPS id 6AGJk4HK3204805
+	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
+	Mon, 16 Nov 2026 14:46:04 -0500
+Received: (from bmarzins@localhost)
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.18.1/Submit) id 6AGJk30N3204804;
+	Mon, 16 Nov 2026 14:46:03 -0500
+Date: Mon, 16 Nov 2026 14:46:03 -0500
+From: Benjamin Marzinski <bmarzins@redhat.com>
+To: Martin Wilck <mwilck@suse.com>
+Cc: Brian Bunker <brian@purestorage.com>,
+        Christophe Varoqui <christophe.varoqui@opensvc.com>,
+        dm-devel@lists.linux.dev
+Subject: Re: [PATCH v4 1/1] multipathd: recheck WWIDs of re-added paths with
+ the device
+Message-ID: <avtdexYN1B3pJLmL@redhat.com>
+References: <20261111181642.51912-1-brian@purestorage.com>
+ <20261111181642.51912-2-brian@purestorage.com>
+ <179452227264.147392.9708937185980533136.b4-review@b4>
+ <avdQNjzddtu7o18n@redhat.com>
+ <9259d20188a042cb280bad95f8be9783d1b9c1fd.camel@suse.com>
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Post: <mailto:dm-devel@lists.linux.dev>
@@ -94,38 +92,229 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 List-Owner: <mailto:dm-devel+owner@lists.linux.dev>
 Precedence: list
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+In-Reply-To: <9259d20188a042cb280bad95f8be9783d1b9c1fd.camel@suse.com>
+X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.4
+X-Mimecast-Spam-Score: 0
+X-Mimecast-MFC-PROC-ID: Nd3ycuAn11mEuIQSeftJ6hVSLWcIQpmcSPalXT0s8FI_1794858366
+X-Mimecast-Originator: redhat.com
+Content-Type: text/plain; charset=iso-8859-1
 Content-Disposition: inline
-In-Reply-To: <20261116120722.99807Ac6-hca@linux.ibm.com>
+Content-Transfer-Encoding: 8bit
 
-On Mon, Nov 16, 2026 at 01:07:22PM +0100, Heiko Carstens wrote:
-> Hi Jarkko,
-> 
-> On Sat, Nov 14, 2026 at 09:36:24PM +0200, Jarkko Sakkinen wrote:
-> > The keyrings subsystem is the sole user of assoc_array. It has over 1700
-> > lines of code, no test suite, and a long history of bugs, with LLMs now
-> > finding more.
+On Fri, Nov 13, 2026 at 09:52:23PM +0100, Martin Wilck wrote:
+> On Fri, 2026-11-13 at 13:00 -0500, Benjamin Marzinski wrote:
+> > On Thu, Nov 12, 2026 at 11:24:32PM +0100, Martin Wilck wrote:
+> > > 
+> > > >  	}
+> > > > +	/*
+> > > > +	 * This path is being re-added because its udev data was
+> > > > missing or
+> > > > +	 * changed. The uevent may have been queued long before
+> > > > we got here,
+> > > > +	 * and adding a path to the map of a different LUN
+> > > > corrupts data. If
+> > > > +	 * recheck_wwid is set, confirm the WWID with the device
+> > > > first. On a
+> > > > +	 * mismatch, leave the path out and let the checker
+> > > > retrigger udev
+> > > > +	 * to get a fresh WWID.
+> > > > +	 */
+> > > > +	if (mode == PATH_ADD_REINIT && pp->recheck_wwid ==
+> > > > RECHECK_WWID_ON &&
+> > > > +	    check_path_wwid_change(pp)) {
+> > > 
+> > > check_path_wwid_change() returns false when it fails, is it correct
+> > > to keep the
+> > > path in that case? IMHO we should treat this like the strlen(pp-
+> > > >wwid) == 0 case
+> > > above.
 > > 
-> > This unfortunate outcome has evolved over time by large from the shortage
-> > of in-kernel callers, time bandwidth and 3rd party contributors.  What the
-> > keyrings subsystem needs is just a generic key-value store, which performs
-> > well with sparse key sets. Replace assoc_array with an rhashtable-backed
-> > keyring index and remove assoc_array from the kernel.
+> > Not sure I agree with this. It's a paranoia check. If it fails, I
+> > don't
+> > have a problem with just trusting the data that was given to us. I'm
+> > willing to be convinced otherwise, however.
 > 
-> ...
+> In my mind, a changed WWID followed by a failure to obtain the WWID
+> from the device shows that something is really fishy about the path in
+> question.
 > 
-> > v13:
-> > - s390/cert_store: Hold key reference across key_unlink(), and ignore -ENOENT.
-> > - s390/cert_store: Add "s390/cert_store: Read-lock keyring semaphore in
-> >   invalidate_keyring_keys()".
+> Moreover: 
 > 
-> Actually I had / have a patch series of 15 small patches ready to address
-> various bugs in certstore, including yours. I'll send them later - a few
-> (or many) collide with your patches. Not sure how we coordinate this.
+> I realize that uev_update_path() calls get_uid() with allow_fallback=0.
+> This goes back to your commit ffaf947 ("multipathd: Don't use fallback
+> code after getting wwid"), where the rationale you provided was 
+> 
+> > once the
+> > devices are set up, udev is the definitive source of this information
+> > ...
+> > Working under the assumption that udev will either never give us this
+> > information, or that it usually will. 
+> 
+> We have given up this assumption, at least partly. In view of the late
+> discussions, it seems reasonable to me to allow fallback to SG_IO if
+> udev failed, at least if pp->wwid was non-zero before.
+> 
+> Then, if the fallback failed, the situation would really be almost
+> identical to the failing paranoia check.
 
-That is perfect. I don't honestly care about patch authorship in this case
-too much. Do whatever you want :-) I'm just happy to get them out of the
-way.
+I wrote my objection assuming that this code would also be called when
+when we simply hadn't gotten the WWID on the first uevent. If we
+retrigger a uevent and then get the WWID, but the SG_IO fails, we could
+end up not creating the multipath device at all, despite the the path
+existing with a WWID (albeit with some issues). Perhaps that's the
+correct answer for an obviously flakey device. If this code was only run
+when we got a wwid before and then it changed, then requiring a matching
+WWID from the device seems much more reasonable. 
+ 
+> > 
+> > makes sense.
+> > 
+> > > But more generally: as this indicates a possible mismatch between
+> > > kernel and device
+> > > state, should we handle this similar to  handle_path_wwid_change()
+> > > instead,
+> > > i.e. also call rescan_path()? I guess that would need to be done in
+> > > uev_update_path(),
+> > > i.e. it would touch the regular "wwid changed in uevent" path.
+> > 
+> > Is this not another place were we are opening ourselves up for
+> > commands
+> > blocking? If we want to do a rescan and it can block, it makes more
+> > sense to do it only if recheck_wwids is set, and we know that the
+> > path
+> > is up. 
+> > 
+> 
+> Right, I didn't consider that rescan_path() may block. But still, why
+> do we need to rescan in handle_path_wwid_change(), but not here? 
+> 
+> AFAICS, the likelihood that the kernel is using stale information is
+> quite high when we handle this situation. I'm not sure if testing
+> whether the path is up makes much sense. There are many situations in
+> which the path would be down, but rescan/inquiry would still work. The
+> only thing that would really hurt us are timeouts during the kernel's
+> probing procedure, but I am not aware of an easy way to predict whether
+> that will happen.
+> 
+> I suppose we could rescan asynchronously in this case. After all, we
+> already have obtained the real WWID from the device, therefore we don't
+> need to wait for the rescan to finish.
 
+I'm not against the rescan, I just thought it made more sense in
+ev_add_path(), although running it asynchronously works too.
+ 
+> > > > 
+> > > > +	}
+> > > >  	mpp = find_mp_by_wwid(vecs->mpvec, pp->wwid);
+> > > >  	if (mpp && pp->size && mpp->size != pp->size) {
+> > > >  		condlog(0, "%s: failed to add new path %s,
+> > > > device size mismatch", mpp->alias, pp->dev);
+> > > > @@ -1375,7 +1390,7 @@ rescan:
+> > > >  	if (ro == 1)
+> > > >  		mpp->force_readonly = 1;
+> > > >  
+> > > > -	if (!need_do_map)
+> > > > +	if (mode == PATH_ADD_NO_MAP)
+> > > >  		return 0;
+> > > >  
+> > > >  	if (!dm_map_present(mpp->alias)) {
+> > > > @@ -1789,7 +1804,7 @@ out:
+> > > >  	}
+> > > >  	/* pp->initialized must not be INIT_PARTIAL if
+> > > > needs_reinit is set */
+> > > >  	if (needs_reinit)
+> > > > -		retval = uev_add_path(uev, vecs, 1);
+> > > > +		retval = uev_add_path(uev, vecs,
+> > > > PATH_ADD_REINIT);
+> > > 
+> > > Is it correct to take this branch also if needs_reinit is set
+> > > because
+> > > INIT_REQUESTED_UDEV was set? I don't think so.
+> > 
+> > This is a little tricky. I agree that we don't need to add the extra
+> > layer of paranoid checking when the path never got a wwid. In that
+> > case,
+> > what most likely what happened is that the udev worker thread timed
+> > out
+> > on the previous uevent, so we couldn't get the WWID from uevent
+> > variables. However, if we don't recheck on INIT_REQUESTED_UDEV, then
+> > we
+> > can get into a situation where:
+> > 1. uev_update_path() notices that the wwid has changed
+> > 2. ev_add_path() confirms that the wwid we got from udev doesn't
+> > match
+> >    the wwid we get directly asking the device
+> > 3. We trigger a new uevent
+> > 4. We blindly trust udev's wwid.
+> 
+> We need to trust udev at some point, don't we? Assume
+> 
+> 4. we double check again 
+> 5. ev_add_path() confirms that the wwid we got from udev doesn't match
+> 6. goto 3 
+> 
+> At least we'd need to avoid getting stuck in a loop.
 
-Br, Jarkko
+This will only loop for retrigger_tries. Then it will give up and trust
+udev without double-checking. Athough we never reset pp->retriggers once
+we have a reasonable WWID, so we only get retrigger_tries for the entire
+lifetime of the path. It seems like the retries when we couldn't get a
+WWID from udev are different than the retries when the WWIDs don't
+match.
+ 
+> AFAICS there are 2 reasons to do the SG_IO check:
+> 
+> 1) vpd info from sysfs may be stale (affects SUSE only)
+> 2) something changed between the VPD detection in udev rules and our
+> event handling
+> 
+> Then there is
+> 
+> 3) a bug e.g. in an udev rule causes ID_SERIAL to be consistently
+> wrong.
+> 
+> Case 1) would be fixed triggering a rescan (see above). In case 2), it
+> makes a certain amount of sense to trust udev the next time. Case 3)
+> would cause an infinite loop if we keep double-checking.
+> 
+> > Perhaps we need more initialization states or a path device flag to
+> > distinguish between the two cases (never having gotten a WWID, or
+> > having
+> > our WWID . Or we can decide that we are o.k. with extra checking
+> > whenever something goes wrong with getting the wwid from udev (when
+> > you
+> > have recheck_wwid set). Or am I misunderstanding something about why
+> > doing this is wrong? Are we intentionally only double-checking once
+> > here?
+> 
+> I don't like the idea of checking the first time around very much, but
+> I agree it isn't a big deal. OTOH, see above.
+
+If it's fine to only do one double-check before trusting udev, then
+PATH_ADD_REINIT is just for that one recheck, and what to do in that
+case is less ambiguous.
+ 
+> Yet another possibility is to introduce a new mode where we just never
+> trust udev. That'd be a 180" turn, but it might be worth trying.
+> The longer we discuss this, the more attractive it seems to me. Rather
+> than guessing whether or not we can trust udev, just use a "zero trust"
+> model :-)
+
+I wouldn't be against it. Device WWIDs could potentially switch between
+modes. But as long as users know that they would need to be careful when
+switching modes, that should be fine. Were you thinking of always
+getting the wwid through SG_IO, or were you thinking of using something
+like sysfs that could still potentially give you a stale value?
+
+-Ben
+
+> Regards
+> Martin
+> 
+> -- 
+> Dr. Martin Wilck <mwilck@suse.com>
+> SUSE Software Solutions Germany GmbH, Frankenstr. 146, 90461 Nürnberg,
+> Germany
+> Geschäftsführer: Stefan Gaiser, Jochen Jaser, Abhinav Puri (HRB
+> 36809,AG Nürnberg)
+
