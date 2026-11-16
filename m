@@ -1,64 +1,57 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=100.103.45.18
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=95.215.58.62
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1794781799;
-	b=F0wEnX4lYUUVvEq6otOQx1p20BaAZbgHWT8kz9uSLXmMqXzf0BzDyUxVo13SNCDtc75H
-	 RXISaCTSC2io60wwFMQTWT329wJNkfZTvY9saPHAuWpOspHXODkUutaUhw14ZtZicQNZq
-	 FRA2i1h2Y4E287EoSxOEKCPbkyPMtBswLjqIiV71KkRcF6ulFOlfVw9Gc0mLhDj6l8BPk
-	 8gB6Md1eF00ofYk5d7OU7BsHDUIGedsGsN2kxHVWcPQ1q9irUQix3hHHrhHAU4BjzW61c
-	 Vu9Vbqywit42bIR3mHmz8h2sWXFbUNP0pqxC5GvMubsGfFQjrn9KRmKmn8V9MpzBWng==
+	t=1794805935;
+	b=JQX+A1tXNglmS7OEgbWK8TDtDCvggkW7fLp/a7+GXr6WDYOOBTfnTpDpbv5wzhWDgkLe
+	 65k4K5fRQTBBx8wc7qnW7wJuNY4Xbqp8f4b2bciLThDAcb0s6/f2HW9RXOuxvyz8xfAez
+	 MvDglZ4B2dCq2Wl4hfoc9LsD5cDKgi4eiDzmLYG/MN62XXL9ECbxLzNhvCY3arp2gOaFX
+	 HKMIaxcsDjeqbbAzOLMC3y+6Z6Jqt+xZsmop7mzuIKrGh6NESaRh0v1LW4hgyBEtAVq+A
+	 eFr8joZfkPvuBkzUN5vxDdXpCEdFkvMp43DDiYNsbRK4b6+W1WZAbfT1TALxywgt/LA==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1794781799;
-	h=Received:DKIM-Signature:Received:Subject:From:In-Reply-To:References:
-	 X-PR-Tracked-List-Id:X-PR-Tracked-Message-Id:X-PR-Tracked-Remote:
-	 X-PR-Tracked-Commit-Id:X-PR-Merge-Tree:X-PR-Merge-Refname:
-	 X-PR-Merge-Commit-Id:Message-Id:Date:To:Cc;
-	bh=o+10pti+x4snul4ibKYKRNasEIh8tgYYEo9ooStnrPI=;
-	b=UJTXLoKgRqBXu4uf4IXCRTXEAtgz3ruqk+U8qUxIVpGFAJhVS4vYcI+AN4/jlAW1bcXr
-	 unxqXcyOnrJc3GKJIVzchzsKXgjqknpAvKzYhNFpVo7YXdNg82Gg1h/BkFTchvtq5LQye
-	 XrWAnyUynsbpFwaz7RnkIUgvbx1wNwoc1goJY8oKRQydtpCCnkx0NtRLmmo+XBzwzGK6n
-	 IjRq/FcjhihNLtwy688LwJYo20+buB8LjPDiSYr10YnUsnsKPqhBgs6crKz1PHazvoh4U
-	 IPTRoG5kuCUHT/GMA1pYxn3yygNxOZQh0Z0TtxxRLGPOtzirjOOnes1B6pEt5WoZOSQ==
+	a=rsa-sha256; c=relaxed/relaxed; t=1794805935;
+	h=DMARC-Filter:X-Envelope-To:DKIM-Signature:X-Envelope-To:Received:
+	 X-Mizu-Trace-ID:X-Migadu-Flow:From:Subject:Date:Message-Id:
+	 MIME-Version:Content-Type:Content-Transfer-Encoding:X-B4-Tracking:To:
+	 Cc:X-Mailer;
+	bh=Z9POl9I4jcuj/IXKCybXSL9Ryns15ceDvYW9lVzUk4g=;
+	b=NN4wOwHov9FBasxDWLLph2JjvQBuCV2E47k1wcLmySeS4rEDkOl2HnUzmjEZm7+AVus2
+	 rYSxVoiKh+603P9kdAIecZRiE6wQz89LGCWcdq5g+ALu22/zdUmtwtd5R1vfdGq963YuB
+	 4BX627FkQ6VY4uLH4RbtDk8soCv7uXPadNWPe9Cz5e+vqpVsBbkPfFvCAT4Km0KAivc4A
+	 kK7BQQ8H+4kUY/rE56YjNy/BujCDk4hIAKAXICZ1pmm+moBcHVrjr02FpmR3JnGAnjmJl
+	 J7jta3CSZqMtCgOdhsCWMcB2HHspymD9gk7X3RchHzMXpSdUT1s3LCNfYllUpKwKPhw==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b="GpiyA/yb";
-	arc=none smtp.remote-ip=100.103.45.18
-Received: from smtp.kernel.org (quasi.space.kernel.org [100.103.45.18])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature ECDSA (prime256v1))
+	dmarc=pass header.from=linux.dev;
+	spf=pass smtp.mailfrom=linux.dev;
+	dkim=pass header.d=linux.dev header.i=@linux.dev header.a=rsa-sha256 header.s=key1 header.b=FnXjxtij;
+	arc=none smtp.remote-ip=95.215.58.62
+Received: from mta1.migadu.com (out-62.mta1.migadu.com [95.215.58.62])
+	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
+	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9FB2E606A32C
-	for <dm-devel@lists.linux.dev>; Sun, 15 Nov 2026 22:29:59 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 426CB606A329
+	for <dm-devel@lists.linux.dev>; Mon, 16 Nov 2026 05:12:13 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 426CB606A329
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.dev
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.dev
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=GpiyA/yb
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 44B381F000C4;
-	Sun, 15 Nov 2026 22:29:59 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
-	s=k20260515; t=1794781799;
-	bh=o+10pti+x4snul4ibKYKRNasEIh8tgYYEo9ooStnrPI=;
-	h=Subject:From:In-Reply-To:References:Date:To:Cc;
-	b=GpiyA/ybAGZlzpKvoHeh2rIvkEVMBJIm/90rJlnzdP11qdrwaLnJQhWMy1etqJP9D
-	 eK6aedup/0KnVKN03SUtSt5IOCP7x4NtURtT6bkjBtzj/N1wygT+Hq2mzUlmXnSESx
-	 l1BdFfMQe/TDYO3gGmiLhtgsUwkcBltaRVb179aD0o1YX3ik5LH/DTgcUoLcL6/bG5
-	 4qjGG0zc/JYeO5aS4/OyJL+jyF+SrBTLGO8vN6o5mLmpqTam7NzgXDEa5kKHQOGNeF
-	 kPHI179NRJhAbX+ExTBEelIdAkK1uUfcA12M2LZElztaGmu5OgnmTOchZ3c1ub9DZ6
-	 8dYF9Adl7KRBA==
-Received: from [10.30.226.235] (localhost [IPv6:::1])
-	by aws-us-west-2-korg-oddjob-rhel9-1.codeaurora.org (Postfix) with ESMTP id 3A51D380823F;
-	Sun, 15 Nov 2026 22:29:59 +0000 (UTC)
-Subject: Re: [git pull] device mapper fixes for 7.4
-From: pr-tracker-bot@kernel.org
-In-Reply-To: <44a2bbbf-26a6-931b-68f5-decd011ad19f@redhat.com>
-References: <44a2bbbf-26a6-931b-68f5-decd011ad19f@redhat.com>
-X-PR-Tracked-List-Id: <dm-devel.lists.linux.dev>
-X-PR-Tracked-Message-Id: <44a2bbbf-26a6-931b-68f5-decd011ad19f@redhat.com>
-X-PR-Tracked-Remote: git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/for-7.4/dm-fixes
-X-PR-Tracked-Commit-Id: e92cd41e8e5ee5616c6c7cd4378661d942f0a7c0
-X-PR-Merge-Tree: torvalds/linux.git
-X-PR-Merge-Refname: refs/heads/master
-X-PR-Merge-Commit-Id: 87aecd24f58e15256870befed777bbffc5d4a9d5
-Message-Id: <179478179782.2784423.3463580905639413494.pr-tracker-bot@kernel.org>
-Date: Sun, 15 Nov 2026 22:29:57 +0000
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: Linus Torvalds <torvalds@linux-foundation.org>, Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>, Benjamin Marzinski <bmarzins@redhat.com>, Daejun Park <daejun7.park@samsung.com>, Edward Adam Davis <eadavis@sina.com>, guolingxing <guolingxing@tju.edu.cn>, Chen Cheng <chencheng@fnnas.com>, Jay Vadayath <jay@artiphishell.com>, Josef Schlehofer <pepe.schlehofer@gmail.com>, Kirtikumar Anandrao Ramchandani <kirtiar15502@gmail.com>, Kyrylo Biryuk <illofspeed@gmail.com>, Li Youhong <liyouhong@kylinos.cn>, Mark Bundschuh <mkbund@amazon.com>, Ming-Hung Tsai <mtsai@redhat.com>, "shao.mingyin" <shao.mingyin@zte.com.cn>, Sinan Polat <sinan86polat@gmail.com>, Weijiang Zhou <weijiang.zhou@unisoc.com>, wuyuehong <wuyuehong@cmss.chinamobile.com>, xietangxin <xietangxin@h-partners.com>, Yaohan Li <shunsheng1218@gmail.com>, Yingjie Wang <x-professor@outlook.com>, Yingjie Wang <1075151112@qq.com>, Zhao Feng <zhaofeng2@cmss.chinamobile.com>, dm-devel@lists.linux.dev
+	dkim=pass (1024-bit key, unprotected) header.d=linux.dev header.i=@linux.dev header.a=rsa-sha256 header.s=key1 header.b=FnXjxtij
+X-Envelope-To: dm-devel@lists.linux.dev
+DKIM-Signature: a=rsa-sha256; bh=Yz4k/P4RhOoUI14DZ6GNPt25I0TqwKwgFQ4BR8IZWf0=;
+ c=simple/simple; d=linux.dev;
+ h=from:to:subject:date:message-id:mime-version:content-type; s=key1;
+ t=1794805932; v=1; x=1795410732;
+ b=FnXjxtijQkhxdYMcxeyPm9T+kdwx2937lBxlq+dpWWLoAsP86LVIDVqlJlM29C3fWN6FS7ll
+ 8EfFex0sMyG0xum3K09pDsQOXJj4UpeNi2DlIvarwb/GGZn9leXEPd4YBVkTFb6eUPgwNJEfWZn
+ 9LdN/xUt/m66nkvVlaf345s8=
+X-Envelope-To: dm-devel@lists.linux.dev
+Received: by smtp.migadu.com with ESMTPS id 896e38f19e08f5bf;
+	Mon, 16 Nov 2026 05:12:12 +0000
+X-Mizu-Trace-ID: 896e38f19e08f5bf
+X-Migadu-Flow: FLOW_OUT
+From: Qiliang Yuan <qiliang.yuan@linux.dev>
+Subject: [PATCH 0/2] dm thin: stop waiting for grace periods when
+ activating and removing thins
+Date: Mon, 16 Nov 2026 00:12:02 -0500
+Message-Id: <20261116-bug-dm-thin-rcu-gp-v1-0-14ed3567da3e@linux.dev>
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Post: <mailto:dm-devel@lists.linux.dev>
@@ -67,16 +60,42 @@ List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 List-Owner: <mailto:dm-devel+owner@lists.linux.dev>
 Precedence: list
+MIME-Version: 1.0
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+X-B4-Tracking: v=1; b=H4sIAKOQ+moC/x3MTQqAIBBA4avErBtQkf6uEi0yJ51FFpoRRHdPW
+ n6L9x5IFJkSDNUDkS5OvIcCWVew+Dk4QrbFoIRqpJQaTXZoNzw9B4xLRnegVb3VptWzMB2U8Ii
+ 08v1Px+l9P0k+2DdkAAAA
+To: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>, 
+ Mikulas Patocka <mpatocka@redhat.com>, 
+ Benjamin Marzinski <bmarzins@redhat.com>
+Cc: dm-devel@lists.linux.dev, linux-kernel@vger.kernel.org, 
+ Qiliang Yuan <qiliang.yuan@linux.dev>
+X-Mailer: b4 0.13.0
 
-The pull request you sent on Sun, 15 Nov 2026 13:30:46 +0100 (CET):
+Activating a thin device waits for an RCU grace period in thin_ctr(),
+and removing one waits for another in thin_dtr(). Tools that create and
+remove thin snapshots for every container, such as the containerd
+devmapper snapshotter, pay for both each time.
 
-> git://git.kernel.org/pub/scm/linux/kernel/git/device-mapper/linux-dm.git tags/for-7.4/dm-fixes
+Patch 1 drops the grace period from thin_ctr(), which isn't needed.
+Patch 2 lets the active_thins walkers skip thins whose last reference is
+gone, so that thin_dtr() can free the thin with kfree_rcu() instead of
+waiting. Activating a thin device gets 51% faster and removing one 15%.
 
-has been merged into torvalds/linux.git:
-https://git.kernel.org/torvalds/c/87aecd24f58e15256870befed777bbffc5d4a9d5
+Signed-off-by: Qiliang Yuan <qiliang.yuan@linux.dev>
+---
+Qiliang Yuan (2):
+      dm thin: drop the grace period from thin_ctr()
+      dm thin: free thins with kfree_rcu() instead of waiting in thin_dtr()
 
-Thank you!
+ drivers/md/dm-thin.c | 37 ++++++++++++++++++-------------------
+ 1 file changed, 18 insertions(+), 19 deletions(-)
+---
+base-commit: 23c62304dde29abe92013d85910d03a77dada35d
+change-id: 20261114-bug-dm-thin-rcu-gp-d29d4b74a0b8
 
+Best regards,
 -- 
-Deet-doot-dot, I am a bot.
-https://korg.docs.kernel.org/prtracker.html
+Qiliang Yuan <qiliang.yuan@linux.dev>
+
