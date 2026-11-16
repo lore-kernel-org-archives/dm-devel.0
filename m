@@ -1,56 +1,75 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=95.215.58.67
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=170.10.133.124
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1794805944;
-	b=Mh0Uj3G07KrvhKY2/ykLmHuKIEosuSifDaUbNG5edKSZ8+wyn3XOYJl91y5cgU5ud8C0
-	 LV6zCz7VzIHcwkUsNGT/XGoWgG+th2fHKhyRQ9EXvYx6zs+P4z9onPlx0/LBCfkT8KQhI
-	 njghzYofw0GCIQ1X+cZ8wxkJT5XzNMO28nv0PL0j5TmFl25C0tEBIfMXM/xSSkqsMl3PI
-	 /FEMihOXifXvSFfzPDipc77tXw8mOY4l+AhAWgEyySCQoNQPM+nEjaIrNadeRlj4MgFgy
-	 jaF5O/p73qEPylvDjo0bX1rZnddcUBJV4f8LVF+BbuYzZ0abtxN8VZaXdvnK6Sc5d7g==
+	t=1794842276;
+	b=kg4D+4QoXN0yZQrTSAJdqgeC6t/XJRtswxogErhgB4va3bJSvuDY5cqO7n1H0zQ4vQ22
+	 92CZ77/MFryyxHcjuXUDREwpYIvAcLcSb783MK1CqIvLrooR/otB4+Ew4Dlb6nxq9ejJ4
+	 fxFfnDmNFzON4xCM14YLfBB0363dnI0QAHK1arCAWFgfqECESDkO1/Q8PeKts1jHmHs/3
+	 xcBedTNExmqRUeffxEdVRLLdov7vWsl+TeSYkqXZrP5flpQEHVAumxkYQg6yHhQ8O3pWQ
+	 dNmFPqvRX9m2u27kGegSgHIXq1dDwuXyG3HWmaZh4ZmnaAmTYsH/J5Za3BB1RzieZFA==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1794805944;
-	h=DMARC-Filter:X-Envelope-To:DKIM-Signature:X-Envelope-To:Received:
-	 X-Mizu-Trace-ID:X-Migadu-Flow:From:Date:Subject:MIME-Version:
-	 Content-Type:Content-Transfer-Encoding:Message-Id:References:
-	 In-Reply-To:To:Cc:X-Mailer;
-	bh=iDcxcgpD8H2AJ+U+UDDaqNSj/Xno6laRJDhgDqjVhCc=;
-	b=ffrbqISXZ72rMgVYeGTeqsoOZg7XOdyMgI3N8inUYg+qTdWNM3L+f8t0Wuabhvqvy6j0
-	 0Hakn/Kau4GyqS0Fb0v3+3t0j0HF3BMqf6NM1bFonWiY4fVzQjW3ZF+XxFBytGrCypZZe
-	 eSVHf6Dpd8c4xe96LdllGh6SJGcVfQiltP7E2ZF4arAOLpeh1NwzKuvmKdOVytybxwQ01
-	 KPxbQXyPZKD9ptLEssLSpowNAV501kHDaBIA993KzMhP1nal7aUGo86sEtLS5I3vwlw8B
-	 hey3vFT7eNke7FP2k5ZJpkoUsvQl1QokbDpQNmz8qliX77l+/lJqIwheB8NYCe0CYRw==
+	a=rsa-sha256; c=relaxed/relaxed; t=1794842276;
+	h=DMARC-Filter:DKIM-Signature:Received:X-MC-Unique:
+	 X-Mimecast-MFC-AGG-ID:Received:Received:Date:From:To:cc:Subject:
+	 In-Reply-To:Message-ID:References:MIME-Version:X-Scanned-By:
+	 X-Mimecast-MFC-PROC-ID:X-Mimecast-Originator:Content-Type;
+	bh=b37GkLVGO60t3CXWtXvYGydBuiHnKhL1cK13DcMfi5U=;
+	b=c1Q2YS0cjR1EXWyO/XQu+WQ/IJwydKSjNScBI9AyVa2KJmYdE/KOgKtcY5qo/URPO4LH
+	 ThliHa95N0X6M6hZ4sfBepV8aTHP1uCGsEjfpUSYv1e6hujkHj0jmReQGaCTb+b+QrEk8
+	 66pbAhoCHrT0lvgqs71v8cUxI8OVGgIHdclpJdagAFpL+7VTy+v3ebaXm+00m3gi0adLJ
+	 B+nR7nO+4GyPVSxJ8niExlJ1ED/JkzeyfvcAHwTtnaxgiLcCz6Zk4dlNi6iA2LqgdJy78
+	 uOSEuvUGC7eSgfjqDIcFdN4NJ7AeHh45EZUbM85hkB3XurBVMlYLvLSgw1LpoTgvbWQ==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dmarc=pass header.from=linux.dev;
-	spf=pass smtp.mailfrom=linux.dev;
-	dkim=pass header.d=linux.dev header.i=@linux.dev header.a=rsa-sha256 header.s=key1 header.b=XxwoNSaN;
-	arc=none smtp.remote-ip=95.215.58.67
-Received: from mta1.migadu.com (out-67.mta1.migadu.com [95.215.58.67])
-	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
+	dmarc=pass header.from=redhat.com;
+	spf=pass smtp.mailfrom=redhat.com;
+	dkim=pass header.d=redhat.com header.i=@redhat.com header.a=rsa-sha256 header.s=mimecast20190719 header.b=A2Ug0Ecs;
+	arc=none smtp.remote-ip=170.10.133.124
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id F124E606A31C
-	for <dm-devel@lists.linux.dev>; Mon, 16 Nov 2026 05:12:23 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org F124E606A31C
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.dev
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.dev
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B15C4606A323
+	for <dm-devel@lists.linux.dev>; Mon, 16 Nov 2026 15:17:55 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org B15C4606A323
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key, unprotected) header.d=linux.dev header.i=@linux.dev header.a=rsa-sha256 header.s=key1 header.b=XxwoNSaN
-X-Envelope-To: dm-devel@lists.linux.dev
-DKIM-Signature: a=rsa-sha256; bh=KFtcnpywgt6Da6rx/OLFu2kQrGV++9XA+ORnj3A9npM=;
- c=simple/simple; d=linux.dev;
- h=from:to:subject:date:message-id:mime-version:content-type; s=key1;
- t=1794805942; v=1; x=1795410742;
- b=XxwoNSaNAzWB+69/SethpreM8exUr5dn8dSHqbWBlekCsHEf8JDujMjvF9nGxmBqUxfcko/P
- WamZQC1SD+nlOBeenLu10vc7MwhQ9LR5o1bIdbiODgrF8QLo1dAYnVwBOjXAUw5d2AxSs00dppj
- 6CM/7jl11G/qZNg/h0UuVDCQ=
-X-Envelope-To: dm-devel@lists.linux.dev
-Received: by smtp.migadu.com with ESMTPS id 1882c6d6c103cf14;
-	Mon, 16 Nov 2026 05:12:22 +0000
-X-Mizu-Trace-ID: 1882c6d6c103cf14
-X-Migadu-Flow: FLOW_OUT
-From: Qiliang Yuan <qiliang.yuan@linux.dev>
-Date: Mon, 16 Nov 2026 00:12:04 -0500
-Subject: [PATCH 2/2] dm thin: free thins with kfree_rcu() instead of
- waiting in thin_dtr()
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.a=rsa-sha256 header.s=mimecast20190719 header.b=A2Ug0Ecs
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1794842274;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 in-reply-to:in-reply-to:references:references;
+	bh=b37GkLVGO60t3CXWtXvYGydBuiHnKhL1cK13DcMfi5U=;
+	b=A2Ug0EcsoKswtKspGFDzf7Cozul8ql3sZhyLbjCBatcGpLp6564iBbs/9+QNoGbNgq61BE
+	rObTqI0Bl9Vh98sUjb/BGqxjgxdpiDSF2lk49npLo2l5E7XSdHaNzO4F3Lommu2lbGMGtV
+	aDp0WiZas8m599z10fkoLWCF+USYg/0=
+Received: from mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-668-N42HNi2bPPmAj8foRtmBEg-1; Mon,
+ 16 Nov 2026 10:17:51 -0500
+X-MC-Unique: N42HNi2bPPmAj8foRtmBEg-1
+X-Mimecast-MFC-AGG-ID: N42HNi2bPPmAj8foRtmBEg_1794842270
+Received: from mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.12])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id AF301195604E;
+	Mon, 16 Nov 2026 15:17:49 +0000 (UTC)
+Received: from mpatocka-thinkpadx1carbongen12.rmtcz.csb (headnet04.pony-001.prod.iad2.dc.redhat.com [10.2.32.116])
+	by mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id A14CF1956047;
+	Mon, 16 Nov 2026 15:17:47 +0000 (UTC)
+Date: Mon, 16 Nov 2026 16:17:43 +0100 (CET)
+From: Mikulas Patocka <mpatocka@redhat.com>
+To: Aibing Chen <chenaibing@cmss.chinamobile.com>
+cc: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>, 
+    Benjamin Marzinski <bmarzins@redhat.com>, dm-devel@lists.linux.dev, 
+    linux-kernel@vger.kernel.org
+Subject: Re: [PATCH] dm-integrity: initialize free_sectors when the superblock
+ changes on resume
+In-Reply-To: <20261115115329.1174-1-chenaibing@cmss.chinamobile.com>
+Message-ID: <a0d2a86b-a001-9f82-1d08-fd8348688218@redhat.com>
+References: <20261115115329.1174-1-chenaibing@cmss.chinamobile.com>
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Post: <mailto:dm-devel@lists.linux.dev>
@@ -60,135 +79,72 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 List-Owner: <mailto:dm-devel+owner@lists.linux.dev>
 Precedence: list
 MIME-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: 7bit
-Message-Id: <20261116-bug-dm-thin-rcu-gp-v1-2-14ed3567da3e@linux.dev>
-References: <20261116-bug-dm-thin-rcu-gp-v1-0-14ed3567da3e@linux.dev>
-In-Reply-To: <20261116-bug-dm-thin-rcu-gp-v1-0-14ed3567da3e@linux.dev>
-To: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>, 
- Mikulas Patocka <mpatocka@redhat.com>, 
- Benjamin Marzinski <bmarzins@redhat.com>
-Cc: dm-devel@lists.linux.dev, linux-kernel@vger.kernel.org, 
- Qiliang Yuan <qiliang.yuan@linux.dev>
-X-Mailer: b4 0.13.0
+X-Scanned-By: MIMEDefang 3.0 on 10.30.177.12
+X-Mimecast-MFC-PROC-ID: VJouWBI6e4lAhKtDJy7zpT1OkEjdeMBuECtSYprh4iI_1794842270
+X-Mimecast-Originator: redhat.com
+Content-Type: text/plain; charset=US-ASCII
 
-get_first_thin() and get_next_thin() find a thin on pool->active_thins
-under rcu_read_lock() and take a reference on it. thin_dtr() removes the
-thin from the list and waits for a grace period before dropping its own
-reference, so that no walker takes one after the last is gone.
 
-Removing a thin device thus waits for a full grace period in thin_dtr(),
-before it waits for the references that are still held.
 
-Take the references with refcount_inc_not_zero() and skip the thins
-whose last reference is gone, so that thin_dtr() only waits for the
-references already taken. Free the thin with kfree_rcu(), as
-requeue_bios() and error_retry_list_with_code() may still look at it
-under rcu_read_lock().
+On Sun, 15 Nov 2026, Aibing Chen wrote:
 
-Removing 100 thin devices of an idle pool with dmsetup remove takes per
-device (mean of five rounds, min-max of the rounds in parentheses). The
-queue freeze in del_gendisk() waits for a grace period of its own, which
-the one in thin_dtr() used to overlap, so only part of it is saved:
+> fc79aeb86a2c ("dm-integrity: validate the superblock on resume") made
+> dm_integrity_resume() jump to skip_writes when the on-disk superblock was
+> modified while the device was suspended.  That path skips
+> replay_journal(), so the journal accounting variables stay
+> zero-initialized: free_sectors is 0 while journal_sections and
+> journal_section_entries are nonzero.
+> 
+> A later suspend or flush queues integrity_commit(), which calls
+> pad_uncommitted() in journal mode.  Its invariant
+> 
+>   journal_sections * journal_section_entries ==
+>   (n_uncommitted_sections + n_committed_sections) *
+>   journal_section_entries + free_sectors
+> 
+> no longer holds because the right-hand side evaluates to 0, and WARN_ON
+> fires.
+> 
+> Restore free_sectors on that error path, as replay_journal() does for the
+> normal resume.  The section counters are already zero and nothing will be
+> committed, since the device is marked failed.
+> 
+> Reported-by: syzbot+94dac3c75477e184f0b0@syzkaller.appspotmail.com
+> Closes: https://syzkaller.appspot.com/bug?extid=94dac3c75477e184f0b0
+> Fixes: fc79aeb86a2c ("dm-integrity: validate the superblock on resume")
+> Cc: stable@vger.kernel.org
+> Signed-off-by: Aibing Chen <chenaibing@cmss.chinamobile.com>
 
-  before (ms)        after (ms)         change
-  16.9 (15.8-17.3)   14.4 (13.8-15.3)     -15%
+Hi
 
-Signed-off-by: Qiliang Yuan <qiliang.yuan@linux.dev>
----
- drivers/md/dm-thin.c | 30 ++++++++++++++++++------------
- 1 file changed, 18 insertions(+), 12 deletions(-)
+This should be already fixed by the commit 
+e5e03918fbec31f0c896f4f43c2bd2aadf35d43d ("dm-integrity: don't attempt to 
+commit journal on disabled device")
 
-diff --git a/drivers/md/dm-thin.c b/drivers/md/dm-thin.c
-index d5ff937eeacba..8386215101eb2 100644
---- a/drivers/md/dm-thin.c
-+++ b/drivers/md/dm-thin.c
-@@ -360,6 +360,7 @@ struct thin_c {
- 	 */
- 	refcount_t refcount;
- 	struct completion can_destroy;
-+	struct rcu_head rcu;
- };
- 
- /*----------------------------------------------------------------*/
-@@ -2317,25 +2318,29 @@ static void process_thin_deferred_cells(struct thin_c *tc)
- 	} while (!list_empty(&cells));
- }
- 
--static void thin_get(struct thin_c *tc);
-+static bool thin_tryget(struct thin_c *tc);
- static void thin_put(struct thin_c *tc);
- 
- /*
-  * We can't hold rcu_read_lock() around code that can block.  So we
-  * find a thin with the rcu lock held; bump a refcount; then drop
-- * the lock.
-+ * the lock.  Skip the thins whose refcount thin_dtr() already dropped
-+ * to zero.
-  */
- static struct thin_c *get_first_thin(struct pool *pool)
- {
--	struct thin_c *tc = NULL;
-+	struct thin_c *tc;
- 
- 	rcu_read_lock();
--	tc = list_first_or_null_rcu(&pool->active_thins, struct thin_c, list);
--	if (tc)
--		thin_get(tc);
-+	list_for_each_entry_rcu(tc, &pool->active_thins, list) {
-+		if (thin_tryget(tc)) {
-+			rcu_read_unlock();
-+			return tc;
-+		}
-+	}
- 	rcu_read_unlock();
- 
--	return tc;
-+	return NULL;
- }
- 
- static struct thin_c *get_next_thin(struct pool *pool, struct thin_c *tc)
-@@ -2344,7 +2349,8 @@ static struct thin_c *get_next_thin(struct pool *pool, struct thin_c *tc)
- 
- 	rcu_read_lock();
- 	list_for_each_entry_continue_rcu(tc, &pool->active_thins, list) {
--		thin_get(tc);
-+		if (!thin_tryget(tc))
-+			continue;
- 		thin_put(old_tc);
- 		rcu_read_unlock();
- 		return tc;
-@@ -4128,9 +4134,9 @@ static struct target_type pool_target = {
-  * Thin target methods
-  *--------------------------------------------------------------
-  */
--static void thin_get(struct thin_c *tc)
-+static bool thin_tryget(struct thin_c *tc)
- {
--	refcount_inc(&tc->refcount);
-+	return refcount_inc_not_zero(&tc->refcount);
- }
- 
- static void thin_put(struct thin_c *tc)
-@@ -4146,7 +4152,6 @@ static void thin_dtr(struct dm_target *ti)
- 	spin_lock_irq(&tc->pool->lock);
- 	list_del_rcu(&tc->list);
- 	spin_unlock_irq(&tc->pool->lock);
--	synchronize_rcu();
- 
- 	thin_put(tc);
- 	wait_for_completion(&tc->can_destroy);
-@@ -4158,7 +4163,8 @@ static void thin_dtr(struct dm_target *ti)
- 	dm_put_device(ti, tc->pool_dev);
- 	if (tc->origin_dev)
- 		dm_put_device(ti, tc->origin_dev);
--	kfree(tc);
-+	/* Let RCU readers of active_thins finish with tc before freeing it */
-+	kfree_rcu(tc, rcu);
- 
- 	mutex_unlock(&dm_thin_pool_table.mutex);
- }
+Mikulas
 
--- 
-2.43.0
+> ---
+>  drivers/md/dm-integrity.c | 7 +++++++
+>  1 file changed, 7 insertions(+)
+> 
+> diff --git a/drivers/md/dm-integrity.c b/drivers/md/dm-integrity.c
+> index 802b37761..6ab305b60 100644
+> --- a/drivers/md/dm-integrity.c
+> +++ b/drivers/md/dm-integrity.c
+> @@ -3915,6 +3915,13 @@ static void dm_integrity_resume(struct dm_target *ti)
+>  		memcpy(ic->sb, ic->sb_copy, sizeof(struct superblock));
+>  		DMERR("The superblock was changed while the device was suspended");
+>  		dm_integrity_io_error(ic, "superblock check", -EINVAL);
+> +		/*
+> +		 * replay_journal() is skipped below, so the journal accounting stays
+> +		 * zero-initialized and pad_uncommitted() would trigger its WARN_ON.
+> +		 * Restore the free sector count; the section counters are already zero
+> +		 * and nothing is committed because the device is marked failed.
+> +		 */
+> +		ic->free_sectors = ic->journal_entries;
+>  		goto skip_writes;
+>  	}
+>  
+> 
+> 
 
