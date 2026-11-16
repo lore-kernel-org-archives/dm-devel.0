@@ -1,75 +1,100 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=170.10.133.124
-ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1794842276;
-	b=kg4D+4QoXN0yZQrTSAJdqgeC6t/XJRtswxogErhgB4va3bJSvuDY5cqO7n1H0zQ4vQ22
-	 92CZ77/MFryyxHcjuXUDREwpYIvAcLcSb783MK1CqIvLrooR/otB4+Ew4Dlb6nxq9ejJ4
-	 fxFfnDmNFzON4xCM14YLfBB0363dnI0QAHK1arCAWFgfqECESDkO1/Q8PeKts1jHmHs/3
-	 xcBedTNExmqRUeffxEdVRLLdov7vWsl+TeSYkqXZrP5flpQEHVAumxkYQg6yHhQ8O3pWQ
-	 dNmFPqvRX9m2u27kGegSgHIXq1dDwuXyG3HWmaZh4ZmnaAmTYsH/J5Za3BB1RzieZFA==
-ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1794842276;
-	h=DMARC-Filter:DKIM-Signature:Received:X-MC-Unique:
-	 X-Mimecast-MFC-AGG-ID:Received:Received:Date:From:To:cc:Subject:
-	 In-Reply-To:Message-ID:References:MIME-Version:X-Scanned-By:
-	 X-Mimecast-MFC-PROC-ID:X-Mimecast-Originator:Content-Type;
-	bh=b37GkLVGO60t3CXWtXvYGydBuiHnKhL1cK13DcMfi5U=;
-	b=c1Q2YS0cjR1EXWyO/XQu+WQ/IJwydKSjNScBI9AyVa2KJmYdE/KOgKtcY5qo/URPO4LH
-	 ThliHa95N0X6M6hZ4sfBepV8aTHP1uCGsEjfpUSYv1e6hujkHj0jmReQGaCTb+b+QrEk8
-	 66pbAhoCHrT0lvgqs71v8cUxI8OVGgIHdclpJdagAFpL+7VTy+v3ebaXm+00m3gi0adLJ
-	 B+nR7nO+4GyPVSxJ8niExlJ1ED/JkzeyfvcAHwTtnaxgiLcCz6Zk4dlNi6iA2LqgdJy78
-	 uOSEuvUGC7eSgfjqDIcFdN4NJ7AeHh45EZUbM85hkB3XurBVMlYLvLSgw1LpoTgvbWQ==
-ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dmarc=pass header.from=redhat.com;
-	spf=pass smtp.mailfrom=redhat.com;
-	dkim=pass header.d=redhat.com header.i=@redhat.com header.a=rsa-sha256 header.s=mimecast20190719 header.b=A2Ug0Ecs;
-	arc=none smtp.remote-ip=170.10.133.124
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+Authentication-Results: smtp.subspace.kernel.org; arc=pass header.oldest-pass=0 smtp.remote-ip=209.85.219.52
+ARC-Seal: i=2; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=pass;
+	t=1794843159;
+	b=ZtsHscEdGPmAeBRsFukDcvLJCD2T8J3epoxhFfFRyDUWesP1BB0VsgiHECJf1yOVFmQ5
+	 djg4hAYPkmccX1dnAEqBW+2gKMDpFTzaWAaoEyAyCIixj11eWphrxPijNgWOc1DdBEsnl
+	 ReJw4RazicWgj719Fi5xi4HtZJlV9XouFUEKHgdiju0xsFgfMs++/F37MRUV0OR5a8IjR
+	 MU4SRXuvcV3EyHRsrLAvL9VlBFdYTyn3DkzE81i22QGwV9MtS3whh5Vh1iDD/xAz7eFoO
+	 59Sg4MWs10uR5q6ocwmPPdLga/7QMBG+pQIELZCKYYgrK68w/mJIOVI85FQr9FG6aKw==
+ARC-Message-Signature: i=2; d=subspace.kernel.org; s=arc20261015;
+	a=rsa-sha256; c=relaxed/relaxed; t=1794843159;
+	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
+	 X-Forwarded-Encrypted:X-Gm-Message-State:X-Gm-Gg:X-Received:
+	 MIME-Version:References:In-Reply-To:From:Date:X-Gm-Features:
+	 Message-ID:Subject:To:Cc:Content-Type;
+	bh=UZfjUUdOGV4n+muBluIHHduUrTQ0oRHWELrphw0Vc24=;
+	b=D9qoyCH9JKc+CzHCRLxUdBsmZYDPkZdC+H3Snkt5gXKmb5xDqXXtnZ7OJp4t90i6YmmO
+	 ti0fBf0iaG54OGZpen9INoiIv3jvqNoH9hQPwDK/g+cPZW5U+s+qJjVhoN3CPsBr14ybh
+	 7f2VqRq8mv4hEjZekpBy2ETj/ZBdGE0jUM3KVt0HKYlXbEnexrVPgf3JLFQ5sHbhXxBal
+	 APMIP6ioCD4YKR8kukMqypMh21JUtr9921esvtNE5LP0K2f6jFuhLtXSZn2efujZ/gGjZ
+	 7gzpTaqifvpYsrlkSWUKMaPQhCSyi6gZn8wJFkIJfaTHRi0B5sdiUSW7CkM/k2qOUgA==
+ARC-Authentication-Results: i=2; smtp.subspace.kernel.org; 
+	dmarc=pass header.from=gmail.com;
+	spf=pass smtp.mailfrom=gmail.com;
+	dkim=pass header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=SbGILGhy;
+	arc=pass header.oldest-pass=0 smtp.remote-ip=209.85.219.52
+Received: from mail-qv1-f52.google.com (mail-qv1-f52.google.com [209.85.219.52])
+	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B15C4606A323
-	for <dm-devel@lists.linux.dev>; Mon, 16 Nov 2026 15:17:55 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org B15C4606A323
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 08C9F606A329
+	for <dm-devel@lists.linux.dev>; Mon, 16 Nov 2026 15:32:38 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 08C9F606A329
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.a=rsa-sha256 header.s=mimecast20190719 header.b=A2Ug0Ecs
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1794842274;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=b37GkLVGO60t3CXWtXvYGydBuiHnKhL1cK13DcMfi5U=;
-	b=A2Ug0EcsoKswtKspGFDzf7Cozul8ql3sZhyLbjCBatcGpLp6564iBbs/9+QNoGbNgq61BE
-	rObTqI0Bl9Vh98sUjb/BGqxjgxdpiDSF2lk49npLo2l5E7XSdHaNzO4F3Lommu2lbGMGtV
-	aDp0WiZas8m599z10fkoLWCF+USYg/0=
-Received: from mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-668-N42HNi2bPPmAj8foRtmBEg-1; Mon,
- 16 Nov 2026 10:17:51 -0500
-X-MC-Unique: N42HNi2bPPmAj8foRtmBEg-1
-X-Mimecast-MFC-AGG-ID: N42HNi2bPPmAj8foRtmBEg_1794842270
-Received: from mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.12])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mx-prod-mc-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id AF301195604E;
-	Mon, 16 Nov 2026 15:17:49 +0000 (UTC)
-Received: from mpatocka-thinkpadx1carbongen12.rmtcz.csb (headnet04.pony-001.prod.iad2.dc.redhat.com [10.2.32.116])
-	by mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id A14CF1956047;
-	Mon, 16 Nov 2026 15:17:47 +0000 (UTC)
-Date: Mon, 16 Nov 2026 16:17:43 +0100 (CET)
-From: Mikulas Patocka <mpatocka@redhat.com>
-To: Aibing Chen <chenaibing@cmss.chinamobile.com>
-cc: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>, 
-    Benjamin Marzinski <bmarzins@redhat.com>, dm-devel@lists.linux.dev, 
-    linux-kernel@vger.kernel.org
-Subject: Re: [PATCH] dm-integrity: initialize free_sectors when the superblock
- changes on resume
-In-Reply-To: <20261115115329.1174-1-chenaibing@cmss.chinamobile.com>
-Message-ID: <a0d2a86b-a001-9f82-1d08-fd8348688218@redhat.com>
-References: <20261115115329.1174-1-chenaibing@cmss.chinamobile.com>
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=SbGILGhy
+Received: by mail-qv1-f52.google.com with SMTP id 6a1803df08f44-91f2b826fe9so36874866d6.1
+        for <dm-devel@lists.linux.dev>; Mon, 16 Nov 2026 07:32:38 -0800 (PST)
+ARC-Seal: i=1; a=rsa-sha256; t=1794843158; cv=none;
+        d=google.com; s=arc-20260327;
+        b=k4Jh682Nh1Mbwy06zRa+xiD3NQI4gXz6u8xTan4AITxRyGeiX5g8lBF/UmgOgDlJTY
+         Xjph5CAzhagkSxZtttXdQ6kfFWdRTa4MBwCaJf/diOYxK1FmG9KKt7n4DHjliHYtXg5N
+         sTkfOg/Tk13qxOwqec+0U6sfXS9I2d1URk2RDTZAhSr4pYeSxQNZ0Ptc5M+1w+orrb+0
+         Ib03XeebsnF35P0YTcpCWX9fSWkPFzzndokb1Zl5kNqOuUGx3B5YEKY7c8qNka7tCuef
+         aq5A3bm25aYrLBJFJ5GkU0RDgRyb51FwKF3ZNaTP31ShES6v1cHllxlKlsG5+AV5UtEH
+         8Y4Q==
+ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=google.com; s=arc-20260327;
+        h=cc:to:subject:message-id:date:from:in-reply-to:references
+         :mime-version:dkim-signature;
+        bh=UZfjUUdOGV4n+muBluIHHduUrTQ0oRHWELrphw0Vc24=;
+        fh=lGiesCu+Ae4Q4vHEhtBhBBGQk20kdCSYzDzUTxYA+yY=;
+        b=bNsmAXe2mm2/cY8BIMb7bpWMFD3ojVflMg7rl2rclGq/3I7olEu/f9wQt45DE/5j0V
+         ecDKmryAK3+cW+VterArkVcgBy+Byke+llKpnXvCLk3u60GbbO3aSDBSnNCJ9Rley8pA
+         i0cg6FaeM5qdA0mteua8zzkPn6G9sVA2awrWIHRU111v2xFKwFjwKoFUnSw7isnb3g1H
+         umkPP76wU0PfLjPGzau+Yxxtswi09wErFwZzpzzOYBcxbQfv9vDyHo2zOU9W7AkqAfmF
+         edHV06HPgfQmJ+74uvz/0icS/ImYY2E61EWFIQGqHUuV0ktqLvkhJwjGlQagtrdE7Dn5
+         DOcg==;
+        darn=lists.linux.dev
+ARC-Authentication-Results: i=1; mx.google.com; arc=none
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20260707; t=1794843158; x=1795447958; darn=lists.linux.dev;
+        h=content-type:cc:to:subject:message-id:date:from:in-reply-to
+         :references:mime-version:from:to:cc:subject:date:message-id:reply-to
+         :content-type;
+        bh=UZfjUUdOGV4n+muBluIHHduUrTQ0oRHWELrphw0Vc24=;
+        b=SbGILGhyjFNMQ/01rK89NDExrsV/7P1lupnSVZ82QXaF+nzwCipc5U+YuZe4+IV1+R
+         4rwgVOyG1AOxMsLMEWNcLf8HXVK5cERmvb9s2Ho/Gk/v6p+HLlyMTwAx08nEcZs4yfHW
+         vVb6lOU3E/Eeu0vpk4UTumy0J92g4gtuwdts0CweybRHTaXY3n+OtOB1VS+MGCSWlA/2
+         k2ws6l7Ebf7Xb+OqBZBpW7hTaLPbc5/SWGQQeDS4mGCvMtNJa4BSYLfVKv3JoCa8DQyH
+         2J9WrfrhUrevyCdUQk8YRQjNA+Mt+DAe5u49hc7ZWUDlZOaVYFRXCcSbntmzWYSQQUQV
+         ntPw==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20260707; t=1794843158; x=1795447958;
+        h=content-type:cc:to:subject:message-id:date:from:in-reply-to
+         :references:mime-version:x-gm-gg:x-gm-message-state:from:to:cc
+         :subject:date:message-id:reply-to:content-type;
+        bh=UZfjUUdOGV4n+muBluIHHduUrTQ0oRHWELrphw0Vc24=;
+        b=Y3NN0Br27qub8yW4W9fWjn3uuDCWI6GuhTmlhJbswi1jBYQThm7rBVCZBjgYHR/fvC
+         wZ+Pq8BUNCItPIWrxJk+PRxzH9+QpJSDm750omU9ibvg3uawhzxnoYMGZK9j1IG1fB62
+         WQ6VTcCGxgEfWYXRuuQMd44C/2XUd/vR7NPc1/Yvt5dOmWV2KScT5WBXs4yet+y+hRzJ
+         1TacjUV9qF/Wd8+DlYh6c85eJVPh7RGwrYhBwBIDGUzoTJzBo87AsyXYmUQ3374DaWUy
+         wWntz4f52R9SOX4P2lR1KiC0Zg5hUTU6zAC5d2k2Ofpw/fzZpE4KZ1Wp4GI5cgAPnpjV
+         zXGw==
+X-Forwarded-Encrypted: i=1; AL+hErGFjEWk1KxPtj+3DXru2E0ndO94pATBjYFMRM+l43t6m3ssoZko3xR+dFWxyjUG6rWUnv2vE8hJeg==@lists.linux.dev
+X-Gm-Message-State: APuU4Z81v4xISEbi5ZtNwF4KF3UgnbRg1rQ/Tbb6vClqvPwsuaw6S0WL
+	saHrs0PWgeKuaKLjZHraypEGWApwz+dtXlGgonz8O6//g50Mm/ykm9C5DaCn4d/1yOuxeU6/uL2
+	xAHg6cHgZCW16/E/qd6q1iEQqbex/Ixg=
+X-Gm-Gg: AZFdTZdr+4MwSqVhsovC7eCIOl5g1RkJCeiQCAuBhJ71jA22PLNcLHC6PrIrRUzUtFg
+	dXpJlah+4w5YyoOFzJkxHx8Sy+9kQluS2CI/XynH7wBuniWwOGoswJR9kzw7g2ZoBI1kDA0h5+9
+	mzgZ5UO+MZ26rICIqx0UqeS92UZUHO21XIO5mZ1svctm6xc3aI3nw1EhwKK4X/7V9D+pcArYAUB
+	etJ3iA4uGgW/3YQDQUbcZ61p8+rbjn7etVqqCZ4FOF5lpw1WuhCDoLG/qmNt5qs0zuWu+OjBlq8
+	jvCjpXe8h0UmKKqxcm01oG2Q0wWHjHl0iRoByr1PfSZRppqCC9XQ/Rlx9RcZWV7MekcUtVLQb0k
+	bfORFIVnjvrhctT+d4tOmbdViSEjLk14lPyryowXCtlxl/jIx4FSK2RBWJOONvcQAm1DFpkYqTU
+	cw7XA=
+X-Received: by 2002:a05:6214:c6f:b0:91c:133d:4916 with SMTP id
+ 6a1803df08f44-91f24258d3bmr175963246d6.57.1794843157790; Mon, 16 Nov 2026
+ 07:32:37 -0800 (PST)
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Post: <mailto:dm-devel@lists.linux.dev>
@@ -79,72 +104,104 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 List-Owner: <mailto:dm-devel+owner@lists.linux.dev>
 Precedence: list
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.0 on 10.30.177.12
-X-Mimecast-MFC-PROC-ID: VJouWBI6e4lAhKtDJy7zpT1OkEjdeMBuECtSYprh4iI_1794842270
-X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset=US-ASCII
+References: <20261112134703.38510-1-nondet@yandex.ru> <20261112134703.38510-2-nondet@yandex.ru>
+ <avmLAy52vfyJ5qze@hungrycats.org>
+In-Reply-To: <avmLAy52vfyJ5qze@hungrycats.org>
+From: Alexey Kuznetsov <kuznetsov.alexey@gmail.com>
+Date: Mon, 16 Nov 2026 15:31:59 +0000
+X-Gm-Features: Aa3M54oeRpvY83d0nLazjOVqW7eXFFClTJV0uMrGDZK8xguOz0qojD8xIBRH0QU
+Message-ID: <CAO1Zr+q5hhK5oPJtQu8v3oh=-AfB9FuPF2VQA=zpSGA0afB-FQ@mail.gmail.com>
+Subject: Re: [RFC PATCH 1/1] btrfs: track physical bad extents, fast-fail,
+ persist, and relocate
+To: Zygo Blaxell <ce3g8jdj@umail.furryterror.org>
+Cc: linux-btrfs@vger.kernel.org, linux-block@vger.kernel.org, 
+	dm-devel@lists.linux.dev
+Content-Type: text/plain; charset="UTF-8"
 
+Hi Zygo,
 
+Thanks for the detailed review. It changed the design, not just the patch.
 
-On Sun, 15 Nov 2026, Aibing Chen wrote:
+I agree with the core point: physical bad-sector handling belongs below the
+filesystem. A drive with spare sectors already does the useful part in
+firmware: the filesystem sees EIO or a checksum mismatch, retries another
+copy, and rewrites the good data to the failed LBA. That rewrite is what makes
+the drive move the sector to a spare. We only need a block-layer replacement
+when the drive can no longer remap, because the spares are exhausted or the
+firmware refuses.
 
-> fc79aeb86a2c ("dm-integrity: validate the superblock on resume") made
-> dm_integrity_resume() jump to skip_writes when the on-disk superblock was
-> modified while the device was suspended.  That path skips
-> replay_journal(), so the journal accounting variables stay
-> zero-initialized: free_sectors is 0 while journal_sections and
-> journal_section_entries are nonzero.
-> 
-> A later suspend or flush queues integrity_commit(), which calls
-> pad_uncommitted() in journal mode.  Its invariant
-> 
->   journal_sections * journal_section_entries ==
->   (n_uncommitted_sections + n_committed_sections) *
->   journal_section_entries + free_sectors
-> 
-> no longer holds because the right-hand side evaluates to 0, and WARN_ON
-> fires.
-> 
-> Restore free_sectors on that error path, as replay_journal() does for the
-> normal resume.  The section counters are already zero and nothing will be
-> committed, since the device is marked failed.
-> 
-> Reported-by: syzbot+94dac3c75477e184f0b0@syzkaller.appspotmail.com
-> Closes: https://syzkaller.appspot.com/bug?extid=94dac3c75477e184f0b0
-> Fixes: fc79aeb86a2c ("dm-integrity: validate the superblock on resume")
-> Cc: stable@vger.kernel.org
-> Signed-off-by: Aibing Chen <chenaibing@cmss.chinamobile.com>
+I also accept the consequences you spelled out: the remap unit has to be the
+lower device's logical block size; reserve allocations must never move; and
+the table has to be crash-consistent with the data, with FLUSH/FUA committing
+table changes and two copies protecting the metadata. btrfs should not
+intercept physical I/O for this.
 
-Hi
+Verified defects
+----------------
 
-This should be already fixed by the commit 
-e5e03918fbec31f0c896f4f43c2bd2aadf35d43d ("dm-integrity: don't attempt to 
-commit journal on disabled device")
+I checked each point against 6.12 and I am not disputing any of them:
 
-Mikulas
+- the write redirect used the chunk/map length, not the bio length;
+- repair writes went through the redirect as well;
+- fast-fail after a split dropped the remainder;
+- fast-fail inflated read_io_errs without doing I/O;
+- device replace reused the old devid, so persisted ranges followed it;
+- the incompat bit was cleared when one device's list emptied, not when the
+  filesystem had no ranges left;
+- the mirror-collapse test could pass from the page cache;
+- dmq renumbered reserve offsets on every rebuild;
+- dmq reloaded the table and only then installed the ranges, leaving a window
+  with no remaps.
 
-> ---
->  drivers/md/dm-integrity.c | 7 +++++++
->  1 file changed, 7 insertions(+)
-> 
-> diff --git a/drivers/md/dm-integrity.c b/drivers/md/dm-integrity.c
-> index 802b37761..6ab305b60 100644
-> --- a/drivers/md/dm-integrity.c
-> +++ b/drivers/md/dm-integrity.c
-> @@ -3915,6 +3915,13 @@ static void dm_integrity_resume(struct dm_target *ti)
->  		memcpy(ic->sb, ic->sb_copy, sizeof(struct superblock));
->  		DMERR("The superblock was changed while the device was suspended");
->  		dm_integrity_io_error(ic, "superblock check", -EINVAL);
-> +		/*
-> +		 * replay_journal() is skipped below, so the journal accounting stays
-> +		 * zero-initialized and pad_uncommitted() would trigger its WARN_ON.
-> +		 * Restore the free sector count; the section counters are already zero
-> +		 * and nothing is committed because the device is marked failed.
-> +		 */
-> +		ic->free_sectors = ic->journal_entries;
->  		goto skip_writes;
->  	}
->  
-> 
-> 
+The last two are already fixed in the userspace side. The map schema now
+stores a per-range reserve_start and the allocator cursor; reconciliation
+keeps existing offsets and only allocates new gaps. Live updates diff the
+target's range list and send incremental add_bad/remove_bad messages, so a
+range-only change does not reload the table at all. Geometry changes are
+refused while the mapped device is mounted. The userspace suite covers
+add-below, remove-middle, idempotent re-apply, split boundaries,
+poison-to-redirect, and reserve exhaustion.
 
+Status of the btrfs patch
+-------------------------
+
+The btrfs patch is withdrawn from upstream consideration and kept as an
+experiment in the branch. I will not resend it and I am not preparing a
+btrfs v2. Scrub reporting and targeted relocation may still be useful, but as
+filesystem features that feed the block layer, not as I/O interception.
+
+Proposed dm-first staging
+-------------------------
+
+I am not claiming crash-safe redirect yet. For a first submission I would
+like the target to do detection, keep a pending list, and poison confirmed
+ranges (return EIO, never stale or zero data). The volatile table would be
+restored by userspace before mount, but nothing would move data to a reserve,
+so no acknowledged write can outlive a lost mapping. Redirect would arrive
+with the persistent log: a small self-checksummed area at the end of the
+device, two copies, a generation number, and the mapping committed before the
+remapped write is reported durable.
+
+Does that split make sense as a first submission, or would you rather see
+redirect and the persistent table in one series?
+
+Two smaller decisions:
+
+- Geometry. I plan to require the lower device to be a partition by default.
+  Whole-disk ownership, including LBA 0, becomes an explicit mode with a
+  documented recovery path (initramfs or rescue media), because the target
+  has to own the partition table and the boot loader's sectors too. Is the
+  partition requirement reasonable, or is whole-disk the more useful default?
+- Reserve. User-specified size with a documented default, not a hardcoded
+  constant; new defects take the next free block and existing mappings never
+  move. Any preference on the default or on whether the pool may grow?
+
+I am rejecting zoned-device support for v1.
+
+I will post the dm design and the on-disk format as a separate RFC once the
+format and crash-ordering rules are written down. If you are willing to look
+at the format before there is code, that is the review that would save the
+most time.
+
+Thanks again,
+Alexey
