@@ -1,100 +1,120 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=pass header.oldest-pass=0 smtp.remote-ip=209.85.219.52
-ARC-Seal: i=2; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=pass;
-	t=1794843159;
-	b=ZtsHscEdGPmAeBRsFukDcvLJCD2T8J3epoxhFfFRyDUWesP1BB0VsgiHECJf1yOVFmQ5
-	 djg4hAYPkmccX1dnAEqBW+2gKMDpFTzaWAaoEyAyCIixj11eWphrxPijNgWOc1DdBEsnl
-	 ReJw4RazicWgj719Fi5xi4HtZJlV9XouFUEKHgdiju0xsFgfMs++/F37MRUV0OR5a8IjR
-	 MU4SRXuvcV3EyHRsrLAvL9VlBFdYTyn3DkzE81i22QGwV9MtS3whh5Vh1iDD/xAz7eFoO
-	 59Sg4MWs10uR5q6ocwmPPdLga/7QMBG+pQIELZCKYYgrK68w/mJIOVI85FQr9FG6aKw==
-ARC-Message-Signature: i=2; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1794843159;
-	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
-	 X-Forwarded-Encrypted:X-Gm-Message-State:X-Gm-Gg:X-Received:
-	 MIME-Version:References:In-Reply-To:From:Date:X-Gm-Features:
-	 Message-ID:Subject:To:Cc:Content-Type;
-	bh=UZfjUUdOGV4n+muBluIHHduUrTQ0oRHWELrphw0Vc24=;
-	b=D9qoyCH9JKc+CzHCRLxUdBsmZYDPkZdC+H3Snkt5gXKmb5xDqXXtnZ7OJp4t90i6YmmO
-	 ti0fBf0iaG54OGZpen9INoiIv3jvqNoH9hQPwDK/g+cPZW5U+s+qJjVhoN3CPsBr14ybh
-	 7f2VqRq8mv4hEjZekpBy2ETj/ZBdGE0jUM3KVt0HKYlXbEnexrVPgf3JLFQ5sHbhXxBal
-	 APMIP6ioCD4YKR8kukMqypMh21JUtr9921esvtNE5LP0K2f6jFuhLtXSZn2efujZ/gGjZ
-	 7gzpTaqifvpYsrlkSWUKMaPQhCSyi6gZn8wJFkIJfaTHRi0B5sdiUSW7CkM/k2qOUgA==
-ARC-Authentication-Results: i=2; smtp.subspace.kernel.org; 
-	dmarc=pass header.from=gmail.com;
-	spf=pass smtp.mailfrom=gmail.com;
-	dkim=pass header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=SbGILGhy;
-	arc=pass header.oldest-pass=0 smtp.remote-ip=209.85.219.52
-Received: from mail-qv1-f52.google.com (mail-qv1-f52.google.com [209.85.219.52])
-	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=148.163.158.5
+ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
+	t=1794849991;
+	b=0THCXWbGmlliipwa0/d+phKWWcB2yXn4YUxYyD/o6JSkXy4nVIdfKBZuYkz5nuOA8nLp
+	 ov+Or5ChQTzSobURr4rPoQiTw4V0ttnY+BuGMsL2dC3KeusI0MYPu9GVZ3NWHAjWs4jtA
+	 0nYzP4Xyx4QdnctY+A/GaqQVaICBkNhczmEQbSB1ucspong55A9b7+S8Sc6D1DCZehkfw
+	 1xtd2Zv5MVyP6/IjuH1Yh7zqk9mQqZ5W/8fT5yz04PxZKFCuYCERjR6AcskTVxcCgoXL6
+	 3gsqLZu1mgCm2RSHdUb5HRhlgNB66dzc/R6DThtCKD34ej4414vOJFMvDdsbNpfh7BA==
+ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
+	a=rsa-sha256; c=relaxed/relaxed; t=1794849991;
+	h=DMARC-Filter:Received:DKIM-Signature:Received:Received:Received:
+	 Received:Received:Received:Received:Date:From:To:Cc:Subject:
+	 Message-ID:References:MIME-Version:Content-Type:Content-Disposition:
+	 In-Reply-To:X-TM-AS-GCONF:X-Proofpoint-Reinject:X-Authority-Analysis:
+	 X-Proofpoint-GUID:X-Proofpoint-Spam-Info:X-Proofpoint-ORIG-GUID:
+	 X-Proofpoint-Spam-Details-Enc:X-Proofpoint-Virus-Version:
+	 X-Proofpoint-Spam-Details;
+	bh=BcdHd1taYkaSg30ORbTb8vkzWzgF+yZIQTU8Xg12AEk=;
+	b=o7iIb/ozAPHYKB5ooALtHikUrFXvHywgNPcBnaBTX3RHrMcIdFLtNtqKSw7n15l626YJ
+	 zkEXfy4TZjbI8GHZSv1+wD3ZpCM7wR/4yloJhhY3/MhZ96B1sbLUdqc9tz9oZ9DiOXMQc
+	 9QyPMvn5tfAur/Lu0ES8313mUWjxFQYy8jP6Fpl+qkmTGcLGnD7Mz00UQxKR7eUfHQYe9
+	 5ChUFHXB/6rlnhGl7ECtWyLRLvpakeLdUAEECbUBBpjCNgatEPjk3DYu6V6voYq0d/Jnu
+	 MEkvAmAC/yRRmlBb5xESR4FRFbW64bqENAdXwlHWmqOudmvJ6XRtBVd4e+v1avQHgHA==
+ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
+	dmarc=pass header.from=linux.ibm.com;
+	spf=pass smtp.mailfrom=linux.ibm.com;
+	dkim=pass header.d=ibm.com header.i=@ibm.com header.a=rsa-sha256 header.s=pp1 header.b=ZAJSkU+Y;
+	arc=none smtp.remote-ip=148.163.158.5
+Received: from mx0b-001b2d01.pphosted.com (mx0b-001b2d01.pphosted.com [148.163.158.5])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 08C9F606A329
-	for <dm-devel@lists.linux.dev>; Mon, 16 Nov 2026 15:32:38 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 08C9F606A329
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7F121606A31C;
+	Mon, 16 Nov 2026 17:26:30 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 7F121606A31C
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.ibm.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.ibm.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=SbGILGhy
-Received: by mail-qv1-f52.google.com with SMTP id 6a1803df08f44-91f2b826fe9so36874866d6.1
-        for <dm-devel@lists.linux.dev>; Mon, 16 Nov 2026 07:32:38 -0800 (PST)
-ARC-Seal: i=1; a=rsa-sha256; t=1794843158; cv=none;
-        d=google.com; s=arc-20260327;
-        b=k4Jh682Nh1Mbwy06zRa+xiD3NQI4gXz6u8xTan4AITxRyGeiX5g8lBF/UmgOgDlJTY
-         Xjph5CAzhagkSxZtttXdQ6kfFWdRTa4MBwCaJf/diOYxK1FmG9KKt7n4DHjliHYtXg5N
-         sTkfOg/Tk13qxOwqec+0U6sfXS9I2d1URk2RDTZAhSr4pYeSxQNZ0Ptc5M+1w+orrb+0
-         Ib03XeebsnF35P0YTcpCWX9fSWkPFzzndokb1Zl5kNqOuUGx3B5YEKY7c8qNka7tCuef
-         aq5A3bm25aYrLBJFJ5GkU0RDgRyb51FwKF3ZNaTP31ShES6v1cHllxlKlsG5+AV5UtEH
-         8Y4Q==
-ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=google.com; s=arc-20260327;
-        h=cc:to:subject:message-id:date:from:in-reply-to:references
-         :mime-version:dkim-signature;
-        bh=UZfjUUdOGV4n+muBluIHHduUrTQ0oRHWELrphw0Vc24=;
-        fh=lGiesCu+Ae4Q4vHEhtBhBBGQk20kdCSYzDzUTxYA+yY=;
-        b=bNsmAXe2mm2/cY8BIMb7bpWMFD3ojVflMg7rl2rclGq/3I7olEu/f9wQt45DE/5j0V
-         ecDKmryAK3+cW+VterArkVcgBy+Byke+llKpnXvCLk3u60GbbO3aSDBSnNCJ9Rley8pA
-         i0cg6FaeM5qdA0mteua8zzkPn6G9sVA2awrWIHRU111v2xFKwFjwKoFUnSw7isnb3g1H
-         umkPP76wU0PfLjPGzau+Yxxtswi09wErFwZzpzzOYBcxbQfv9vDyHo2zOU9W7AkqAfmF
-         edHV06HPgfQmJ+74uvz/0icS/ImYY2E61EWFIQGqHUuV0ktqLvkhJwjGlQagtrdE7Dn5
-         DOcg==;
-        darn=lists.linux.dev
-ARC-Authentication-Results: i=1; mx.google.com; arc=none
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20260707; t=1794843158; x=1795447958; darn=lists.linux.dev;
-        h=content-type:cc:to:subject:message-id:date:from:in-reply-to
-         :references:mime-version:from:to:cc:subject:date:message-id:reply-to
-         :content-type;
-        bh=UZfjUUdOGV4n+muBluIHHduUrTQ0oRHWELrphw0Vc24=;
-        b=SbGILGhyjFNMQ/01rK89NDExrsV/7P1lupnSVZ82QXaF+nzwCipc5U+YuZe4+IV1+R
-         4rwgVOyG1AOxMsLMEWNcLf8HXVK5cERmvb9s2Ho/Gk/v6p+HLlyMTwAx08nEcZs4yfHW
-         vVb6lOU3E/Eeu0vpk4UTumy0J92g4gtuwdts0CweybRHTaXY3n+OtOB1VS+MGCSWlA/2
-         k2ws6l7Ebf7Xb+OqBZBpW7hTaLPbc5/SWGQQeDS4mGCvMtNJa4BSYLfVKv3JoCa8DQyH
-         2J9WrfrhUrevyCdUQk8YRQjNA+Mt+DAe5u49hc7ZWUDlZOaVYFRXCcSbntmzWYSQQUQV
-         ntPw==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1794843158; x=1795447958;
-        h=content-type:cc:to:subject:message-id:date:from:in-reply-to
-         :references:mime-version:x-gm-gg:x-gm-message-state:from:to:cc
-         :subject:date:message-id:reply-to:content-type;
-        bh=UZfjUUdOGV4n+muBluIHHduUrTQ0oRHWELrphw0Vc24=;
-        b=Y3NN0Br27qub8yW4W9fWjn3uuDCWI6GuhTmlhJbswi1jBYQThm7rBVCZBjgYHR/fvC
-         wZ+Pq8BUNCItPIWrxJk+PRxzH9+QpJSDm750omU9ibvg3uawhzxnoYMGZK9j1IG1fB62
-         WQ6VTcCGxgEfWYXRuuQMd44C/2XUd/vR7NPc1/Yvt5dOmWV2KScT5WBXs4yet+y+hRzJ
-         1TacjUV9qF/Wd8+DlYh6c85eJVPh7RGwrYhBwBIDGUzoTJzBo87AsyXYmUQ3374DaWUy
-         wWntz4f52R9SOX4P2lR1KiC0Zg5hUTU6zAC5d2k2Ofpw/fzZpE4KZ1Wp4GI5cgAPnpjV
-         zXGw==
-X-Forwarded-Encrypted: i=1; AL+hErGFjEWk1KxPtj+3DXru2E0ndO94pATBjYFMRM+l43t6m3ssoZko3xR+dFWxyjUG6rWUnv2vE8hJeg==@lists.linux.dev
-X-Gm-Message-State: APuU4Z81v4xISEbi5ZtNwF4KF3UgnbRg1rQ/Tbb6vClqvPwsuaw6S0WL
-	saHrs0PWgeKuaKLjZHraypEGWApwz+dtXlGgonz8O6//g50Mm/ykm9C5DaCn4d/1yOuxeU6/uL2
-	xAHg6cHgZCW16/E/qd6q1iEQqbex/Ixg=
-X-Gm-Gg: AZFdTZdr+4MwSqVhsovC7eCIOl5g1RkJCeiQCAuBhJ71jA22PLNcLHC6PrIrRUzUtFg
-	dXpJlah+4w5YyoOFzJkxHx8Sy+9kQluS2CI/XynH7wBuniWwOGoswJR9kzw7g2ZoBI1kDA0h5+9
-	mzgZ5UO+MZ26rICIqx0UqeS92UZUHO21XIO5mZ1svctm6xc3aI3nw1EhwKK4X/7V9D+pcArYAUB
-	etJ3iA4uGgW/3YQDQUbcZ61p8+rbjn7etVqqCZ4FOF5lpw1WuhCDoLG/qmNt5qs0zuWu+OjBlq8
-	jvCjpXe8h0UmKKqxcm01oG2Q0wWHjHl0iRoByr1PfSZRppqCC9XQ/Rlx9RcZWV7MekcUtVLQb0k
-	bfORFIVnjvrhctT+d4tOmbdViSEjLk14lPyryowXCtlxl/jIx4FSK2RBWJOONvcQAm1DFpkYqTU
-	cw7XA=
-X-Received: by 2002:a05:6214:c6f:b0:91c:133d:4916 with SMTP id
- 6a1803df08f44-91f24258d3bmr175963246d6.57.1794843157790; Mon, 16 Nov 2026
- 07:32:37 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=ibm.com header.i=@ibm.com header.a=rsa-sha256 header.s=pp1 header.b=ZAJSkU+Y
+Received: from pps.filterd (m0356516.ppops.net [127.0.0.1])
+	by mx0a-001b2d01.pphosted.com (8.18.1.11/8.18.1.11) with ESMTP id 6AGGQDIA3730285;
+	Mon, 16 Nov 2026 17:25:33 GMT
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=ibm.com; h=cc
+	:content-type:date:from:in-reply-to:message-id:mime-version
+	:references:subject:to; s=pp1; bh=BcdHd1taYkaSg30ORbTb8vkzWzgF+y
+	ZIQTU8Xg12AEk=; b=ZAJSkU+Y+qllip2NvMD4FBPVPq1w1n2KCnE+3TerpnE6IU
+	kAYupYcyxWCMYk5EQC83M/LgCWycIbCm2HHCtGR4CnKP2OgxXgL6VZ/RmSvfkVPw
+	2eQvRRAWeOk/ZYcuHZn0FX6fs2T61MvZrqu/Ssk410C2UB3Fhh4M6azTCG9HkB/J
+	8koyqyPyVjVx+m8OQDv43mf9m4JYOeJtv2K65NQbRURFRBMVdIWG8Db35DZItKdE
+	FyKwLqNES8KVJP9mdG7bzYxRCjTC+FAbLcjvGSq/OeXoUJVE+BTIPYx2JhzZGzEg
+	jJ4PlQ/FY+teq1okya3xZ+iVUiMgvO7jnODrOGXg==
+Received: from ppma23.wdc07v.mail.ibm.com (5d.69.3da9.ip4.static.sl-reverse.com [169.61.105.93])
+	by mx0a-001b2d01.pphosted.com (PPS) with ESMTPS id 4hxd2kxcbe-190
+	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
+	Mon, 16 Nov 2026 17:25:32 +0000 (GMT)
+Received: from pps.filterd (ppma23.wdc07v.mail.ibm.com [127.0.0.1])
+	by ppma23.wdc07v.mail.ibm.com (8.18.1.11/8.18.1.11) with ESMTP id 6AGC4va92416721;
+	Mon, 16 Nov 2026 12:07:39 GMT
+Received: from smtprelay07.fra02v.mail.ibm.com ([9.218.2.229])
+	by ppma23.wdc07v.mail.ibm.com (PPS) with ESMTPS id 4hy3fghqn1-1
+	(version=TLSv1.2 cipher=ECDHE-RSA-AES256-GCM-SHA384 bits=256 verify=NOT);
+	Mon, 16 Nov 2026 12:07:39 +0000 (GMT)
+Received: from smtpav02.fra02v.mail.ibm.com (smtpav02.fra02v.mail.ibm.com [10.20.54.101])
+	by smtprelay07.fra02v.mail.ibm.com (8.14.9/8.14.9/NCO v10.0) with ESMTP id 6AGC7PII28574136
+	(version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-GCM-SHA384 bits=256 verify=OK);
+	Mon, 16 Nov 2026 12:07:25 GMT
+Received: from smtpav02.fra02v.mail.ibm.com (unknown [127.0.0.1])
+	by IMSVA (Postfix) with ESMTP id 596512004F;
+	Mon, 16 Nov 2026 12:07:25 +0000 (GMT)
+Received: from smtpav02.fra02v.mail.ibm.com (unknown [127.0.0.1])
+	by IMSVA (Postfix) with ESMTP id D5FB52004B;
+	Mon, 16 Nov 2026 12:07:23 +0000 (GMT)
+Received: from osiris (unknown [9.111.42.169])
+	by smtpav02.fra02v.mail.ibm.com (Postfix) with ESMTPS;
+	Mon, 16 Nov 2026 12:07:23 +0000 (GMT)
+Date: Mon, 16 Nov 2026 13:07:22 +0100
+From: Heiko Carstens <hca@linux.ibm.com>
+To: Jarkko Sakkinen <jarkko@kernel.org>
+Cc: David Howells <dhowells@redhat.com>, bpf@vger.kernel.org,
+        dm-devel@lists.linux.dev, fsverity@lists.linux.dev,
+        keyrings@vger.kernel.org, linux-doc@vger.kernel.org,
+        linux-kernel@vger.kernel.org, linux-kselftest@vger.kernel.org,
+        linux-security-module@vger.kernel.org,
+        Alasdair Kergon <agk@redhat.com>,
+        Alexander Gordeev <agordeev@linux.ibm.com>,
+        Alexei Starovoitov <ast@kernel.org>, Alex Shi <alexs@kernel.org>,
+        Anastasia Eskova <anastasia.eskova@ibm.com>,
+        Andrew Morton <akpm@linux-foundation.org>,
+        Andrii Nakryiko <andrii@kernel.org>,
+        Benjamin Marzinski <bmarzins@redhat.com>,
+        Christian Borntraeger <borntraeger@linux.ibm.com>,
+        Daniel Borkmann <daniel@iogearbox.net>,
+        Dongliang Mu <dzm91@hust.edu.cn>, Eduard Zingerman <eddyz87@gmail.com>,
+        Emil Tsalapatis <emil@etsalapatis.com>,
+        Eric Biggers <ebiggers@kernel.org>, Ignat Korchagin <ignat@linux.win>,
+        Ihor Solodrai <ihor.solodrai@linux.dev>,
+        James Bottomley <James.Bottomley@hansenpartnership.com>,
+        James Morris <jmorris@namei.org>, Jiri Olsa <jolsa@kernel.org>,
+        Jonathan Corbet <corbet@lwn.net>,
+        Kumar Kartikeya Dwivedi <memxor@gmail.com>,
+        Linus Torvalds <torvalds@linux-foundation.org>,
+        Martin KaFai Lau <martin.lau@linux.dev>,
+        Mike Snitzer <snitzer@kernel.org>,
+        Mikulas Patocka <mpatocka@redhat.com>,
+        Mimi Zohar <zohar@linux.ibm.com>, Paul Moore <paul@paul-moore.com>,
+        Peter Oberparleiter <oberpar@linux.ibm.com>,
+        Randy Dunlap <rdunlap@infradead.org>,
+        Roberto Sassu <roberto.sassu@huawei.com>,
+        "Serge E. Hallyn" <serge@hallyn.com>,
+        Shuah Khan <skhan@linuxfoundation.org>, Song Liu <song@kernel.org>,
+        Sven Schnelle <svens@linux.ibm.com>,
+        "Theodore Y. Ts'o" <tytso@mit.edu>, Vasily Gorbik <gor@linux.ibm.com>,
+        Yanteng Si <si.yanteng@linux.dev>,
+        Yonghong Song <yonghong.song@linux.dev>
+Subject: Re: [PATCH v13 0/7] KEYS: Replace assoc_array with rhashtable
+Message-ID: <20261116120722.99807Ac6-hca@linux.ibm.com>
+References: <20261114193631.731615-1-jarkko@kernel.org>
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Post: <mailto:dm-devel@lists.linux.dev>
@@ -104,104 +124,58 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 List-Owner: <mailto:dm-devel+owner@lists.linux.dev>
 Precedence: list
 MIME-Version: 1.0
-References: <20261112134703.38510-1-nondet@yandex.ru> <20261112134703.38510-2-nondet@yandex.ru>
- <avmLAy52vfyJ5qze@hungrycats.org>
-In-Reply-To: <avmLAy52vfyJ5qze@hungrycats.org>
-From: Alexey Kuznetsov <kuznetsov.alexey@gmail.com>
-Date: Mon, 16 Nov 2026 15:31:59 +0000
-X-Gm-Features: Aa3M54oeRpvY83d0nLazjOVqW7eXFFClTJV0uMrGDZK8xguOz0qojD8xIBRH0QU
-Message-ID: <CAO1Zr+q5hhK5oPJtQu8v3oh=-AfB9FuPF2VQA=zpSGA0afB-FQ@mail.gmail.com>
-Subject: Re: [RFC PATCH 1/1] btrfs: track physical bad extents, fast-fail,
- persist, and relocate
-To: Zygo Blaxell <ce3g8jdj@umail.furryterror.org>
-Cc: linux-btrfs@vger.kernel.org, linux-block@vger.kernel.org, 
-	dm-devel@lists.linux.dev
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <20261114193631.731615-1-jarkko@kernel.org>
+X-TM-AS-GCONF: 00
+X-Proofpoint-Reinject: loops=2 maxloops=12
+X-Authority-Analysis: v=2.4 cv=B6UsQ+tM c=1 sm=1 tr=0 ts=6afb3c8d cx=c_pps
+ a=3Bg1Hr4SwmMryq2xdFQyZA==:117 a=3Bg1Hr4SwmMryq2xdFQyZA==:17
+ a=kj9zAlcOel0A:10 a=zJRp6_cAMcgA:10 a=VkNPw1HP01LnGYTKEx00:22
+ a=RnoormkPH1_aCDwRdu11:22 a=Y2IxJ9c9Rs8Kov3niI8_:22 a=oqTggi8YXqEucMIkv7cA:9
+ a=CjuIK1q_8ugA:10
+X-Proofpoint-GUID: 9SDoFU1xBjlY7T5jqlYkE5NvUgSVvYAZ
+X-Proofpoint-Spam-Info: AW1haW4tMjYxMTE2MDA2NyBTYWx0ZWRfXySetjeLiQBKc
+ EAdDHNo72O0OksGdsYjL29Vj0sRRwrd7OAt5trA1PAwA9aCZfjkM1wyE389OTKCAW2ejtNsE+5n
+ nmv1x+D2McOwEqkVjobRnrbZLE0nNEs=
+X-Proofpoint-ORIG-GUID: j8IPWo5Dc6zrl5qOvKGqoXraeULv805I
+X-Proofpoint-Spam-Details-Enc: AW1haW4tMjYxMTE2MDA2NyBTYWx0ZWRfX4VweZfbjaATF
+ 80VGoO/6yW/fNkdJQsV+sfNFohbcoS5tetUDVqFWEPJiRpSgYeb1gFoIhjybiYhoUpjsbrOpguT
+ nJ24xMw06y0g4wE14eCuauXZTJn9AZwwyYBI1k4BCMVFgKGxde/2feOszhdxhJWCfvsm00h19SV
+ RGQ8YVOjbOKM6Y7UNiotIukHOITLKdhsNHw8xBNnkoFI68IMoAKfRPPf8peWtX4hCR2N7zoPPDO
+ 95y9f++8XyBTHhdOSkcL8XIsukigqteYd5RBMNEWRmw+53h4/wij8XynGcOxLR2rWrt4GH2n0TD
+ x9IZtuh2/1dFiROi58yACUWhEbZaLyGBhWXrAbp1+4/xgUSgCYjpxNRet14nqri4v4qXQ0akzDq
+ WT73N7jRe8uQmpCEqjKkld/VLQPIfzrY0Z+Np6BGIJFladspqVhO9ijj/xcZ5C2VmOAODw0S02F
+ XH99IWVypDD8hK/nUEQ==
+X-Proofpoint-Virus-Version: vendor=baseguard
+ engine=ICAP:2.0.293,Aquarius:18.0.1176,Hydra:6.1.138,FMLib:17.12.100.49
+ definitions=2026-11-16_05,2026-11-16_01,2025-10-01_01
+X-Proofpoint-Spam-Details: rule=outbound_notspam policy=outbound score=0
+ lowpriorityscore=0 clxscore=1011 spamscore=0 phishscore=0 adultscore=0
+ priorityscore=1501 bulkscore=0 suspectscore=0 impostorscore=0 malwarescore=0
+ classifier=typeunknown authscore=0 authtc= authcc= route=outbound adjust=0
+ reason=mlx scancount=1 engine=8.22.0-2611040001 definitions=main-2611160067
 
-Hi Zygo,
+Hi Jarkko,
 
-Thanks for the detailed review. It changed the design, not just the patch.
+On Sat, Nov 14, 2026 at 09:36:24PM +0200, Jarkko Sakkinen wrote:
+> The keyrings subsystem is the sole user of assoc_array. It has over 1700
+> lines of code, no test suite, and a long history of bugs, with LLMs now
+> finding more.
+> 
+> This unfortunate outcome has evolved over time by large from the shortage
+> of in-kernel callers, time bandwidth and 3rd party contributors.  What the
+> keyrings subsystem needs is just a generic key-value store, which performs
+> well with sparse key sets. Replace assoc_array with an rhashtable-backed
+> keyring index and remove assoc_array from the kernel.
 
-I agree with the core point: physical bad-sector handling belongs below the
-filesystem. A drive with spare sectors already does the useful part in
-firmware: the filesystem sees EIO or a checksum mismatch, retries another
-copy, and rewrites the good data to the failed LBA. That rewrite is what makes
-the drive move the sector to a spare. We only need a block-layer replacement
-when the drive can no longer remap, because the spares are exhausted or the
-firmware refuses.
+...
 
-I also accept the consequences you spelled out: the remap unit has to be the
-lower device's logical block size; reserve allocations must never move; and
-the table has to be crash-consistent with the data, with FLUSH/FUA committing
-table changes and two copies protecting the metadata. btrfs should not
-intercept physical I/O for this.
+> v13:
+> - s390/cert_store: Hold key reference across key_unlink(), and ignore -ENOENT.
+> - s390/cert_store: Add "s390/cert_store: Read-lock keyring semaphore in
+>   invalidate_keyring_keys()".
 
-Verified defects
-----------------
-
-I checked each point against 6.12 and I am not disputing any of them:
-
-- the write redirect used the chunk/map length, not the bio length;
-- repair writes went through the redirect as well;
-- fast-fail after a split dropped the remainder;
-- fast-fail inflated read_io_errs without doing I/O;
-- device replace reused the old devid, so persisted ranges followed it;
-- the incompat bit was cleared when one device's list emptied, not when the
-  filesystem had no ranges left;
-- the mirror-collapse test could pass from the page cache;
-- dmq renumbered reserve offsets on every rebuild;
-- dmq reloaded the table and only then installed the ranges, leaving a window
-  with no remaps.
-
-The last two are already fixed in the userspace side. The map schema now
-stores a per-range reserve_start and the allocator cursor; reconciliation
-keeps existing offsets and only allocates new gaps. Live updates diff the
-target's range list and send incremental add_bad/remove_bad messages, so a
-range-only change does not reload the table at all. Geometry changes are
-refused while the mapped device is mounted. The userspace suite covers
-add-below, remove-middle, idempotent re-apply, split boundaries,
-poison-to-redirect, and reserve exhaustion.
-
-Status of the btrfs patch
--------------------------
-
-The btrfs patch is withdrawn from upstream consideration and kept as an
-experiment in the branch. I will not resend it and I am not preparing a
-btrfs v2. Scrub reporting and targeted relocation may still be useful, but as
-filesystem features that feed the block layer, not as I/O interception.
-
-Proposed dm-first staging
--------------------------
-
-I am not claiming crash-safe redirect yet. For a first submission I would
-like the target to do detection, keep a pending list, and poison confirmed
-ranges (return EIO, never stale or zero data). The volatile table would be
-restored by userspace before mount, but nothing would move data to a reserve,
-so no acknowledged write can outlive a lost mapping. Redirect would arrive
-with the persistent log: a small self-checksummed area at the end of the
-device, two copies, a generation number, and the mapping committed before the
-remapped write is reported durable.
-
-Does that split make sense as a first submission, or would you rather see
-redirect and the persistent table in one series?
-
-Two smaller decisions:
-
-- Geometry. I plan to require the lower device to be a partition by default.
-  Whole-disk ownership, including LBA 0, becomes an explicit mode with a
-  documented recovery path (initramfs or rescue media), because the target
-  has to own the partition table and the boot loader's sectors too. Is the
-  partition requirement reasonable, or is whole-disk the more useful default?
-- Reserve. User-specified size with a documented default, not a hardcoded
-  constant; new defects take the next free block and existing mappings never
-  move. Any preference on the default or on whether the pool may grow?
-
-I am rejecting zoned-device support for v1.
-
-I will post the dm design and the on-disk format as a separate RFC once the
-format and crash-ordering rules are written down. If you are willing to look
-at the format before there is code, that is the review that would save the
-most time.
-
-Thanks again,
-Alexey
+Actually I had / have a patch series of 15 small patches ready to address
+various bugs in certstore, including yours. I'll send them later - a few
+(or many) collide with your patches. Not sure how we coordinate this.
