@@ -1,72 +1,87 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=74.125.82.198
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=170.10.133.124
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1794868389;
-	b=fsBnQ4sHEZCD+lKuDsqVonvSmRk8o6LFUNwgei4fmeVWhjkDr9g5Jklzxn698dl2Ouqm
-	 3kuoO0P2gD/hEtBScwRXmspZoGqTf8XGHk7P0Xeqx3JPE12l/yNoONC1rotk4baOy0QXs
-	 0G/kq7Dcp42WYsjvlPUwjmGYQfXWtq94dntBfQzSnoUkI8l+yo3DNQ/BfjLy0/nkJ5Vpr
-	 nuYuXN5SGRLwb2WdUJGNXJvexR5JY8L6SorsOgIip3TTsgTkHP0Ohx3MQkuFR6atMRspD
-	 j6gn2x5TknV6Yr+s4pEyJ1gZxlJTi8Or7t1jKRU2IQ421vhH2mN6w00GXB5itOJtYhw==
+	t=1794891263;
+	b=UZKlwpViMzlgTW5lsEXFzlFdkJYZQQvpNAqM/Qt82oB4d/8tsSzs3ZqaMUrjzDk3jMg4
+	 qoyRCRfS8hUcDIfeJ6dWdvzfCJn3OsupSVq/5tTjR9EU/WYOMVxBCygdtf7V1HicLyhB4
+	 3u0qY2XZGcqr3c/4J97gD+TbhEwiPrdU0gUigfZ0Z3ydPAryi6nLoZ6KSLNrk4jyD9p9s
+	 umvDzuN6Ewry0jQ5WFAt6J9U3dQs686/hfhzAPrFy0fyDQk5XyFsqMx/Tc/T4sVic1tFp
+	 F0bx6bSXx/ZkYz3Y+Os5MYdJlWSKiJ35rv27+beUagpc7kGnrOI8/whNlVjRHbViylQ==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1794868389;
-	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
-	 X-Forwarded-Encrypted:X-Gm-Message-State:X-Received:Date:Mime-Version:
-	 X-Mailer:Message-ID:Subject:From:To:Cc:Content-Type;
-	bh=LAjrtpG3yMBtaw72gpwmwsyACrUESbNEG0x3WEcUFPM=;
-	b=KtqRwqXzItfzksb9+PaOYWyYzD8mm6u7y3zR8VYH0yaLRZncBCmzhrSJ+VX7Uvw+8yaC
-	 HS2kVLrTJrA0wIlv2E1Qr3oGmOwloSSDA9tjNaxsu7apfUiaGi3DJiE4yI6Y9BWur2fU2
-	 Io3hSNQ/li6Vkpfr2plFtVP2tiGrKzoqZFwXBJtQTZ0WLhx3+CIP648q0tnViZln9U8Ib
-	 cUS613OGM1bR3kDGmC/feZF9H1IvSHuL/VYURQM8xZgQPjBgA/z8/v8m9+HQ15fGapEc2
-	 Ct0IHW2DiMzt8EZdIkERoEIXjNeCq+tQ04A4X/4JX6s7F6LCTTgUsjR8hfSYXQB9MvQ==
+	a=rsa-sha256; c=relaxed/relaxed; t=1794891263;
+	h=DMARC-Filter:DKIM-Signature:Received:X-MC-Unique:
+	 X-Mimecast-MFC-AGG-ID:Received:X-Google-DKIM-Signature:
+	 X-Forwarded-Encrypted:X-Gm-Message-State:X-Gm-Gg:X-Received:
+	 X-Received:MIME-Version:References:In-Reply-To:From:Date:
+	 X-Gm-Features:Message-ID:Subject:To:Cc:X-Mimecast-Spam-Score:
+	 X-Mimecast-MFC-PROC-ID:X-Mimecast-Originator:Content-Type:
+	 Content-Transfer-Encoding;
+	bh=Q7H2nc9bosJoZgL9qNmHTOhIFvJBNvNVcBjiUkQrllk=;
+	b=PN1hHEeoXy9LX2HKfoBNgAFuHDgf8rdPAxuqQ4CPYdAV7iXTu/XEeU1IabxkyHJLGK/F
+	 Ei6AVKsXdctpjNlIvdIZJbUPQ/wlBD0n7Ibvq28wrBrrCLdNcI8HIL8S15JJyDat2yyZX
+	 YlkMq4fBcLImWv9jIiLCnR32V1w9htuXE1LwPGN0wPUL03Vgt3lOhbV1z7ZrXkr7fJO8i
+	 wJoQ6dH/MMIsJjxzakedVcbjWH1waqjLC4Y2ePH3qEjY4HmGBJugH6JlXB1A7s2mgQW1n
+	 t7Y0TuJsc+vZLPUSiYILrCnMSliGGrYlQ6MNn4Nvs0NKoOeHArVC9vgY493te4uMfNg==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dmarc=pass header.from=google.com;
-	spf=pass smtp.mailfrom=flex--sarthakkukreti.bounces.google.com;
-	dkim=pass header.d=google.com header.i=@google.com header.a=rsa-sha256 header.s=20260707 header.b="A/xBOiIb";
-	arc=none smtp.remote-ip=74.125.82.198
-Received: from mail-dy1-f198.google.com (mail-dy1-f198.google.com [74.125.82.198])
-	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
+	dmarc=pass header.from=redhat.com;
+	spf=pass smtp.mailfrom=redhat.com;
+	dkim=pass header.d=redhat.com header.i=@redhat.com header.a=rsa-sha256 header.s=mimecast20190719 header.b=iTXHqGhb;
+	arc=none smtp.remote-ip=170.10.133.124
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 16F5D606A88F
-	for <dm-devel@lists.linux.dev>; Mon, 16 Nov 2026 22:33:06 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 16F5D606A88F
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=google.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=flex--sarthakkukreti.bounces.google.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 098AC606A332
+	for <dm-devel@lists.linux.dev>; Tue, 17 Nov 2026 04:54:22 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 098AC606A332
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=google.com header.i=@google.com header.a=rsa-sha256 header.s=20260707 header.b=A/xBOiIb
-Received: by mail-dy1-f198.google.com with SMTP id 5a478bee46e88-38131260a5dso633908eec.0
-        for <dm-devel@lists.linux.dev>; Mon, 16 Nov 2026 14:33:06 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=google.com; s=20260707; t=1794868386; x=1795473186; darn=lists.linux.dev;
-        h=content-type:cc:to:from:subject:message-id:mime-version:date:from
-         :to:cc:subject:date:message-id:reply-to:content-type;
-        bh=LAjrtpG3yMBtaw72gpwmwsyACrUESbNEG0x3WEcUFPM=;
-        b=A/xBOiIbvdkaoX7rck6kyf54yyJAELaWE8BuJjMubXXiGCPQiSwkt1cL5Fc7TjDFC7
-         y686hhxQuimJ3cxyHiKPPxWIewgf63UST5r2KaHC4E0MjIiQRw263Y8zDRUyiyOvDc4U
-         lI3obPZzYfaph/rS1F+HkP0+iYFM6CYxoOOMm1xXyu3d3OU0kVCnijfz2dfWfvhbNX+F
-         PLtOFjUE/mBYCElT/43xRZHb+YKCVFjDdPjW6WwoVACDFu0mWMsv7gLKOrxAkXF5JUl1
-         AhHWb1Fc8osvWNDdhOjnzSSPEZxNb7VRtN53zouStlleZcdFcr0gOdnZx+8MGs9OuPPD
-         AWew==
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.a=rsa-sha256 header.s=mimecast20190719 header.b=iTXHqGhb
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1794891262;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=Q7H2nc9bosJoZgL9qNmHTOhIFvJBNvNVcBjiUkQrllk=;
+	b=iTXHqGhbjWrXez6m8s1klTD/S1GpzzLTu9PR4KsoGCl6JY5gBbZDWlQ1vMOWBONNVuTpV5
+	3BkJkIUQdkXkvTMrtxA032PsPEPZyE6tzOqfy3JWuwAq7li2cMaxGa/uJb2aDcfEVlHxK1
+	gx6d1FLasWevLPB5irqME1PPwBoEj4c=
+Received: from mail-lj1-f198.google.com (mail-lj1-f198.google.com
+ [209.85.208.198]) by relay.mimecast.com with ESMTP with STARTTLS
+ (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
+ us-mta-84-pufi21JwMtadqw_TuH8VBQ-1; Mon, 16 Nov 2026 23:54:20 -0500
+X-MC-Unique: pufi21JwMtadqw_TuH8VBQ-1
+X-Mimecast-MFC-AGG-ID: pufi21JwMtadqw_TuH8VBQ_1794891259
+Received: by mail-lj1-f198.google.com with SMTP id 38308e7fff4ca-3ad09084d85so23988281fa.3
+        for <dm-devel@lists.linux.dev>; Mon, 16 Nov 2026 20:54:20 -0800 (PST)
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1794868386; x=1795473186;
-        h=content-type:cc:to:from:subject:message-id:mime-version:date
+        d=1e100.net; s=20260707; t=1794891259; x=1795496059;
+        h=content-transfer-encoding:content-type:cc:to:subject:message-id
+         :date:from:in-reply-to:references:mime-version:x-gm-gg
          :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
          :content-type;
-        bh=LAjrtpG3yMBtaw72gpwmwsyACrUESbNEG0x3WEcUFPM=;
-        b=Zn9Xo4nnQgef2Z7Sxx+K/Ij8owe4Re9mgz4TfWHurvKT1XXLPtFpXIk583S5aZ056H
-         IvBWHBZttvZLeuAkNTRgYIZg6XO4GYPRezev8ODg6X4/8bXsoFG7n5joJiYGFIajE44m
-         Slporn6PIFWJDgZYW7U6wG3TX4JJCsuSEigP2PsHjl3Rd7ZzIFchibV21ID7m4p37NG9
-         LytUCSrPYQuWwHUWX0PiSgSqW9BxIRUrIyRrj6aZQHGXT4o0wdGv7cfjEZ/nDJTwNH2Y
-         SjrBfH14mu2qgCqulfkUUBPO5BdpS3BXoDW1KMVox/IqT/M14HtJwV6NZRSaXyPOsAs1
-         5XDg==
-X-Forwarded-Encrypted: i=1; AL+hErF98fUla5Z/54bR/hXknnyc7ZzirsbKJavOtOAHn7YNdYNqCntXaThbCQGx/X2g4IJ9JYULY2aLIA==@lists.linux.dev
-X-Gm-Message-State: APuU4Z9o1IBHDJr3mw16/v/o+I/IjQ7KgT6Q0SYjFOCweA8bmXu7FgCe
-	kZGNG7hpnAbcah5ZRF5RwV0joQozct8h1XS5sbramr2okAvPeMscTZ72zMVOvOEJmv7QzLwe/xS
-	nMxDx1/SQx6vzur0bv+1rIT8KPATyj92mu+NXXg==
-X-Received: from dyad21.prod.google.com ([2002:a05:693c:8355:b0:359:a8c8:38e2])
- (user=sarthakkukreti job=prod-delivery.src-stubby-dispatcher) by
- 2002:a05:701b:424a:20b0:168:3243:c911 with SMTP id a92af1059eb24-1b503137b4fmr13707934c88.37.1794868385967;
- Mon, 16 Nov 2026 14:33:05 -0800 (PST)
-Date: Mon, 16 Nov 2026 14:33:01 -0800
+        bh=Q7H2nc9bosJoZgL9qNmHTOhIFvJBNvNVcBjiUkQrllk=;
+        b=XIG/DmN8aupEshPpWK5YkricwzGQ/q26cPpQ7tytW6Bf2VeAiguJt6g/sP+V5hcY8V
+         2eMVHI2Mo0xr05RRw9c7mqwESr9BF6hGJj9SZi2qLQ5w4GadOSKFjNyxGqPOUTliCz+s
+         u/RIjcOXL0yIRi9v3wA2oiZKCCyjEvN8HtR3IC3wSxowQ/Fd9VkqV3Rip+4scEXreGdh
+         mhCPV3GtiMsgGxh4vLvsvAWwTl93iWHDh1adKaTVJzayBFx3IOfg+tM/AwTeJnQDO8X+
+         +0ZrY3X1l4EY2DNP4moU/WfLHXU4IvRwEoYXXgC6wyk2Su2lOLlsYT77OaGkGpA2H22c
+         tlFA==
+X-Forwarded-Encrypted: i=1; AL+hErFdnJuUe4figUmWNlZPHaEQUphcEy0gS7t5HDzEPZI74vbDvSu/NayHjlQAvOcjUHihZao06H8Z2A==@lists.linux.dev
+X-Gm-Message-State: APuU4Z95qLAvQ3mEUel1vHuCMrZrEWWC6r0IWA4BfwKhE5VcgKeE2EgQ
+	RmW7RyICBCrAbeYlMgI4MJQ+ARIf1qwtwo7gTYPzgH8TlHLAUaEEmh0D1+MO0KoSfybFISAuJhZ
+	KJky1zpIqOgZAwNYXjIEJszUmEiYP/npCX07FeNfIU4ryC3yJqOWoi4sdQq2DjR+N8Qy3l7Xdd1
+	ZqXKmQJBAD31A9bW/F4lrQXceWMwzHa9RC3Q==
+X-Gm-Gg: AYBFou0wJltAjH/NxI3m8j6gN/irE3fgfa5DqIzHxoc5n2TsYIW2D3KUILL9FPfP1tV
+	7ruge594BChLIuBJdHB9ZWeWagpHRXcoxR3vNaFzS8jIBFIqiU6MpivcuQDt5hZo5laq8xcv0ZR
+	yJm6VwQ/UyUjWttlv8kj3AJ6dHsIXl4uq7QwSt+TyIrNnznBwvHSawZxafDd0o8B5dYrCaBTYU1
+	wjGQkVvcTLJ+qSiODYecqR+5rMjJzmRckpPBZffDmnd/meLQht43NMandVYJWi6tD6rLRvuWis=
+X-Received: by 2002:a05:651c:987:b0:3ae:25db:8a10 with SMTP id 38308e7fff4ca-3ae2b50dc54mr38699681fa.18.1794891258861;
+        Mon, 16 Nov 2026 20:54:18 -0800 (PST)
+X-Received: by 2002:a05:651c:987:b0:3ae:25db:8a10 with SMTP id
+ 38308e7fff4ca-3ae2b50dc54mr38699631fa.18.1794891258476; Mon, 16 Nov 2026
+ 20:54:18 -0800 (PST)
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Post: <mailto:dm-devel@lists.linux.dev>
@@ -75,116 +90,101 @@ List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 List-Owner: <mailto:dm-devel+owner@lists.linux.dev>
 Precedence: list
-Mime-Version: 1.0
-X-Mailer: git-send-email 2.56.0.679.gc527c65306-goog
-Message-ID: <20261116223301.1706170-1-sarthakkukreti@google.com>
-Subject: [PATCH] dm-verity: export verify_wq to sysfs
-From: Sarthak Kukreti <sarthakkukreti@google.com>
-To: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>, 
-	Mikulas Patocka <mpatocka@redhat.com>, Benjamin Marzinski <bmarzins@redhat.com>
-Cc: Eric Biggers <ebiggers@kernel.org>, Brian Geffon <bgeffon@google.com>, 
-	David Stevens <stevensd@chromium.org>, dm-devel@lists.linux.dev, 
-	linux-kernel@vger.kernel.org, Sarthak Kukreti <sarthakkukreti@google.com>
+MIME-Version: 1.0
+References: <CALKjhPewyFB0=2tfyNVuDPosTAisDD2YcejTpX+0iiKRXdsGaw@mail.gmail.com>
+ <f9266fcb-d030-dd16-e16f-0569b93bf4b6@redhat.com>
+In-Reply-To: <f9266fcb-d030-dd16-e16f-0569b93bf4b6@redhat.com>
+From: Ming Hung Tsai <mtsai@redhat.com>
+Date: Tue, 17 Nov 2026 12:54:06 +0800
+X-Gm-Features: AclHuK_jpXwqt8GjPaIqf_AW3r_cm6NLbWKbBwBxrR01hq8PTlb885wJw1OdM4g
+Message-ID: <CALjSBEsCVz5h55GtN_s5cf96qT6T8RqYiL6A4och+SHJOeiaSQ@mail.gmail.com>
+Subject: Re: [PATCH] dm btree: Remove redundant index condition
+To: Mikulas Patocka <mpatocka@redhat.com>
+Cc: Donut Oreo Computer I <donut.oreo.computer@gmail.com>, dm-devel@lists.linux.dev, 
+	Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>, 
+	Benjamin Marzinski <bmarzins@redhat.com>, linux-kernel@vger.kernel.org
+X-Mimecast-Spam-Score: 0
+X-Mimecast-MFC-PROC-ID: _An9Imcj_pfKNhnrrXTodyjgDRY9aTHSdhLnWogpYl8_1794891259
+X-Mimecast-Originator: redhat.com
 Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 
-Under heavy concurrent read bursts, dm-verity workers blocking on
-dm-bufio reads or locks can cause workqueue concurrency management to
-spawn hundreds of per-CPU kverityd threads across the system.
+On Tue, Nov 17, 2026 at 4:07=E2=80=AFAM Mikulas Patocka <mpatocka@redhat.co=
+m> wrote:
+>
+>
+>
+> On Fri, 6 Nov 2026, Donut Oreo Computer I wrote:
+>
+> > The index is unsigned, so checking whether i is non-negative is
+> > unnecessary.
+>
+> Really?
+>
+> In the caller, there is
+>
+> "unsigned int level, index =3D -1, last_level =3D info->levels - 1;"
+>
+> In btree_insert_raw, there is "int r, i =3D *index, top =3D 1;"
+>
+> If you cast -1 to unsigned int and then cast it back to int, you get -1.
+>
+> So, it doesn't seem like an obvious dead code to me.
+>
+> Mikulas
+>
+> > Signed-off-by: Donut Oreo Computer <donut.oreo.computer@gmail.com>
+> > ---
+> >  drivers/md/persistent-data/dm-btree.c | 2 +-
+> >  1 file changed, 1 insertion(+), 1 deletion(-)
+> >
+> > diff --git a/drivers/md/persistent-data/dm-btree.c
+> > b/drivers/md/persistent-data/dm-btree.c
+> > index dd02eee4a23c..b7ac2f6d1d71 100644
+> > --- a/drivers/md/persistent-data/dm-btree.c
+> > +++ b/drivers/md/persistent-data/dm-btree.c
+> > @@ -1108,7 +1108,7 @@ static int btree_insert_raw(struct shadow_spine
+> > *s, dm_block_t root,
+> >                  * see a way to do this automatically as part of the sp=
+ine
+> >                  * op.
+> >                  */
+> > -               if (shadow_has_parent(s) && i >=3D 0) { /* FIXME: secon=
+d
+> > clause unness. */
+> > +               if (shadow_has_parent(s)) {
+> >                         __le64 location =3D
+> > cpu_to_le64(dm_block_location(shadow_current(s)));
+> >
+> >                         __dm_bless_for_disk(&location);
+> > --
+> > 2.56.0
+> >
+>
 
-Export verify_wq to sysfs via WQ_SYSFS so userspace can inspect and
-configure workqueue attributes (such as max_active) per dm-verity
-device under /sys/bus/workqueue/devices/kverityd-<dev>-<id>/.
+The commit message is not accurate. It's not that "the variable i is
+always greater than zero", it's "the variable i cannot be negative if
+shadow_has_parent() returns true". The reason is how the variable i
+relates to the shadow spine. 'i' is the slot in the parent node that
+points to the current node. It is initialized to -1 only on the first
+btree_insert_raw() call, when the shadow_spine is empty and
+shadow_has_parent() returns false (because the top-level root doesn't
+have a parent). After shadowing the second node along the path and
+shadow_has_parent(s) returns true, the variable i must be
+non-negative.
 
-Co-developed-by: Brian Geffon <bgeffon@google.com>
-Signed-off-by: Brian Geffon <bgeffon@google.com>
-Co-developed-by: David Stevens <stevensd@chromium.org>
-Signed-off-by: David Stevens <stevensd@chromium.org>
-Signed-off-by: Sarthak Kukreti <sarthakkukreti@google.com>
----
- drivers/md/dm-verity-target.c | 22 ++++++++++++++++++----
- drivers/md/dm-verity.h        |  1 +
- 2 files changed, 19 insertions(+), 4 deletions(-)
+For multi-level btrees, the index passed to remove_raw() means the
+slot of the previous level's leaf, hence 'i' is always >=3D 0 on subtree
+roots.
 
-diff --git a/drivers/md/dm-verity-target.c b/drivers/md/dm-verity-target.c
-index 306ed1f6c118..730adf931494 100644
---- a/drivers/md/dm-verity-target.c
-+++ b/drivers/md/dm-verity-target.c
-@@ -18,6 +18,7 @@
- #include "dm-verity-verify-sig.h"
- #include "dm-audit.h"
- #include <linux/hex.h>
-+#include <linux/idr.h>
- #include <linux/module.h>
- #include <linux/reboot.h>
- #include <linux/string.h>
-@@ -26,6 +27,8 @@
- 
- #define DM_MSG_PREFIX			"verity"
- 
-+static DEFINE_IDA(workqueue_ida);
-+
- #define DM_VERITY_ENV_LENGTH		46
- #define DM_VERITY_ENV_VAR_NAME		"DM_VERITY_ERR_BLOCK_NR"
- 
-@@ -1065,6 +1068,8 @@ static void verity_dtr(struct dm_target *ti)
- 
- 	if (v->verify_wq)
- 		destroy_workqueue(v->verify_wq);
-+	if (v->workqueue_id)
-+		ida_free(&workqueue_ida, v->workqueue_id);
- 
- 	mempool_exit(&v->recheck_pool);
- 	if (v->io)
-@@ -1421,7 +1426,7 @@ static int verity_ctr(struct dm_target *ti, unsigned int argc, char **argv)
- 	struct dm_arg_set as;
- 	unsigned int num;
- 	unsigned long long num_ll;
--	int r;
-+	int r, wq_id;
- 	int i;
- 	sector_t hash_position;
- 	char dummy;
-@@ -1637,6 +1642,14 @@ static int verity_ctr(struct dm_target *ti, unsigned int argc, char **argv)
- 		goto bad;
- 	}
- 
-+	wq_id = ida_alloc_min(&workqueue_ida, 1, GFP_KERNEL);
-+	if (wq_id < 0) {
-+		ti->error = "Cannot allocate workqueue id";
-+		r = wq_id;
-+		goto bad;
-+	}
-+	v->workqueue_id = wq_id;
-+
- 	/*
- 	 * Using WQ_HIGHPRI improves throughput and completion latency by
- 	 * reducing wait times when reading from a dm-verity device.
-@@ -1646,9 +1659,10 @@ static int verity_ctr(struct dm_target *ti, unsigned int argc, char **argv)
- 	 * will fall-back to using it for error handling (or if the bufio cache
- 	 * doesn't have required hashes).
- 	 */
--	v->verify_wq = alloc_workqueue("kverityd",
--				       WQ_MEM_RECLAIM | WQ_HIGHPRI | WQ_PERCPU,
--				       0);
-+	v->verify_wq = alloc_workqueue("kverityd-%s-%d",
-+				       WQ_MEM_RECLAIM | WQ_HIGHPRI |
-+				       WQ_PERCPU | WQ_SYSFS, 0,
-+				       dm_table_device_name(ti->table), wq_id);
- 	if (!v->verify_wq) {
- 		ti->error = "Cannot allocate workqueue";
- 		r = -ENOMEM;
-diff --git a/drivers/md/dm-verity.h b/drivers/md/dm-verity.h
-index e104a651c657..53f894f259d3 100644
---- a/drivers/md/dm-verity.h
-+++ b/drivers/md/dm-verity.h
-@@ -71,6 +71,7 @@ struct dm_verity {
- 	atomic_t corrupted_errs;/* Number of errors for corrupted blocks */
- 
- 	struct workqueue_struct *verify_wq;
-+	int workqueue_id;
- 
- 	/* starting blocks for each tree level. 0 is the lowest level. */
- 	sector_t hash_level_block[DM_VERITY_MAX_LEVELS];
--- 
-2.56.0.679.gc527c65306-goog
+With the invariant "index =3D=3D -1 only when the shadow_spine is empty",
+it should be safe to remove the i >=3D 0 check. remove_raw() and
+remove_nearest() in dm-btree-remove.c alrealy rely on the same rule,
+without the extra check.
+
+__btree_get_overwrite_leaf() has the same redundant check. I'll handle
+it in a separate patch after testing.
+
+
+Hank
 
