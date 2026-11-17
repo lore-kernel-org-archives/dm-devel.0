@@ -1,83 +1,83 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.214.170
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.214.174
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1794921614;
-	b=xQeDDTd/Eoc2dTlcSU/xfNdqhAfV7PI/vVY5JuoBkRDeKzxW2YKF+jPTo/juAMIM4oF1
-	 GSvD3LWvcumH5L5xILQGjDBEwFQeCUXeGBKqbSJd6Z6TGX+UIUwT/OlsxsZY3k+WpVZwq
-	 382gziDVDBBktAg+Z7rjpK7zgIi1oXOvPPYD15zaIkA1m/SiScVBkE8alHflFYOYoap5m
-	 5B/NMRa17j8nga5AWTTZaZjwUELfoFtUwqfA9vjjp55pzKwS1JOv7KaWGhEGm1vb8AeNQ
-	 surQ4dI8KohT//O7oJPFkxL7V8fVqmtuVQ8P06s/CimbaA3Aq/T6x4FzkTYstqxO2zg==
+	t=1794921618;
+	b=2T39r++rtA3PApGURJlCsS20+pi/tmhGzudBPyQCKhRwCuWz5fR23O3kU5rkD5SYtKyH
+	 xfTXuKaEOxVr6no/BoQkrr/3JeVb17uaqHHQPmBLEMSZFl3XRJ0LwXL+nK4jgkvEYahgk
+	 5I4nQSgEhBhdgcFfL50BDbLJ7XWR0JSWmiN01BbyYepY0cK59aJ2p75r6P6gKsEbFwJzB
+	 F+n0BA8uK01/FF4VTF3arUNVdEe23zacJRuWwuCED2w2GC36SzQodr+Mj/rd8SapbMQbg
+	 Hii5ulVTLQt5fhYEXzzlYfcXELCGuMVVxLjP/JxCiG1T46ZkFfT7ZwU7SRT4oGWaKgg==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1794921614;
+	a=rsa-sha256; c=relaxed/relaxed; t=1794921618;
 	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
 	 X-Gm-Message-State:X-Gm-Gg:X-Received:Received:From:To:Cc:Subject:
 	 Date:Message-ID:X-Mailer:In-Reply-To:References:MIME-Version:
 	 Content-Transfer-Encoding;
-	bh=b4OFzIpt+JkN9gwkTTZElpkbcD6v6n6GsIMD8rYgg8w=;
-	b=R7y/wcgegN7h6QNQZe3eH8ogFsYOSfAvYk2q89C4pOatoHD7Tt4YzoXyas8AhosAELYu
-	 LgaE7Q4e4kahYgVFSTaYNe3PvTY4AECLmHE4UQafqcUH3EPWFNI6cdHQvKe0bxNZn98Cd
-	 eV+49WoJrZPGi7TLkBseSac4wYtwkbUYwSUky6SCLyI8juoQALr9jOmRl5bGvIXbJ1sZl
-	 5VwOvB4ylELs1oYUdxeYDy2Dp9keh/O8Ndu7rlkGAU/JCBqC99HCVoy49cRNhA9UOuAVX
-	 pOt9d7X6xAyFAJ8+EdF8DZkT35WQmuym+G4IAzHCpJIsuiGxK1DFHJYVZQmnRAtG/Dw==
+	bh=iWlxrv+AcT5ZQb4bjWQXKVckOuAz/YqFbGaqUunOEYU=;
+	b=tUuDxvEWAWOquWc3h02GNT21SN9RIcDEslWoBf0ccPlHVyWJpQfZRiLAic4aTO9VZoHG
+	 MN4HHtRPDCkUxGGoZ3zOIAYF7+YutC/CGUaqpYdcexkqmvMkUZ++vSEfxSFaBJFtuyzoh
+	 Hty1WyWR4K6noSvfcvF6zBz9nbZlJdXPxj+2heY+tY6MT09HDE4J7RfzTXcElijTPmuzS
+	 iD2rr2QYr8+Zh9K61hkfBg6URv/y5zF9zADi5fSe/cwyCU1W9QDzBd/9KBI6w5kDRAUFI
+	 5wPKVM9T6EFz+3+Kb5odC8ZoLDf3OVfrsUTPdFrz/hT8j0Ss5G/C9ULahXg4Hu4BVNg==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
 	dmarc=pass header.from=gmail.com;
 	spf=pass smtp.mailfrom=gmail.com;
-	dkim=pass header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=aTr4s4XZ;
-	arc=none smtp.remote-ip=209.85.214.170
-Received: from mail-pl1-f170.google.com (mail-pl1-f170.google.com [209.85.214.170])
+	dkim=pass header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=q4o6k9M6;
+	arc=none smtp.remote-ip=209.85.214.174
+Received: from mail-pl1-f174.google.com (mail-pl1-f174.google.com [209.85.214.174])
 	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5C1CD606A31C
-	for <dm-devel@lists.linux.dev>; Tue, 17 Nov 2026 13:20:14 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 5C1CD606A31C
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 2208B606A323
+	for <dm-devel@lists.linux.dev>; Tue, 17 Nov 2026 13:20:17 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 2208B606A323
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=aTr4s4XZ
-Received: by mail-pl1-f170.google.com with SMTP id d9443c01a7336-2e96502e447so46341555ad.1
-        for <dm-devel@lists.linux.dev>; Tue, 17 Nov 2026 05:20:14 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=q4o6k9M6
+Received: by mail-pl1-f174.google.com with SMTP id d9443c01a7336-2e9995ce866so43736495ad.0
+        for <dm-devel@lists.linux.dev>; Tue, 17 Nov 2026 05:20:17 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20260707; t=1794921614; x=1795526414; darn=lists.linux.dev;
+        d=gmail.com; s=20260707; t=1794921617; x=1795526417; darn=lists.linux.dev;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to:content-type;
-        bh=b4OFzIpt+JkN9gwkTTZElpkbcD6v6n6GsIMD8rYgg8w=;
-        b=aTr4s4XZJdmfJbNH00n8XcU5ucpicpMP2lMc8/WSIAtlKSma7cqK+THVjwBrRS2/Zu
-         wBvyfXI0NrYCWNAS3fVGR0DX3HTQ9ICxchQo8knsqKQD40C9/Zakv4hDNNipm33jOzZa
-         DiXAmyFEhozneWzH7rfSRArJRTVSIwTq0QhhV9f5xoqaAj/d89l4Ycd/KdLM08/GXgtJ
-         fEfGHxK9T31j1gJ0eISL5HbMpmxSU64o+/9+TRcIF9nsntZlZqeFTHD24CCovJYwFv++
-         CGl8d1LE9UVu50MrRRRpBy3DyXSPOmyqzuVbtIP9Egf3gUQaBzMa0ejpyfyI/AY6ThI0
-         7pVA==
+        bh=iWlxrv+AcT5ZQb4bjWQXKVckOuAz/YqFbGaqUunOEYU=;
+        b=q4o6k9M6S/Qfqv8kfhjqerPX5Tn7f1OfLPXluU3u8lbuYz8Pp0MNlffHfk9HN9tVxD
+         wd6asrQXzCvmx96TcLgnfznTbzUAVD5Eo22NPH5Xa4DvJ5kZR+9DDw3hgRqM6vnFAL7n
+         I7uX3ACh2o//bCpfGQOSEKT1FsR/oXr1rKRGTX0tRo6beUVDC1kTI502+eclhgl7e/dk
+         nMyHhtFVzloHQohKqTji8GKeUOqpB11LsRqVhtSGrx1pKMIRwY3Sy7N9pjz5VSDy/qPx
+         r2PiledMzjQFsxtMkJfNV7rCwCYgRDZRhUiWbhF9XU/k/rzCGB+6GHu+fDUkjlroC2/e
+         uU6A==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1794921614; x=1795526414;
+        d=1e100.net; s=20260707; t=1794921617; x=1795526417;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:x-gm-gg:x-gm-message-state:from
          :to:cc:subject:date:message-id:reply-to:content-type;
-        bh=b4OFzIpt+JkN9gwkTTZElpkbcD6v6n6GsIMD8rYgg8w=;
-        b=sEGP8LzUMKb20uzH13FCogoWQYA8d0JA8OAa1VMvSfbDXMrxnUy4IRvtM4wZWCrdAs
-         U0Y+TX1ZSl8eF7rzKSpAHmj+thsgjkK+8VO0uKjHt3nhW2oi+4IIkbUiXBhM807fuWU+
-         NdWo+UGsU3EctcKFq1KuKTmuhCFaxUusaP40pxbZyu3AbKF2Xj9MJUgcUFbz1oz3LjRA
-         K398ZztIQ68Clc9LWMVcO8KdnCRW1bZn9PYDGIzuTzMuPUMtQR+7S27gSXIbljIMGlNS
-         XJ5RVuMTcXhabi+ArdacbVZvTW2zGdBPfy6x1dajpf/LhaimH+Gle6gABPpxBPjlRh3z
-         IrVQ==
-X-Gm-Message-State: APuU4Z/JxIuodXswCUePhVttE8g2JxKt44HTMqaTp1IjRRYFY998dxtR
-	/gmbB80OSexeh6VF/TRXZVFbvOJHe9qBORg5xrKyBVYwTz+38up0nMv5
-X-Gm-Gg: AZFdTZdzrinvDAp1V4TGiQxlpJoEGZLScVScFURQyJW0H8a+G987YoiHxqhYhN74xCU
-	sAZjt1guWpkquvzqttI1B9U2kUppL8rryfreawQCji9lmkB8Vb9wlt379Hub1k+Qo8giAuLWTk9
-	S59s1OVSX6GNmRKdyxB+PveaZMymLs7lLVrvUK0zab9hie3y0XoIi8IYuyT97yt3W9fuD8MFGFB
-	krvMdRNUSw20riGcqZuM9bZT+GydXOggPmfSUJwHIx5eFKLpRwUngIEyac6DZtCGudFloUXDAwz
-	MM+oJkR9P6FNZbZ8VZbcs+11/GCG5fghzBBCDuhCwWqWCaPFbCjSu8sr9LGsARGhl/+pH3TbaU7
-	NDvEvdEcNsAh7eRO7w4XQU1KT2K2fHeDnn9A7p0U5BNSt82PUm9BSyWi5wIAgJSYq5nxlEPuohV
-	T8U2kG6mnoGaWH4y1z48yyYpXwdvEn7kLvOoalCT+edQLGdKUMsKpW8KKCBMIpnmMFH11VmOqR+
-	2EXHLZ6/UCpzqQR1/AHp2xXDEAThncRg6Z7IVd1HwID0+k1qgWjYeh9rbTh/DDNzCKa8JivWU/u
-	k1Yz9xRJi55aWVdLYlvfA3JPNAtAi4qM5AiBVgknZmbEmJcoExix9E8/Jj63+5uhlNBqNOGTKAR
-	rEkF4/8vz
-X-Received: by 2002:a17:903:2285:b0:2e9:a16b:c251 with SMTP id d9443c01a7336-2ee0d6726e2mr134994625ad.3.1794921613568;
-        Tue, 17 Nov 2026 05:20:13 -0800 (PST)
+        bh=iWlxrv+AcT5ZQb4bjWQXKVckOuAz/YqFbGaqUunOEYU=;
+        b=CwAVh6cKqUMdtbVZ6gUcWKpQx74LAkqxquYyXxkevYjkjPwaY++05Ms6Ko6tM6ubgk
+         6ICkUvJFJUdaLCWwre1KWLlUc9kc1e2DMmRzIlCSIv9f8Uc98He9kYtQmhBfrQAVcM1v
+         fnxirt0VEyBesFvHzk340bIUsRXBJ+fxZSinLvoGi65t7Ggeqqgjv6pTnXzv+eOrJoxH
+         +JqegCEsX64kOKqUWRFDTkXwLZZq2zFu7Ngrl26qhigUgpp1ukoa4HwvfkGX7FKiNa4M
+         N660Vwh+HdkYG2EKy8kIW+PGpqahr7B1e774Zpd0ilOM0h+y9XnXh41PvRLL1OqpyoVf
+         nPJQ==
+X-Gm-Message-State: APuU4Z+fBNoh/3g2avdLrbNAufnI7CCaR4cpBekqWfDoVUVEeYToQdq4
+	Juh8wRL1X3U5g84DuCnm1TIvhZnrco+4ORxmUG8k4PJpVgXp5ymiY7Rg
+X-Gm-Gg: AZFdTZf126GiKBFx9slNAvarvYbTGR6OsEXo0TH2tO4K+hANAmqnX46NHGFanvdO91r
+	9/CihcMYJ/3lbRA0YEeEXMyDLMcwRw0WEQdAKHsnhY4fmGdvYrrlCMyVZ/l1BoD+ga+CWfa1TLy
+	onYOHMxt5AIXKIMoxinPUX2GkNojBinDtfNCJ77MKM4UcfbYdygNCQNtr3ZI+fYwRrQtIZzgUdS
+	baEF7plXda5peg0B+uL7rc2JavJ2a70fzYfmbMFMB3m30BxIChz81oItrJPFhZbx89l3584lFak
+	ZyWy1qhYUx0vgIiRCcSxEELFsQKQiQ/FQL8MKipJg1OHnaf1e14rS+KdN+s/D2EeWcbFtS7H6ci
+	Q+Nw4xnIzssw2J/QjKTLo4kXGQjZbYcwLCOhaWNkcswwSZo/w7sTJ8Dfc64ETsbvr+PuYwVXPRW
+	wkUryJc9ifYXrIeLYTFR0Bu5GG1SGUOop7Mx+hkfSAE/MjrM2HDeNgEkclleahXO/7myvK/97jk
+	H8L5Ie9iQ2Dk1rOkjTG7UZbXFJKKXIC4OWAPdWHRfCeYWiyBVoeeuU1GK451U6ycVF3EPebMsrW
+	+IxgpGO9PU++Ua+MWnr9sG5PeleF3SyvfwXZR9b/l98tt0XyI4LlGnbODQktMqzmUhP8KLrcAVO
+	lTsBXocjM
+X-Received: by 2002:a17:903:3c6f:b0:2ed:379:159f with SMTP id d9443c01a7336-2ee0da9672bmr128183515ad.20.1794921617298;
+        Tue, 17 Nov 2026 05:20:17 -0800 (PST)
 Received: from bj-kjy-standalone-yangyongpeng.mioffice.cn ([43.224.245.241])
-        by smtp.gmail.com with ESMTPSA id d9443c01a7336-2efd7a5f754sm16064915ad.52.2026.11.17.05.20.10
+        by smtp.gmail.com with ESMTPSA id d9443c01a7336-2efd7a5f754sm16064915ad.52.2026.11.17.05.20.14
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 17 Nov 2026 05:20:12 -0800 (PST)
+        Tue, 17 Nov 2026 05:20:16 -0800 (PST)
 From: Yongpeng Yang <yangyongpeng.storage@gmail.com>
 To: Alasdair Kergon <agk@redhat.com>,
 	Mike Snitzer <snitzer@kernel.org>,
@@ -85,9 +85,9 @@ To: Alasdair Kergon <agk@redhat.com>,
 	Benjamin Marzinski <bmarzins@redhat.com>
 Cc: dm-devel@lists.linux.dev,
 	Yongpeng Yang <yangyongpeng@xiaomi.com>
-Subject: [PATCH 3/4] dm-verity: size the hash retain target from the hash area
-Date: Tue, 17 Nov 2026 21:19:19 +0800
-Message-ID: <20261117131918.2745193-6-yangyongpeng.storage@gmail.com>
+Subject: [PATCH 4/4] dm-verity: add messages to inspect, prefetch and drop hash blocks
+Date: Tue, 17 Nov 2026 21:19:20 +0800
+Message-ID: <20261117131918.2745193-7-yangyongpeng.storage@gmail.com>
 X-Mailer: git-send-email 2.43.0
 In-Reply-To: <20261117131918.2745193-2-yangyongpeng.storage@gmail.com>
 References: <20261117131918.2745193-2-yangyongpeng.storage@gmail.com>
@@ -104,152 +104,245 @@ Content-Transfer-Encoding: 8bit
 
 From: Yongpeng Yang <yangyongpeng@xiaomi.com>
 
-With the dm-bufio default of 256 KiB a large device re-reads hash
-blocks evicted under memory pressure, while a small device holds far
-more than it needs.
+Nothing lets a user warm a verity device's cache ahead of the reads
+that will need it, or release the memory a device no longer needs.
 
-Set the hash client's target to hash_retain_percent (default 10) of
-the hash area, computed with mult_frac().  A percentage above 100 is
-ignored, leaving the dm-bufio default.
+Add three messages.  retain_bytes <hash|fec> [<bytes>] reports or sets
+a client's retain target.  prefetch_hash [<start> <count>] starts
+reading hash blocks asynchronously; it is not limited by the retain
+target, which only applies to eviction.  drop_hash [<start> <count>]
+drops hash blocks, keeping those that are in use or dirty.
 
-Publish the clients under /sys/block/dm-N/dm-bufio/<name>.
-Registration runs from ->resume because the dm device's block device
-does not exist until the table is loaded.  The parameter only affects
-devices created afterwards.
+drop_hash is unsupported on try_verify_in_tasklet devices, whose bufio
+client cannot drop buffers (-EOPNOTSUPP).
 
 Signed-off-by: Yongpeng Yang <yangyongpeng@xiaomi.com>
 Assisted-by: LLM
 ---
- drivers/md/dm-verity-target.c | 60 +++++++++++++++++++++++++++++++++++
- drivers/md/dm-verity.h        |  2 ++
- 2 files changed, 62 insertions(+)
+ .../admin-guide/device-mapper/verity.rst      |  42 +++++
+ drivers/md/dm-verity-target.c                 | 149 ++++++++++++++++++
+ 2 files changed, 191 insertions(+)
 
+diff --git a/Documentation/admin-guide/device-mapper/verity.rst b/Documentation/admin-guide/device-mapper/verity.rst
+index 9e9d4b8157c0..8fea6130765b 100644
+--- a/Documentation/admin-guide/device-mapper/verity.rst
++++ b/Documentation/admin-guide/device-mapper/verity.rst
+@@ -328,6 +328,48 @@ Status
+ 2. Number of corrected blocks by Forward Error Correction.
+    '-' if Forward Error Correction is not enabled.
+ 
++Metadata caching
++================
++
++The hash blocks, and the FEC parity blocks when FEC is enabled, are cached in
++memory by dm-bufio.  How much of the hash tree is kept cached is controlled by
++the ``hash_retain_percent`` module parameter (default 10), settable at boot
++time with ``dm_verity.hash_retain_percent=<0-100>`` or at run time through
++``/sys/module/dm_verity/parameters/hash_retain_percent``.  A value of 0 or
++above 100 leaves the dm-bufio default (256 KiB), which is also what the FEC
++clients keep.  Only devices created afterwards are affected.
++
++Each client's retain target and memory use are visible under
++``/sys/block/dm-N/dm-bufio/<hash|fec|fec-data>/`` on the verity device's own
++block device, and the target can be changed by writing that directory's
++``retain_bytes`` attribute; see
++Documentation/admin-guide/device-mapper/dm-bufio.rst.  The directories appear
++when the device is first activated and disappear with it.  Reloading the
++table removes the old table's directories; the new table's reappear on the
++next resume.
++
++Messages
++========
++
++``retain_bytes <hash|fec> [<bytes>]``
++    Report the retain target of the hash or FEC parity client, or set it
++    (0 resets to the dm-bufio default).  ``fec`` requires FEC to be
++    enabled.  The reply is ``retain_bytes=<bytes>``.
++
++``prefetch_hash [<start> <count>]``
++    Start reading hash blocks into the cache; without arguments, the whole
++    hash area.  The read is asynchronous and is not limited by the retain
++    target, which only applies to eviction.
++
++``drop_hash [<start> <count>]``
++    Drop hash blocks from the cache, keeping blocks that are in use or
++    dirty.  Not supported on devices created with ``try_verify_in_tasklet``
++    (``-EOPNOTSUPP``), whose bufio client cannot drop buffers.
++
++Both cache commands still work while the device is suspended: prefetch
++reads are queued and complete on resume, and ``drop_hash`` finds an empty
++cache because verity resets the bufio client on suspend.
++
+ Example
+ =======
+ Set up a device::
 diff --git a/drivers/md/dm-verity-target.c b/drivers/md/dm-verity-target.c
-index 451c75e30a8f..3ae1b25fdbf6 100644
+index 3ae1b25fdbf6..e197befe0793 100644
 --- a/drivers/md/dm-verity-target.c
 +++ b/drivers/md/dm-verity-target.c
-@@ -32,6 +32,8 @@
- #define DM_VERITY_DEFAULT_PREFETCH_SIZE	262144
- #define DM_VERITY_USE_BH_DEFAULT_BYTES	8192
- 
-+#define DM_VERITY_DEFAULT_HASH_RETAIN_PERCENT	10
-+
- #define DM_VERITY_MAX_CORRUPTED_ERRS	100
- 
- #define DM_VERITY_OPT_LOGGING		"ignore_corruption"
-@@ -50,6 +52,13 @@ static unsigned int dm_verity_prefetch_cluster = DM_VERITY_DEFAULT_PREFETCH_SIZE
- 
- module_param_named(prefetch_cluster, dm_verity_prefetch_cluster, uint, 0644);
- 
-+/* Default fraction of the hash tree that dm-bufio is asked to keep cached. */
-+static unsigned int dm_verity_hash_retain_percent = DM_VERITY_DEFAULT_HASH_RETAIN_PERCENT;
-+
-+module_param_named(hash_retain_percent, dm_verity_hash_retain_percent, uint, 0644);
-+MODULE_PARM_DESC(hash_retain_percent,
-+	"Percentage of the hash area to keep cached by default");
-+
- static unsigned int dm_verity_use_bh_bytes[4] = {
- 	DM_VERITY_USE_BH_DEFAULT_BYTES,	// IOPRIO_CLASS_NONE
- 	DM_VERITY_USE_BH_DEFAULT_BYTES,	// IOPRIO_CLASS_RT
-@@ -1092,6 +1101,9 @@ static void verity_dtr(struct dm_target *ti)
- 
- 	verity_fec_dtr(v);
- 
-+	if (v->bufio_kobj)
-+		kobject_put(v->bufio_kobj);
-+
- 	kfree(v->signature_key_desc);
- 
- 	if (v->use_bh_wq)
-@@ -1421,6 +1433,7 @@ static int verity_ctr(struct dm_target *ti, unsigned int argc, char **argv)
- 	struct dm_verity_sig_opts verify_args = {0};
- 	struct dm_arg_set as;
- 	unsigned int num;
-+	unsigned int hash_retain_percent;
- 	unsigned long long num_ll;
- 	int r;
- 	int i;
-@@ -1638,6 +1651,13 @@ static int verity_ctr(struct dm_target *ti, unsigned int argc, char **argv)
- 		goto bad;
- 	}
- 
-+	hash_retain_percent = READ_ONCE(dm_verity_hash_retain_percent);
-+	if (hash_retain_percent <= 100)
-+		dm_bufio_set_retain_bytes(v->bufio,
-+			mult_frac((u64)(v->hash_end - v->hash_start) <<
-+				  v->hash_dev_block_bits,
-+				  hash_retain_percent, 100));
-+
- 	/*
- 	 * Using WQ_HIGHPRI improves throughput and completion latency by
- 	 * reducing wait times when reading from a dm-verity device.
-@@ -1815,6 +1835,45 @@ static void verity_postsuspend(struct dm_target *ti)
- 	verity_security_clear_integrity(ti);
+@@ -1874,6 +1874,154 @@ static void verity_resume(struct dm_target *ti)
+ 	verity_register_bufio_sysfs(ti->private);
  }
  
-+/*
-+ * Publish the bufio clients under /sys/block/dm-N/dm-bufio/.  Runs from
-+ * ->resume because the dm device's block device does not exist in ->ctr.
-+ */
-+static void verity_register_bufio_sysfs(struct dm_verity *v)
++static int verity_prefetch_hash(struct dm_verity *v, unsigned int argc,
++				char **argv, char *result, unsigned int maxlen)
 +{
-+	struct mapped_device *md = dm_table_get_md(v->ti->table);
-+	struct kobject *parent;
++	sector_t total = v->hash_end - v->hash_start;
++	sector_t start, n;
++	unsigned long long value;
++	unsigned int sz = 0;
 +
-+	if (v->bufio_kobj)
-+		return;
++	if (argc == 1) {
++		start = 0;
++		n = total;
++	} else if (argc == 3) {
++		if (kstrtoull(argv[1], 0, &value) || (sector_t)value != value)
++			return -EINVAL;
++		start = value;
 +
-+	parent = &disk_to_dev(dm_disk(md))->kobj;
-+	/*
-+	 * On a table reload the old table's directory is still there; it is
-+	 * removed only after this resume returns.  We retry on the next one.
-+	 */
-+	v->bufio_kobj = kobject_create_and_add("dm-bufio", parent);
-+	if (!v->bufio_kobj) {
-+		DMERR("cannot create dm-bufio sysfs directory, will retry on next resume");
-+		return;
++		if (kstrtoull(argv[2], 0, &value) || (sector_t)value != value)
++			return -EINVAL;
++		n = value;
++	} else {
++		return -EINVAL;
 +	}
 +
-+	if (dm_bufio_client_sysfs_add(v->bufio, v->bufio_kobj, "hash"))
-+		DMERR("cannot register hash bufio client in sysfs");
-+
-+	if (verity_fec_is_enabled(v)) {
-+		if (dm_bufio_client_sysfs_add(v->fec->bufio, v->bufio_kobj, "fec"))
-+			DMERR("cannot register FEC bufio client in sysfs");
-+		if (dm_bufio_client_sysfs_add(v->fec->data_bufio, v->bufio_kobj, "fec-data"))
-+			DMERR("cannot register FEC data bufio client in sysfs");
++	if (start >= total) {
++		DMERR("prefetch_hash start %llu beyond hash area (%llu blocks)",
++		      (unsigned long long)start, (unsigned long long)total);
++		return -EINVAL;
 +	}
++
++	n = min(n, total - start);
++	n = min_t(sector_t, n, UINT_MAX);
++
++	dm_bufio_prefetch(v->bufio, v->hash_start + start, n);
++
++	DMEMIT("prefetch_hash: started %llu blocks", (unsigned long long)n);
++
++	return 1;
 +}
 +
-+static void verity_resume(struct dm_target *ti)
++static int verity_drop_hash(struct dm_verity *v, unsigned int argc,
++			    char **argv, char *result, unsigned int maxlen)
 +{
-+	verity_register_bufio_sysfs(ti->private);
++	sector_t total = v->hash_end - v->hash_start;
++	sector_t start, n;
++	unsigned long long value;
++	unsigned int sz = 0;
++
++	/*
++	 * dm_bufio_forget_buffers() ends up in cache_remove_range(), which
++	 * cannot run on a client created with DM_BUFIO_CLIENT_NO_SLEEP.
++	 */
++	if (v->use_bh_wq) {
++		DMERR("drop_hash unsupported on tasklet-verifying device");
++		return -EOPNOTSUPP;
++	}
++
++	if (argc == 1) {
++		start = 0;
++		n = total;
++	} else if (argc == 3) {
++		if (kstrtoull(argv[1], 0, &value) || (sector_t)value != value)
++			return -EINVAL;
++		start = value;
++
++		if (kstrtoull(argv[2], 0, &value) || (sector_t)value != value)
++			return -EINVAL;
++		n = value;
++	} else {
++		return -EINVAL;
++	}
++
++	if (start >= total) {
++		DMERR("drop_hash start %llu beyond hash area (%llu blocks)",
++		      (unsigned long long)start, (unsigned long long)total);
++		return -EINVAL;
++	}
++
++	n = min(n, total - start);
++
++	dm_bufio_forget_buffers(v->bufio, v->hash_start + start, n);
++
++	DMEMIT("drop_hash: dropped %llu", (unsigned long long)n);
++
++	return 1;
++}
++
++/*
++ * retain_bytes <hash|fec> [<bytes>]
++ *
++ * Report the selected client's retain target, or set it (0 resets to the
++ * dm-bufio default, non-zero is rounded down to a block boundary).
++ */
++static int verity_retain_bytes(struct dm_verity *v, unsigned int argc,
++			       char **argv, char *result, unsigned int maxlen)
++{
++	struct dm_bufio_client *bufio;
++	unsigned long long value;
++	unsigned int sz = 0;
++
++	if (argc < 2 || argc > 3)
++		return -EINVAL;
++
++	if (!strcasecmp(argv[1], "hash")) {
++		bufio = v->bufio;
++	} else if (!strcasecmp(argv[1], "fec")) {
++		if (!verity_fec_is_enabled(v)) {
++			DMERR("FEC is not enabled");
++			return -EINVAL;
++		}
++		bufio = v->fec->bufio;
++	} else {
++		return -EINVAL;
++	}
++
++	if (argc == 3) {
++		if (kstrtoull(argv[2], 0, &value) ||
++		    (unsigned long)value != value)
++			return -EINVAL;
++		dm_bufio_set_retain_bytes(bufio, value);
++	}
++
++	DMEMIT("retain_bytes=%lu", dm_bufio_get_retain_bytes(bufio));
++
++	return 1;
++}
++
++static int verity_message(struct dm_target *ti, unsigned int argc, char **argv,
++			  char *result, unsigned int maxlen)
++{
++	struct dm_verity *v = ti->private;
++
++	if (!argc)
++		return -EINVAL;
++
++	if (!strcasecmp(argv[0], "retain_bytes"))
++		return verity_retain_bytes(v, argc, argv, result, maxlen);
++
++	if (!strcasecmp(argv[0], "prefetch_hash"))
++		return verity_prefetch_hash(v, argc, argv, result, maxlen);
++
++	if (!strcasecmp(argv[0], "drop_hash"))
++		return verity_drop_hash(v, argc, argv, result, maxlen);
++
++	DMERR("unknown message '%s'", argv[0]);
++
++	return -EINVAL;
 +}
 +
  static struct target_type verity_target = {
  	.name		= "verity",
  /* Note: the LSMs depend on the singleton and immutable features */
-@@ -1825,6 +1884,7 @@ static struct target_type verity_target = {
- 	.dtr		= verity_dtr,
- 	.map		= verity_map,
+@@ -1886,6 +2034,7 @@ static struct target_type verity_target = {
  	.postsuspend	= verity_postsuspend,
-+	.resume		= verity_resume,
+ 	.resume		= verity_resume,
  	.status		= verity_status,
++	.message	= verity_message,
  	.prepare_ioctl	= verity_prepare_ioctl,
  	.iterate_devices = verity_iterate_devices,
-diff --git a/drivers/md/dm-verity.h b/drivers/md/dm-verity.h
-index e104a651c657..1bd625f5b45a 100644
---- a/drivers/md/dm-verity.h
-+++ b/drivers/md/dm-verity.h
-@@ -82,6 +82,8 @@ struct dm_verity {
- 
- 	struct dm_io_client *io;
- 	mempool_t recheck_pool;
-+
-+	struct kobject *bufio_kobj;	/* /sys/block/dm-N/dm-bufio, or NULL */
- };
- 
- struct pending_block {
+ 	.io_hints	= verity_io_hints,
 -- 
 2.43.0
 
