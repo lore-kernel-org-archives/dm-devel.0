@@ -1,87 +1,92 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.214.174
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1794891263;
-	b=UZKlwpViMzlgTW5lsEXFzlFdkJYZQQvpNAqM/Qt82oB4d/8tsSzs3ZqaMUrjzDk3jMg4
-	 qoyRCRfS8hUcDIfeJ6dWdvzfCJn3OsupSVq/5tTjR9EU/WYOMVxBCygdtf7V1HicLyhB4
-	 3u0qY2XZGcqr3c/4J97gD+TbhEwiPrdU0gUigfZ0Z3ydPAryi6nLoZ6KSLNrk4jyD9p9s
-	 umvDzuN6Ewry0jQ5WFAt6J9U3dQs686/hfhzAPrFy0fyDQk5XyFsqMx/Tc/T4sVic1tFp
-	 F0bx6bSXx/ZkYz3Y+Os5MYdJlWSKiJ35rv27+beUagpc7kGnrOI8/whNlVjRHbViylQ==
+	t=1794921593;
+	b=iaLK3OHkXeKkbnryM7mBLpCMDXOXIjM5D7RskhHuAO32B4zUfuTDUOXX5fLFl9YWyzo5
+	 PMbojZ+sNTPt498vezp+8834wje82pKY2Iu9zSPIsgf0lwhqJ1PLaP1fmkGD7zmo3d0Km
+	 sPEvfdJlWiYdwVhvPkw9wpvSPHXiZqzP5AusXSnwVX11Eh5BNM6ZQmB4W7+w/oc2ZVLnJ
+	 dqQH+NUwy8+mvqnlZSIQQyu6HYd8mXfS6A240e/TqVsbvk3XlNvQ2x771/2uxxFnm9DKc
+	 w0ZYSDrhPzNVi3AmEPzpGCIOOl6mTP1N0BT43RZVGhJisKhiUHDSgymPA6aHAUVBStA==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1794891263;
-	h=DMARC-Filter:DKIM-Signature:Received:X-MC-Unique:
-	 X-Mimecast-MFC-AGG-ID:Received:X-Google-DKIM-Signature:
-	 X-Forwarded-Encrypted:X-Gm-Message-State:X-Gm-Gg:X-Received:
-	 X-Received:MIME-Version:References:In-Reply-To:From:Date:
-	 X-Gm-Features:Message-ID:Subject:To:Cc:X-Mimecast-Spam-Score:
-	 X-Mimecast-MFC-PROC-ID:X-Mimecast-Originator:Content-Type:
-	 Content-Transfer-Encoding;
-	bh=Q7H2nc9bosJoZgL9qNmHTOhIFvJBNvNVcBjiUkQrllk=;
-	b=PN1hHEeoXy9LX2HKfoBNgAFuHDgf8rdPAxuqQ4CPYdAV7iXTu/XEeU1IabxkyHJLGK/F
-	 Ei6AVKsXdctpjNlIvdIZJbUPQ/wlBD0n7Ibvq28wrBrrCLdNcI8HIL8S15JJyDat2yyZX
-	 YlkMq4fBcLImWv9jIiLCnR32V1w9htuXE1LwPGN0wPUL03Vgt3lOhbV1z7ZrXkr7fJO8i
-	 wJoQ6dH/MMIsJjxzakedVcbjWH1waqjLC4Y2ePH3qEjY4HmGBJugH6JlXB1A7s2mgQW1n
-	 t7Y0TuJsc+vZLPUSiYILrCnMSliGGrYlQ6MNn4Nvs0NKoOeHArVC9vgY493te4uMfNg==
+	a=rsa-sha256; c=relaxed/relaxed; t=1794921593;
+	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
+	 X-Gm-Message-State:X-Gm-Gg:X-Received:Received:From:To:Cc:Subject:
+	 Date:Message-ID:X-Mailer:MIME-Version:Content-Transfer-Encoding;
+	bh=B+GCwP4zo8R29zZKrSQAvAg5KSYOaq4Cj74P2gw1H1c=;
+	b=EkFVb3fcfr4lFi0ApRH6VQmsxMkZt5CO7X/2JyhB8ivgHOnxaM7rzXlt4tciatOx9xSr
+	 5hFyeh7e+cu65idn77fKG7kgYPaD72NGxscWQ4QqucSTYzxKB49056uuxUofg5eTUROwl
+	 9R3hrZXNRja7R3TCH4LZxkhsCWpvssDtQ7QaO9NeSs5CsEwnXUQs6tQ29Wxz9Zm5xmwOZ
+	 mKsMHqfT8SeCvIDKNRNQPP8XiSEPhogJoylyxWaKsgcM79sjRQ5NxVy27k0/gh3aM0/qk
+	 bCkO2wrbRMwvMyDfF0KDra8/PR8qSYMxWsj0WOpCK3tuJEmF7nIrubGXoMF0EIYEkHQ==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dmarc=pass header.from=redhat.com;
-	spf=pass smtp.mailfrom=redhat.com;
-	dkim=pass header.d=redhat.com header.i=@redhat.com header.a=rsa-sha256 header.s=mimecast20190719 header.b=iTXHqGhb;
-	arc=none smtp.remote-ip=170.10.133.124
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	dmarc=pass header.from=gmail.com;
+	spf=pass smtp.mailfrom=gmail.com;
+	dkim=pass header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=Q+Rz4Eqc;
+	arc=none smtp.remote-ip=209.85.214.174
+Received: from mail-pl1-f174.google.com (mail-pl1-f174.google.com [209.85.214.174])
+	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 098AC606A332
-	for <dm-devel@lists.linux.dev>; Tue, 17 Nov 2026 04:54:22 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 098AC606A332
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id EC29E606A323
+	for <dm-devel@lists.linux.dev>; Tue, 17 Nov 2026 13:19:52 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org EC29E606A323
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.a=rsa-sha256 header.s=mimecast20190719 header.b=iTXHqGhb
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1794891262;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=Q7H2nc9bosJoZgL9qNmHTOhIFvJBNvNVcBjiUkQrllk=;
-	b=iTXHqGhbjWrXez6m8s1klTD/S1GpzzLTu9PR4KsoGCl6JY5gBbZDWlQ1vMOWBONNVuTpV5
-	3BkJkIUQdkXkvTMrtxA032PsPEPZyE6tzOqfy3JWuwAq7li2cMaxGa/uJb2aDcfEVlHxK1
-	gx6d1FLasWevLPB5irqME1PPwBoEj4c=
-Received: from mail-lj1-f198.google.com (mail-lj1-f198.google.com
- [209.85.208.198]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-84-pufi21JwMtadqw_TuH8VBQ-1; Mon, 16 Nov 2026 23:54:20 -0500
-X-MC-Unique: pufi21JwMtadqw_TuH8VBQ-1
-X-Mimecast-MFC-AGG-ID: pufi21JwMtadqw_TuH8VBQ_1794891259
-Received: by mail-lj1-f198.google.com with SMTP id 38308e7fff4ca-3ad09084d85so23988281fa.3
-        for <dm-devel@lists.linux.dev>; Mon, 16 Nov 2026 20:54:20 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=Q+Rz4Eqc
+Received: by mail-pl1-f174.google.com with SMTP id d9443c01a7336-2efe022c04bso2487515ad.1
+        for <dm-devel@lists.linux.dev>; Tue, 17 Nov 2026 05:19:52 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20260707; t=1794921592; x=1795526392; darn=lists.linux.dev;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:from:to:cc:subject:date:message-id:reply-to:content-type;
+        bh=B+GCwP4zo8R29zZKrSQAvAg5KSYOaq4Cj74P2gw1H1c=;
+        b=Q+Rz4EqcO8lnMpyOMODvuY4chYLBk9dlvIEYLx4hWBof2052NHHCU5S6njGK/80nHd
+         kY0iGMd/NAyddtKRv4KFk7VzlO1TMe1dTDFUdjqpo2ul4jCu6j0G+tYOi9aoNLNJQaeX
+         HANFtlJ+f0Vo/g/d/gTV74k2CpSuwr+bQtewj1kd+0u4StCZHNDhihQ9JdHoFkOfXwid
+         aAZgbj60dTJrhCIib0cmsyXKKLa0HFVbrc8Q5w43urqm1kq57k6497fb5sByUzRpElxA
+         e3W3vnBWv5Fvah5XREQomkOPi6MqfafSVR50z18O4q2091ZaylnWj8yUM99BK+3Nh/gC
+         k9/g==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1794891259; x=1795496059;
-        h=content-transfer-encoding:content-type:cc:to:subject:message-id
-         :date:from:in-reply-to:references:mime-version:x-gm-gg
-         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
-         :content-type;
-        bh=Q7H2nc9bosJoZgL9qNmHTOhIFvJBNvNVcBjiUkQrllk=;
-        b=XIG/DmN8aupEshPpWK5YkricwzGQ/q26cPpQ7tytW6Bf2VeAiguJt6g/sP+V5hcY8V
-         2eMVHI2Mo0xr05RRw9c7mqwESr9BF6hGJj9SZi2qLQ5w4GadOSKFjNyxGqPOUTliCz+s
-         u/RIjcOXL0yIRi9v3wA2oiZKCCyjEvN8HtR3IC3wSxowQ/Fd9VkqV3Rip+4scEXreGdh
-         mhCPV3GtiMsgGxh4vLvsvAWwTl93iWHDh1adKaTVJzayBFx3IOfg+tM/AwTeJnQDO8X+
-         +0ZrY3X1l4EY2DNP4moU/WfLHXU4IvRwEoYXXgC6wyk2Su2lOLlsYT77OaGkGpA2H22c
-         tlFA==
-X-Forwarded-Encrypted: i=1; AL+hErFdnJuUe4figUmWNlZPHaEQUphcEy0gS7t5HDzEPZI74vbDvSu/NayHjlQAvOcjUHihZao06H8Z2A==@lists.linux.dev
-X-Gm-Message-State: APuU4Z95qLAvQ3mEUel1vHuCMrZrEWWC6r0IWA4BfwKhE5VcgKeE2EgQ
-	RmW7RyICBCrAbeYlMgI4MJQ+ARIf1qwtwo7gTYPzgH8TlHLAUaEEmh0D1+MO0KoSfybFISAuJhZ
-	KJky1zpIqOgZAwNYXjIEJszUmEiYP/npCX07FeNfIU4ryC3yJqOWoi4sdQq2DjR+N8Qy3l7Xdd1
-	ZqXKmQJBAD31A9bW/F4lrQXceWMwzHa9RC3Q==
-X-Gm-Gg: AYBFou0wJltAjH/NxI3m8j6gN/irE3fgfa5DqIzHxoc5n2TsYIW2D3KUILL9FPfP1tV
-	7ruge594BChLIuBJdHB9ZWeWagpHRXcoxR3vNaFzS8jIBFIqiU6MpivcuQDt5hZo5laq8xcv0ZR
-	yJm6VwQ/UyUjWttlv8kj3AJ6dHsIXl4uq7QwSt+TyIrNnznBwvHSawZxafDd0o8B5dYrCaBTYU1
-	wjGQkVvcTLJ+qSiODYecqR+5rMjJzmRckpPBZffDmnd/meLQht43NMandVYJWi6tD6rLRvuWis=
-X-Received: by 2002:a05:651c:987:b0:3ae:25db:8a10 with SMTP id 38308e7fff4ca-3ae2b50dc54mr38699681fa.18.1794891258861;
-        Mon, 16 Nov 2026 20:54:18 -0800 (PST)
-X-Received: by 2002:a05:651c:987:b0:3ae:25db:8a10 with SMTP id
- 38308e7fff4ca-3ae2b50dc54mr38699631fa.18.1794891258476; Mon, 16 Nov 2026
- 20:54:18 -0800 (PST)
+        d=1e100.net; s=20260707; t=1794921592; x=1795526392;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
+         :message-id:reply-to:content-type;
+        bh=B+GCwP4zo8R29zZKrSQAvAg5KSYOaq4Cj74P2gw1H1c=;
+        b=cZe1CU+CAjA+Ax////vkdfdIlYKlLTWEmL6tzTHOgBfLEPGLUZl+fS3E1/cleFeOYO
+         NIsQau49LDuyhrmlNH72F3rFfqVhuGWq8hMfHZCDKpz+yUosXUM5SMuXDU0erIzkR5kL
+         j1edE3+oGbq+oxFY8ZMc+nsDkU/NwqVE8D5NcXcYdM6Xd03BDxZzqPkeXoKZnpeog3mk
+         yEpkr55VMF8PTUfqEfSqYJG/mS2NGXtlDkd7BtAMOlxlnr4XfSMB9LhCuNn8boP3MaL7
+         mogcXA5smGkXIzlD5sPeP8U5sdCDYEgfifCcXlx0OqC5/YmnDIOibxlFsiiJiP8qzmZ7
+         pMqg==
+X-Gm-Message-State: APuU4Z+VfjqCwBmQny6IOOFVyhFXntCZ1hVXUtU8WnxDWoNTDdb+66rp
+	3y+kWheF6yDAVXs61uMjcBMskLNa9Rc2LeilqSnVlE4qt81z4+oRhL+f
+X-Gm-Gg: AZFdTZcy8Ezqhh+oADOnniEFGt/zThtBJMMb3mYqJHWfNFXkOaNJmgxsYf+Z8HJ2yCc
+	WDevx8ccnFyeSQqFwpbApR45naApRNUxwQiEKfbuubXCLXJFjjlHL0xXeslwLqTEd126v4ZkILH
+	ypdzqqoubWS9B95fbApe/Pz8/bWsbTc+954tlL3oJPbCnkbGMduMS5OghuZctZAfCwCKivqbWWU
+	CM/405EGaWBFZbIfa6HcB+Mf1Gc354W34KbqkQpQMeEi/7S1R482mutnUqD2hibZPeVE2THYoMz
+	m0jMqHuxCeg70btJqmz2HfL0dgpzCNdte/eZy0aVM/RXAl82wNnUl6oAi6AyGe7cOTEQK8vQ60j
+	AKmhXSEAM+l5M8eeGA5rNrvxvOpNRaKHBE545mNjP3Zk6/Zkgz34fwiU8FNWVeoIMYvxcmPcnkc
+	XJTUUCwt60aJsV4SC+lt10tkXQT42CLxsugANOhzNenK4DVXDZJsweI2BAfuXCd66m/HRcUcknc
+	77bZPmszBxom404FxH5jSAJMm1Vf7Ra2V5eXhwD+k85+MEz8UwuOFm9iO62BcqhWpfKtPZTQF8z
+	9VkULYviR4XyCFcdAwT0PJmu5Z69IHBIFsi1qK3AMlCVFUomA3WEzjBRXoySd9ci4CVEB4j/Xn6
+	xBsOv+4BP
+X-Received: by 2002:a17:902:ea06:b0:2e9:6b5b:3db6 with SMTP id d9443c01a7336-2ee0de4fa12mr132046625ad.30.1794921591893;
+        Tue, 17 Nov 2026 05:19:51 -0800 (PST)
+Received: from bj-kjy-standalone-yangyongpeng.mioffice.cn ([43.224.245.241])
+        by smtp.gmail.com with ESMTPSA id d9443c01a7336-2efd7a5f754sm16064915ad.52.2026.11.17.05.19.48
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Tue, 17 Nov 2026 05:19:50 -0800 (PST)
+From: Yongpeng Yang <yangyongpeng.storage@gmail.com>
+To: Alasdair Kergon <agk@redhat.com>,
+	Mike Snitzer <snitzer@kernel.org>,
+	Mikulas Patocka <mpatocka@redhat.com>,
+	Benjamin Marzinski <bmarzins@redhat.com>
+Cc: dm-devel@lists.linux.dev,
+	Yongpeng Yang <yangyongpeng@xiaomi.com>
+Subject: [PATCH 0/4] dm-bufio: per-client retain target, sysfs and dm-verity cache control
+Date: Tue, 17 Nov 2026 21:19:15 +0800
+Message-ID: <20261117131918.2745193-2-yangyongpeng.storage@gmail.com>
+X-Mailer: git-send-email 2.43.0
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Post: <mailto:dm-devel@lists.linux.dev>
@@ -91,100 +96,77 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 List-Owner: <mailto:dm-devel+owner@lists.linux.dev>
 Precedence: list
 MIME-Version: 1.0
-References: <CALKjhPewyFB0=2tfyNVuDPosTAisDD2YcejTpX+0iiKRXdsGaw@mail.gmail.com>
- <f9266fcb-d030-dd16-e16f-0569b93bf4b6@redhat.com>
-In-Reply-To: <f9266fcb-d030-dd16-e16f-0569b93bf4b6@redhat.com>
-From: Ming Hung Tsai <mtsai@redhat.com>
-Date: Tue, 17 Nov 2026 12:54:06 +0800
-X-Gm-Features: AclHuK_jpXwqt8GjPaIqf_AW3r_cm6NLbWKbBwBxrR01hq8PTlb885wJw1OdM4g
-Message-ID: <CALjSBEsCVz5h55GtN_s5cf96qT6T8RqYiL6A4och+SHJOeiaSQ@mail.gmail.com>
-Subject: Re: [PATCH] dm btree: Remove redundant index condition
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: Donut Oreo Computer I <donut.oreo.computer@gmail.com>, dm-devel@lists.linux.dev, 
-	Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>, 
-	Benjamin Marzinski <bmarzins@redhat.com>, linux-kernel@vger.kernel.org
-X-Mimecast-Spam-Score: 0
-X-Mimecast-MFC-PROC-ID: _An9Imcj_pfKNhnrrXTodyjgDRY9aTHSdhLnWogpYl8_1794891259
-X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+Content-Transfer-Encoding: 8bit
 
-On Tue, Nov 17, 2026 at 4:07=E2=80=AFAM Mikulas Patocka <mpatocka@redhat.co=
-m> wrote:
->
->
->
-> On Fri, 6 Nov 2026, Donut Oreo Computer I wrote:
->
-> > The index is unsigned, so checking whether i is non-negative is
-> > unnecessary.
->
-> Really?
->
-> In the caller, there is
->
-> "unsigned int level, index =3D -1, last_level =3D info->levels - 1;"
->
-> In btree_insert_raw, there is "int r, i =3D *index, top =3D 1;"
->
-> If you cast -1 to unsigned int and then cast it back to int, you get -1.
->
-> So, it doesn't seem like an obvious dead code to me.
->
-> Mikulas
->
-> > Signed-off-by: Donut Oreo Computer <donut.oreo.computer@gmail.com>
-> > ---
-> >  drivers/md/persistent-data/dm-btree.c | 2 +-
-> >  1 file changed, 1 insertion(+), 1 deletion(-)
-> >
-> > diff --git a/drivers/md/persistent-data/dm-btree.c
-> > b/drivers/md/persistent-data/dm-btree.c
-> > index dd02eee4a23c..b7ac2f6d1d71 100644
-> > --- a/drivers/md/persistent-data/dm-btree.c
-> > +++ b/drivers/md/persistent-data/dm-btree.c
-> > @@ -1108,7 +1108,7 @@ static int btree_insert_raw(struct shadow_spine
-> > *s, dm_block_t root,
-> >                  * see a way to do this automatically as part of the sp=
-ine
-> >                  * op.
-> >                  */
-> > -               if (shadow_has_parent(s) && i >=3D 0) { /* FIXME: secon=
-d
-> > clause unness. */
-> > +               if (shadow_has_parent(s)) {
-> >                         __le64 location =3D
-> > cpu_to_le64(dm_block_location(shadow_current(s)));
-> >
-> >                         __dm_bless_for_disk(&location);
-> > --
-> > 2.56.0
-> >
->
+From: Yongpeng Yang <yangyongpeng@xiaomi.com>
 
-The commit message is not accurate. It's not that "the variable i is
-always greater than zero", it's "the variable i cannot be negative if
-shadow_has_parent() returns true". The reason is how the variable i
-relates to the shadow spine. 'i' is the slot in the parent node that
-points to the current node. It is initialized to -1 only on the first
-btree_insert_raw() call, when the shadow_spine is empty and
-shadow_has_parent() returns false (because the top-level root doesn't
-have a parent). After shadowing the second node along the path and
-shadow_has_parent(s) returns true, the variable i must be
-non-negative.
+Device-mapper's verity targets read their hash trees, and FEC parity
+when FEC is enabled, through dm-bufio.  dm-bufio has a single
+module-wide retain_bytes value shared by every client, no way to see
+or change one client's memory use, and no way to warm the cache ahead
+of the reads that need it.
 
-For multi-level btrees, the index passed to remove_raw() means the
-slot of the previous level's leaf, hence 'i' is always >=3D 0 on subtree
-roots.
+That fits poorly systems with many verified devices of very different
+sizes, such as Android, which mounts a dozen verity partitions plus
+per-app verified images: a large partition's hash tree (tens of MB) is
+evicted and re-read under memory pressure with the 256 KiB default,
+while raising the global value would make every small, idle verity
+device hold memory it does not need, and would still be the wrong size
+for most of them.  The same system also wants to preload a device's
+hash blocks at boot and to release the memory when the device is no
+longer in use, which today requires dropping caches globally.
 
-With the invariant "index =3D=3D -1 only when the shadow_spine is empty",
-it should be safe to remove the i >=3D 0 check. remove_raw() and
-remove_nearest() in dm-btree-remove.c alrealy rely on the same rule,
-without the extra check.
+This series adds per-client granularity to dm-bufio and lets dm-verity
+size and manage its caches:
 
-__btree_get_overwrite_leaf() has the same redundant check. I'll handle
-it in a separate patch after testing.
+ 1. Move the retain target into struct dm_bufio_client, initialized
+    from the module parameter at creation.  The parameter keeps its
+    meaning as the default for new clients.
 
+ 2. Add dm_bufio_client_sysfs_add(), publishing a client in sysfs
+    under a caller-chosen kobject and name, with a writable
+    retain_bytes and the rest of the state read-only.  It is opt-in,
+    so targets that do not want it pay nothing.
 
-Hank
+ 3. dm-verity: size the hash client's retain target as
+    hash_retain_percent (default 10) of the hash area, and register
+    the hash, FEC parity and FEC data clients under
+    /sys/block/dm-N/dm-bufio/<hash|fec|fec-data>/.
+
+ 4. dm-verity: add messages to report or set a client's retain target
+    and to prefetch or drop hash blocks, for warming the cache ahead
+    of use and releasing it afterwards.
+
+Nothing changes for existing users: every client starts with the value
+the module parameter holds, and only dm-verity opts into sysfs.
+
+Tested on a VM running v7.4-rc1: message and sysfs write paths, the
+shrinker retain floor under memory pressure, 500 suspend/resume
+cycles, 100 create/destroy cycles watching slab counters for leaks,
+and error-path injection.  No kernel warnings.
+
+Signed-off-by: Yongpeng Yang <yangyongpeng@xiaomi.com>
+Assisted-by: LLM
+
+Yongpeng Yang (4):
+  dm-bufio: make the retain target per client
+  dm-bufio: allow exposing a client in sysfs under a caller-chosen
+    kobject
+  dm-verity: size the hash retain target from the hash area
+  dm-verity: add messages to inspect, prefetch and drop hash blocks
+
+ .../ABI/testing/sysfs-kernel-dm-bufio         |  76 +++++++
+ .../admin-guide/device-mapper/dm-bufio.rst    |  54 +++++
+ .../admin-guide/device-mapper/index.rst       |   1 +
+ .../admin-guide/device-mapper/verity.rst      |  42 ++++
+ drivers/md/dm-bufio.c                         | 178 ++++++++++++++-
+ drivers/md/dm-verity-target.c                 | 209 ++++++++++++++++++
+ drivers/md/dm-verity.h                        |   2 +
+ include/linux/dm-bufio.h                      |  15 ++
+ 8 files changed, 576 insertions(+), 1 deletion(-)
+ create mode 100644 Documentation/ABI/testing/sysfs-kernel-dm-bufio
+ create mode 100644 Documentation/admin-guide/device-mapper/dm-bufio.rst
+
+-- 
+2.43.0
 
