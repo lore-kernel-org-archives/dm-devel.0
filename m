@@ -1,84 +1,84 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.216.47
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.215.173
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1795022524;
-	b=hT7IRiabGC3U5/AF5wnV37dGlIYszaOlcb9LOOYIVS1ir3KgXnj0okKYlzsth6oblReP
-	 ChJb+guJqNBIpmhStw2tYLt4A87jUcahCj401ucCbcI+Ggl1Q97blMApuaIP097Qhcoqe
-	 J8iz1DjL1CCkAxa5m77DY9AKFl8YhqLaZ0dFfyTQTbRps4culWhJS4iPiRYnVDZHdAp9M
-	 x4nQrt2G3W+pB/pLzwwcXUkmHUtjmqNkLqqSi4q9wreMZC0k3OjYz1s2Foj91N30cIGSf
-	 Q5oGGtNfjedAEghEyRVV3Z3MdIOeGNZ+fxYXtJsUD1ATYYF7WBcfcgtcTCyppaJmKpw==
+	t=1795022529;
+	b=uqY9HIMS3tt2ve6NZfaEmuspHR9EjLPRp8JGu42RR0uCJQ8nykxT2JDJjJ2eR9DyuQOR
+	 pg53S/xm1y34VSNGQqch8WcCrmu83bLFL7GRGetGh8LJQ/JA5iD9vw/q6xIZ3MqhYKPXD
+	 X6b2uhDHGV1sVDt5KjZ+miQkHkol1ZlIjmg7oetjgDDtzRBSRE3gVZfiJLhwqwi/j6vNr
+	 aVNakvB6eAuBW/tSYeWb3nBG8uUQjirg9WoV24VUZ4V7Yto5gbzXFoPkLkBgHXqoTsVwB
+	 Cn6lXiFMQieyywZ56xx8t7DhUjH6bkLxR76jI4PmI7e1XJk4xRrCu/mhKXHHKAwdpgg==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1795022524;
+	a=rsa-sha256; c=relaxed/relaxed; t=1795022529;
 	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
 	 X-Forwarded-Encrypted:X-Gm-Message-State:X-Gm-Gg:X-Received:Received:
 	 From:To:Cc:Subject:Date:Message-ID:X-Mailer:In-Reply-To:References:
 	 MIME-Version:Content-Transfer-Encoding;
-	bh=Sd14T1fUB4Q14wsBGQFevFadETWy31cL3NXuCPpZvvQ=;
-	b=k70RgkTVI9d4pALms3I4XbtB3zlEY3Le0chruYqeBlNoxcyKQY+j/tXLr7CBbNDAGRJJ
-	 WDokuGGZyGbZmqGS9cqXcP7P4l6PhmUzysdkGDt6Vi7/0rleataPmTiGsaNkvXflvzwho
-	 WFkN8fDuzkpGf7qraCIrl04I09sET55EIPjWUF71kYzXFY3mN4uCLjlxIaJ3h2hs8puc7
-	 NETXYWNxVdH0gQJc6xdCcDCT0/grmmd4zprl1b1SFPZH1qst/nNzwHb0VVJZUWkV024qQ
-	 8RdGva851izkONfHEpkxgncG4hDXzO8KCgpJ0qlItcZZfBBEhGeHcArNg8AzFTcbLKQ==
+	bh=5760WBpqW28SthV7ha4JpTO3lv6G1wiA/QaZuKa6JhY=;
+	b=C2Ax9xPvfnBnFBKwl6c2FIHys43xowbA/f3oXdX0xnjzbGMfmaH+4AR9P/aYytRGT49n
+	 jJbEusRiavuuzRbSIeH/p8CGxiUpeabWR0PK8KNwt8Ce9fnbmanXpByBYO48HmKxH8vxI
+	 z/pEzkTz5yRSLKxkf4mdCovHcoRYgvDPZYqGJ1riChLt0SXdhvql0XKnmvgVfBYKPDqtH
+	 wPfq3377TDaVldpmlssP4t/dNAz7CG+A7kWAheL9IxOwFaAD9QURcFs2psWmDBq4T1O32
+	 puZ88YLASx2j0AscN+1N+7vJl22zUkuPZlgZDqLbNCuai9pfHjtgWRyLHVtbataLvQQ==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
 	dmarc=pass header.from=gmail.com;
 	spf=pass smtp.mailfrom=gmail.com;
-	dkim=pass header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=KA42VOL1;
-	arc=none smtp.remote-ip=209.85.216.47
-Received: from mail-pj1-f47.google.com (mail-pj1-f47.google.com [209.85.216.47])
+	dkim=pass header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=ZxZbp76+;
+	arc=none smtp.remote-ip=209.85.215.173
+Received: from mail-pg1-f173.google.com (mail-pg1-f173.google.com [209.85.215.173])
 	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7B97E606A338
-	for <dm-devel@lists.linux.dev>; Wed, 18 Nov 2026 17:22:02 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 7B97E606A338
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B6D63606A330
+	for <dm-devel@lists.linux.dev>; Wed, 18 Nov 2026 17:22:08 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org B6D63606A330
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=KA42VOL1
-Received: by mail-pj1-f47.google.com with SMTP id 98e67ed59e1d1-3b3bf3bef9aso1237125a91.1
-        for <dm-devel@lists.linux.dev>; Wed, 18 Nov 2026 09:22:02 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=ZxZbp76+
+Received: by mail-pg1-f173.google.com with SMTP id 41be03b00d2f7-cdb75699c7cso674919a12.2
+        for <dm-devel@lists.linux.dev>; Wed, 18 Nov 2026 09:22:08 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20260707; t=1795022522; x=1795627322; darn=lists.linux.dev;
+        d=gmail.com; s=20260707; t=1795022528; x=1795627328; darn=lists.linux.dev;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to:content-type;
-        bh=Sd14T1fUB4Q14wsBGQFevFadETWy31cL3NXuCPpZvvQ=;
-        b=KA42VOL1glZmJ8Iw0eOdnewzMuBEGdGo4bxtaDpPEc19/Nxg7N+thx/yUqwPPethLo
-         8FOsX2i5SCSvBWntnizYxfeom3748uOPeNGBisCBiihpxVZ5qAPKDARBkS+U9IGJjuw1
-         aHguXAdgWtPFnMnw8rZsSGYCsvfTD3ucmZ+p6vnVsxmXoBDMY+ZrDJ4CQUucE5Y+9ih3
-         pNhPyjSCWXfRSKmEQQUH6AcOJs5v0jtzYZnYS6Pf9RE8V0C874p6miEWGvqictUivRBn
-         JGNulqmZT8tIJ4GetBwwuBpXslY+IPqvgH7f/bOSXFKE9qchC+J7/l+Yq2KrZZVNyTvQ
-         7RpQ==
+        bh=5760WBpqW28SthV7ha4JpTO3lv6G1wiA/QaZuKa6JhY=;
+        b=ZxZbp76+MuQXQWVs13xEAjXIPE92tw3PjwayasZd0N0Rv1Y6eV37l+6wq2EC4neZkk
+         PfBMHpHJi9VsZc20j2mYi7Q+/kPyDZJWTJ8lM6x3teFW/ByuzIusJv4xXF/Nw86fokW2
+         fAAAKNi9dowagExAgrxMWh8xIb1RijzVmMu8XeYS+cyLEsIIkiMMppPVqvwbqnnhBPJ/
+         l4ky693qYyY68b/wZYWnOusOrhfCtr2si1A2/eGK/ug157tz0AZCxhTRS5AL+ncx+hso
+         jLfGdA7/aNU9RPEvyDgCYcVzmSP7HtjhsjL0sJ+TP1DVAeAC5dv50/oOa3sHT8sztPDt
+         P4Jw==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1795022522; x=1795627322;
+        d=1e100.net; s=20260707; t=1795022528; x=1795627328;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:x-gm-gg:x-gm-message-state:from
          :to:cc:subject:date:message-id:reply-to:content-type;
-        bh=Sd14T1fUB4Q14wsBGQFevFadETWy31cL3NXuCPpZvvQ=;
-        b=jnNseDBqWk8a4SbZwJCLL7scWW6y0J0I7JNy4s3xwFsAoLmXIKk97R7hO+jpS7fEY+
-         kq2SM3jEwbNLvoQ5IrQ3mpqguh+O2BPFkTMqJSzKZX/As9jYOxpBfhvmfDqG73LnbAks
-         uAMvoXPJpL0I+p6aBZG8qLwBotP6GAw4ZGLNRL4t33hGnpfxEVVKzDglQ5/kWBQqLPzH
-         liUeT8f8/aDvS/y7iuCROb3y0CymESbm5cKY276DCBKiFcIXNwKHEerdXRNF9mJ7hoj0
-         ntPB7r+Wp5/PrAOpcKlugv3vf4x7g6JoOaNJ+s5bM6qooosrqN9nF5oZpDEENMmnPw/R
-         r4WA==
-X-Forwarded-Encrypted: i=1; AL+hErFkwpUjVrdXjDb7E4yaB1wAvbthobbFGj3MurlCPHy+OE52A5PclJtIxh0ww46e9ZegLeuCHDumug==@lists.linux.dev
-X-Gm-Message-State: APuU4Z+Ujq0rgmADhttb5eaXP4XgUO7S6lRRvB4FshSZ0a87HUYd37Bq
-	PaYkuy0nvL/qDw/ltfw/1ZXWfJWV73qbbk3+fE5QVFxaHHqGHYzUIsZD
-X-Gm-Gg: AZFdTZfNafHv75/xqVOw4VyT78exyei27XGaZpTj1WCSnthUuuzss/GK6XDKzzQo/u2
-	3wXdT15Ywhz5/D7su8TF/urZFaNm6Y7f340FLNFQVJmOjxdlO8CT474UMbnXJms6YurD4yJ6nsZ
-	TCy1UxgDGDv6Cy67qjIzUBMZn54SkVknEVr7ZtR4QxA3FuHPWLiIUCp/Mf9HlOsmQhbgWFJZmxE
-	NmiWhI9QeVmMaztHgWCNe+LQaK+uGipV5rxsnVbdIuN4h8Nb1gt7EzXI2T8tyAYNyzsHwQ6Udyb
-	MnpT27ichs1VZZLQojgC6FUIque7rPNmhtg8PHWwUxyDzPC0NRekpxDJB/iVyJkNtwjHYcWlIIR
-	WUzqYb189WGxx2ScTI8SJTCPDIvWBrYcfbcA4GG2zC96gNvyTaNfltzSk7LoacaXVBRH5aZJcHL
-	Iun19/Mn1m4FH2ODoHnsHgqUmAUh6czQmqVUSMB3EPO7v7d1s1m8j942Ow59YDiRNt4lCqwUqTK
-	F1/0Wunvd7fa9PAHKze8bMzk4FpzlVex640Hcju/rB8v1wsMMlYm4pruoXy0WH/4ghvHsTjy3W9
-	nKYDE3kJcur9VL58H4/5U5qeOHbRyZIkFHKL+R2GIj2Vu4v9HCDrm07N6rlVF3CKjzpMK55yuCo
-	sf/loSycB
-X-Received: by 2002:a17:90a:d886:b0:3b0:9e2c:9b57 with SMTP id 98e67ed59e1d1-3b3d06a425cmr3642264a91.4.1795022522308;
-        Wed, 18 Nov 2026 09:22:02 -0800 (PST)
+        bh=5760WBpqW28SthV7ha4JpTO3lv6G1wiA/QaZuKa6JhY=;
+        b=y4a3W9aokQqvLJRJDfSuD1Ixy0Z2Fj+KAHxD4Bg8OAWB02SyrTxit0pjYgVsfqQu3o
+         m8HxNVqGwBiAGAKYjCcLbxRozuywwOZ2DLGZtuuisDejCcZqVdjhcrJE3vwsDy9D5Zo7
+         v5HJg13B+EjpWcxyMcnO0lAl4Y1r7naHji/sr9gmWvd4vuXsYp5+wBYWui+/yfvhr/ia
+         bT3s/bQl8zci7/ezqwOqXsOfcLYWjwPdfZAfrgqvNrwPJsepbg3CZHEVZ0jdV5zsh473
+         zQVYP1q8i+6nhlf+L7HmKweB5al/8gmYr+aqGMNu8wMFNq4FGBY0ZhxR3Vhf7+e9PE1v
+         Z6sQ==
+X-Forwarded-Encrypted: i=1; AL+hErHdWSNWs7x/IUfMK1KMI8On/A5BcfVV6Vq8V0OCT7osOqMYVYUE1QdM7vPP9Mv1JUHuoxIFzmEW5Q==@lists.linux.dev
+X-Gm-Message-State: APuU4Z8kBaVlm1SxLNiGGcF4XU5bWsrltI0LIH5byhwWdmkjR78co9EN
+	ars/nyVXyiD3LMVg7ClF9ct9ilh35Yepo2dy+NwM2/gRloS6bCoJrqjR
+X-Gm-Gg: AZFdTZftEpbNt6zuLrc+jO1aEqmdrwHAfsyTOdUdBBfSVpKi6+bX9qoxc9C9F8PKA8e
+	i0NHHQGrDd9pESHDNPLu5nJTGhimwlVGR0YVUTwJsYlWk6H8hpWwrW319mEM+P00ALpkN6it6YB
+	8CaAjkhLE0VvccW+npiI8Do3ciBarQPAaF0/HjrJPegzve8fbtzIFU1NcWelJBzSYHifqqd36tD
+	obouQZl++NTllsq76uRHw1G9Ks0NTKeTG7Qb3PMYUV/q+hadNSihB9Rcm4XjvPYN20DGMIpyXjo
+	sZPpjblIp8tvbI4mteqG+IJOIM5eOVm7lZZNqiLFZN5gPNN6KngYMRymw8/M2Sim44cH/4PCim8
+	8wLvZoq4W2Gqkhj8FQTuNS4//KeV4R7g2IGe8A0eXMST33T2pJUwk3zxko7JmoOAF9eLablIVzD
+	K+L+8s4gJGPb9BPidrPNHZjfY1843AmlpE0aavlNwXKQVWVFBN+MM+K2AFTBFhZVhXWhYcySpoU
+	pAoJ0hVXbU6hc/k9I8dMgQQPITVzY2LdNA87IMNyarXAEqiwzuGgDgQgMqpi9Q4ElnMBK6O8Vpn
+	V96RNJS6wkJEv1MJwIqQxKeVeAgUfLzx+4GC6zvYKqr0VmCg+vNCN9f6/RHehmQi3zOxyF2t5Nb
+	LujTPE6v9
+X-Received: by 2002:a17:90b:3f83:b0:3b3:af8e:ea8d with SMTP id 98e67ed59e1d1-3b3d07aa083mr3356899a91.39.1795022527861;
+        Wed, 18 Nov 2026 09:22:07 -0800 (PST)
 Received: from bj-kjy-standalone-yangyongpeng.mioffice.cn ([43.224.245.241])
-        by smtp.gmail.com with ESMTPSA id 98e67ed59e1d1-3b3f7067012sm135659a91.12.2026.11.18.09.22.00
+        by smtp.gmail.com with ESMTPSA id 98e67ed59e1d1-3b3f7067012sm135659a91.12.2026.11.18.09.22.05
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Wed, 18 Nov 2026 09:22:01 -0800 (PST)
+        Wed, 18 Nov 2026 09:22:07 -0800 (PST)
 From: Yongpeng Yang <yangyongpeng.storage@gmail.com>
 To: agk@redhat.com,
 	bmarzins@redhat.com,
@@ -86,9 +86,9 @@ To: agk@redhat.com,
 	mpatocka@redhat.com,
 	snitzer@kernel.org
 Cc: yangyongpeng@xiaomi.com
-Subject: [PATCH v2 2/4] dm-bufio: allow exposing a client in sysfs under a caller-chosen kobject
-Date: Thu, 19 Nov 2026 01:21:32 +0800
-Message-ID: <20261118172133.689163-4-yangyongpeng.storage@gmail.com>
+Subject: [PATCH v2 3/4] dm-verity: size the hash retain target from the hash area
+Date: Thu, 19 Nov 2026 01:21:33 +0800
+Message-ID: <20261118172133.689163-5-yangyongpeng.storage@gmail.com>
 X-Mailer: git-send-email 2.43.0
 In-Reply-To: <20261118172133.689163-2-yangyongpeng.storage@gmail.com>
 References: <20261118172133.689163-2-yangyongpeng.storage@gmail.com>
@@ -105,415 +105,264 @@ Content-Transfer-Encoding: 8bit
 
 From: Yongpeng Yang <yangyongpeng@xiaomi.com>
 
-There is no way to see how much memory a particular dm-bufio client is
-using, or to change one client's retain target without also affecting
-every future client.
+With the dm-bufio default of 256 KiB a large device re-reads hash
+blocks evicted under memory pressure, while a small device holds far
+more than it needs.
 
-Add dm_bufio_client_sysfs_add(), which publishes a client as <name>
-under a kobject supplied by its user, with the retain target writable
-and the rest of its state read-only.  Callers that have no use for it
-simply never call it.
+Set the hash client's target to hash_retain_percent (default 10) of
+the hash area, computed with mul_u64_u32_div() and clamped at
+ULONG_MAX so a large area cannot truncate to near-zero on 32-bit.  A
+percentage above 100 is ignored, leaving the dm-bufio default.
 
-The kobject is embedded in the client, which is therefore freed only
-after the release method runs, as in dm-sysfs.
+Publish the clients under /sys/block/dm-N/dm-bufio/<name>.
+Registration runs from ->resume, not ->ctr, because the dm device's
+block device does not exist until the table is loaded; the directories
+are detached again in ->presuspend, which frees the names but keeps
+the kobjects until the table is destroyed.  A reloaded table can then
+publish its own directories synchronously from ->resume, with no
+collision and no kernfs drain while the queue is frozen.  The
+parameter only affects devices created afterwards.
 
 Signed-off-by: Yongpeng Yang <yangyongpeng@xiaomi.com>
 Assisted-by: LLM
 ---
 v2:
-- Zero the kobject after a failed dm_bufio_client_sysfs_add() so a
-  retried call cannot free the already-freed name again.
+- Destroy the FEC bufio clients before putting the data and hash
+  devices in verity_dtr().
+- Compute the percentage with mul_u64_u32_div() and clamp it at
+  ULONG_MAX, so a large area cannot truncate to near-zero on 32-bit.
+- Detach the sysfs directories in ->presuspend (names freed, kobjects
+  kept until the table is destroyed) so a table reload publishes its
+  directories synchronously from ->resume; add
+  dm_bufio_client_sysfs_detach() and re-attachment in
+  dm_bufio_client_sysfs_add().
+- Document dm_verity.hash_retain_percent= in kernel-parameters.txt.
 ---
- .../ABI/testing/sysfs-kernel-dm-bufio         |  76 ++++++++
- .../admin-guide/device-mapper/dm-bufio.rst    |  54 ++++++
- .../admin-guide/device-mapper/index.rst       |   1 +
- drivers/md/dm-bufio.c                         | 168 ++++++++++++++++++
- include/linux/dm-bufio.h                      |   9 +
- 5 files changed, 308 insertions(+)
- create mode 100644 Documentation/ABI/testing/sysfs-kernel-dm-bufio
- create mode 100644 Documentation/admin-guide/device-mapper/dm-bufio.rst
+ .../admin-guide/kernel-parameters.txt         |   6 +
+ drivers/md/dm-verity-target.c                 | 123 +++++++++++++++++-
+ drivers/md/dm-verity.h                        |   2 +
+ 3 files changed, 130 insertions(+), 1 deletion(-)
 
-diff --git a/Documentation/ABI/testing/sysfs-kernel-dm-bufio b/Documentation/ABI/testing/sysfs-kernel-dm-bufio
-new file mode 100644
-index 000000000000..bccd679c1b60
---- /dev/null
-+++ b/Documentation/ABI/testing/sysfs-kernel-dm-bufio
-@@ -0,0 +1,76 @@
-+What:		/sys/block/<dm-device>/dm-bufio/<name>/
-+Date:		November 2026
-+KernelVersion:	7.4
-+Contact:	dm-devel@lists.linux.dev
-+Description:
-+		Directory exposing one dm-bufio client whose user opted in
-+		through dm_bufio_client_sysfs_add().  <name> is chosen by that
-+		user; dm-verity, which places the directory under the block
-+		device of its own dm device, uses <name> "hash" for the hash
-+		tree client, "fec" for the FEC parity client and "fec-data"
-+		for the FEC data client.  The directory lives from
-+		registration until the client is destroyed, independently of
-+		any device-mapper table loaded on the device, so a suspend or
-+		table reload never leaves dangling entries behind.  The
-+		read-only counters are instantaneous snapshots and may be
-+		approximate.
-+
-+What:		/sys/block/<dm-device>/dm-bufio/<name>/bdev
-+Date:		November 2026
-+KernelVersion:	7.4
-+Contact:	dm-devel@lists.linux.dev
-+Description:
-+		Major and minor of the client's block device, in the form
-+		<major>:<minor>.  Read-only.
-+
-+What:		/sys/block/<dm-device>/dm-bufio/<name>/bdev_name
-+Date:		November 2026
-+KernelVersion:	7.4
-+Contact:	dm-devel@lists.linux.dev
-+Description:
-+		Name of the client's block device.  Read-only.
-+
-+What:		/sys/block/<dm-device>/dm-bufio/<name>/block_size
-+Date:		November 2026
-+KernelVersion:	7.4
-+Contact:	dm-devel@lists.linux.dev
-+Description:
-+		Block size of the client in bytes.  Read-only.
-+
-+What:		/sys/block/<dm-device>/dm-bufio/<name>/retain_bytes
-+Date:		November 2026
-+KernelVersion:	7.4
-+Contact:	dm-devel@lists.linux.dev
-+Description:
-+		Number of bytes dm-bufio tries to keep cached for this
-+		client.  It is a floor applied by the memory shrinker, not a
-+		cap, so the cache may grow past it when memory is plentiful.
-+
-+		Writable.  A non-zero value is rounded up to a block
-+		boundary, so the target keeps at least as many bytes as
-+		requested; zero restores the dm-bufio default.  Writing it
-+		affects only this client, not the retain_bytes module
-+		parameter and not other clients.
-+
-+What:		/sys/block/<dm-device>/dm-bufio/<name>/current_bytes
-+Date:		November 2026
-+KernelVersion:	7.4
-+Contact:	dm-devel@lists.linux.dev
-+Description:
-+		Number of bytes currently cached by this client.  Read-only.
-+
-+What:		/sys/block/<dm-device>/dm-bufio/<name>/buffers
-+Date:		November 2026
-+KernelVersion:	7.4
-+Contact:	dm-devel@lists.linux.dev
-+Description:
-+		Number of buffers currently cached by this client.
-+		Read-only.
-+
-+What:		/sys/block/<dm-device>/dm-bufio/<name>/minimum_buffers
-+Date:		November 2026
-+KernelVersion:	7.4
-+Contact:	dm-devel@lists.linux.dev
-+Description:
-+		Minimum number of buffers the client keeps before cleanup
-+		happens.  Read-only.
-diff --git a/Documentation/admin-guide/device-mapper/dm-bufio.rst b/Documentation/admin-guide/device-mapper/dm-bufio.rst
-new file mode 100644
-index 000000000000..c35e415acacd
---- /dev/null
-+++ b/Documentation/admin-guide/device-mapper/dm-bufio.rst
-@@ -0,0 +1,54 @@
-+========
-+dm-bufio
-+========
-+
-+dm-bufio caches small metadata blocks on block devices for several
-+device-mapper targets (dm-verity, dm-thin, dm-cache, dm-integrity and
-+dm-ebs among others).  Each user creates clients on a block device; the
-+caches are independent, even for clients on the same device.
-+
-+Retain target
-+=============
-+
-+dm-bufio bounds nothing by itself: buffers live until the memory shrinker
-+evicts them, and the shrinker stops once a client is back down to its
-+retain target.  The target is a floor under memory pressure, not a cap,
-+so a fully warmed cache may hold far more.
-+
-+The default is the ``retain_bytes`` module parameter of dm_bufio
-+(256 KiB), which only affects clients created after it is changed.  One
-+client changes its own target through the ``retain_bytes`` attribute of
-+its sysfs directory or a target-specific message.
-+
-+sysfs interface
-+===============
-+
-+A client may be published in sysfs with dm_bufio_client_sysfs_add(),
-+passing the parent kobject and the directory name; dm-bufio does not
-+choose where it lives.  The directory lives until the client is
-+destroyed.  dm-verity registers its clients under the block device of
-+its own dm device::
-+
-+  /sys/block/dm-N/dm-bufio/hash/        the hash tree client
-+  /sys/block/dm-N/dm-bufio/fec/         the FEC parity client
-+  /sys/block/dm-N/dm-bufio/fec-data/    the FEC data client
-+
-+The attributes, including the read-write ``retain_bytes``, are documented
-+in Documentation/ABI/testing/sysfs-kernel-dm-bufio.
-+
-+Example
-+=======
-+
-+Inspect the hash client of a dm-verity device::
-+
-+  # ls /sys/block/dm-1/dm-bufio/
-+  fec  fec-data  hash
-+
-+  # cat /sys/block/dm-1/dm-bufio/hash/retain_bytes
-+  2535424
-+
-+  # echo 8388608 > /sys/block/dm-1/dm-bufio/hash/retain_bytes
-+  # cat /sys/block/dm-1/dm-bufio/hash/retain_bytes
-+  8388608
-+
-+The other clients keep their own targets.
-diff --git a/Documentation/admin-guide/device-mapper/index.rst b/Documentation/admin-guide/device-mapper/index.rst
-index 73c1f2002134..3b6c348f71f5 100644
---- a/Documentation/admin-guide/device-mapper/index.rst
-+++ b/Documentation/admin-guide/device-mapper/index.rst
-@@ -8,6 +8,7 @@ Device Mapper
-     cache-policies
-     cache
-     delay
-+    dm-bufio
-     dm-clone
-     dm-crypt
-     dm-dust
-diff --git a/drivers/md/dm-bufio.c b/drivers/md/dm-bufio.c
-index 367f878c17dc..a2991dcd532f 100644
---- a/drivers/md/dm-bufio.c
-+++ b/drivers/md/dm-bufio.c
-@@ -20,6 +20,9 @@
- #include <linux/rbtree.h>
- #include <linux/stacktrace.h>
- #include <linux/jump_label.h>
-+#include <linux/kobject.h>
-+#include <linux/sysfs.h>
-+#include <linux/completion.h>
+diff --git a/Documentation/admin-guide/kernel-parameters.txt b/Documentation/admin-guide/kernel-parameters.txt
+index 0b3c140babd9..914da403c5de 100644
+--- a/Documentation/admin-guide/kernel-parameters.txt
++++ b/Documentation/admin-guide/kernel-parameters.txt
+@@ -1351,6 +1351,12 @@ Kernel parameters
+ 			For details see:
+ 			Documentation/admin-guide/hw-vuln/reg-file-data-sampling.rst
  
- #include "dm.h"
++	dm_verity.hash_retain_percent=
++			[DM] Percentage of the hash area that dm-verity
++			asks dm-bufio to keep cached for a new device.
++			Defaults to 10; 0 or a value above 100 leaves the
++			dm-bufio default.
++
+ 	dm_verity.keyring_unsealed=
+ 			[KNL] When set to 1, leave the dm-verity keyring
+ 			unsealed after initialization so userspace can
+diff --git a/drivers/md/dm-verity-target.c b/drivers/md/dm-verity-target.c
+index 451c75e30a8f..8059c842b9f9 100644
+--- a/drivers/md/dm-verity-target.c
++++ b/drivers/md/dm-verity-target.c
+@@ -32,6 +32,8 @@
+ #define DM_VERITY_DEFAULT_PREFETCH_SIZE	262144
+ #define DM_VERITY_USE_BH_DEFAULT_BYTES	8192
  
-@@ -995,6 +998,9 @@ struct dm_bufio_client {
- 	unsigned int minimum_buffers;
++#define DM_VERITY_DEFAULT_HASH_RETAIN_PERCENT	10
++
+ #define DM_VERITY_MAX_CORRUPTED_ERRS	100
  
- 	unsigned long retain_bytes;	/* READ_ONCE/WRITE_ONCE, no lock needed */
-+	bool sysfs_added;
-+	struct kobject kobj;
-+	struct completion kobj_unregister;
+ #define DM_VERITY_OPT_LOGGING		"ignore_corruption"
+@@ -50,6 +52,13 @@ static unsigned int dm_verity_prefetch_cluster = DM_VERITY_DEFAULT_PREFETCH_SIZE
  
- 	sector_t start;
+ module_param_named(prefetch_cluster, dm_verity_prefetch_cluster, uint, 0644);
  
-@@ -2505,6 +2511,165 @@ static unsigned long dm_bufio_shrink_count(struct shrinker *shrink, struct shrin
- 	return count;
++/* Default fraction of the hash tree that dm-bufio is asked to keep cached. */
++static unsigned int dm_verity_hash_retain_percent = DM_VERITY_DEFAULT_HASH_RETAIN_PERCENT;
++
++module_param_named(hash_retain_percent, dm_verity_hash_retain_percent, uint, 0644);
++MODULE_PARM_DESC(hash_retain_percent,
++	"Percentage of the hash area to keep cached by default");
++
+ static unsigned int dm_verity_use_bh_bytes[4] = {
+ 	DM_VERITY_USE_BH_DEFAULT_BYTES,	// IOPRIO_CLASS_NONE
+ 	DM_VERITY_USE_BH_DEFAULT_BYTES,	// IOPRIO_CLASS_RT
+@@ -1084,13 +1093,19 @@ static void verity_dtr(struct dm_target *ti)
+ 
+ 	kfree(v->alg_name);
+ 
++	verity_fec_dtr(v);
++
+ 	if (v->hash_dev)
+ 		dm_put_device(ti, v->hash_dev);
+ 
+ 	if (v->data_dev)
+ 		dm_put_device(ti, v->data_dev);
+ 
+-	verity_fec_dtr(v);
++	if (v->bufio_kobj) {
++		if (v->bufio_kobj->state_in_sysfs)
++			kobject_del(v->bufio_kobj);
++		kobject_put(v->bufio_kobj);
++	}
+ 
+ 	kfree(v->signature_key_desc);
+ 
+@@ -1421,6 +1436,7 @@ static int verity_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ 	struct dm_verity_sig_opts verify_args = {0};
+ 	struct dm_arg_set as;
+ 	unsigned int num;
++	unsigned int hash_retain_percent;
+ 	unsigned long long num_ll;
+ 	int r;
+ 	int i;
+@@ -1638,6 +1654,18 @@ static int verity_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ 		goto bad;
+ 	}
+ 
++	/* Keep a configurable fraction of the hash tree cached by default. */
++	hash_retain_percent = READ_ONCE(dm_verity_hash_retain_percent);
++	if (hash_retain_percent <= 100) {
++		u64 retain = mul_u64_u32_div((u64)(v->hash_end - v->hash_start) <<
++					     v->hash_dev_block_bits,
++					     hash_retain_percent, 100);
++
++		if (retain > ULONG_MAX)
++			retain = ULONG_MAX;
++		dm_bufio_set_retain_bytes(v->bufio, retain);
++	}
++
+ 	/*
+ 	 * Using WQ_HIGHPRI improves throughput and completion latency by
+ 	 * reducing wait times when reading from a dm-verity device.
+@@ -1806,6 +1834,49 @@ static inline void verity_security_clear_integrity(struct dm_target *ti)
+ 
+ #endif /* CONFIG_SECURITY */
+ 
++/* Detach the dm-bufio directories from sysfs, keeping the kobjects. */
++static void verity_detach_bufio_sysfs(struct dm_verity *v)
++{
++	dm_bufio_client_sysfs_detach(v->bufio);
++	if (verity_fec_is_enabled(v)) {
++		dm_bufio_client_sysfs_detach(v->fec->bufio);
++		dm_bufio_client_sysfs_detach(v->fec->data_bufio);
++	}
++
++	if (v->bufio_kobj && v->bufio_kobj->state_in_sysfs)
++		kobject_del(v->bufio_kobj);
++}
++
++/*
++ * Free the directory names before a table reload resumes a new
++ * instance.  Presuspend runs before the queue is frozen, so the kernfs
++ * drain cannot block on I/O.
++ */
++static void verity_presuspend(struct dm_target *ti)
++{
++	verity_detach_bufio_sysfs(ti->private);
++}
++
++static void verity_presuspend_undo(struct dm_target *ti)
++{
++	struct dm_verity *v = ti->private;
++	struct mapped_device *md = dm_table_get_md(v->ti->table);
++	struct kobject *parent = &disk_to_dev(dm_disk(md))->kobj;
++
++	if (!v->bufio_kobj)
++		return;
++
++	if (!v->bufio_kobj->state_in_sysfs &&
++	    kobject_add(v->bufio_kobj, parent, "%s", "dm-bufio"))
++		DMERR("cannot re-attach dm-bufio sysfs directory");
++
++	(void)dm_bufio_client_sysfs_add(v->bufio, v->bufio_kobj, "hash");
++	if (verity_fec_is_enabled(v)) {
++		(void)dm_bufio_client_sysfs_add(v->fec->bufio, v->bufio_kobj, "fec");
++		(void)dm_bufio_client_sysfs_add(v->fec->data_bufio, v->bufio_kobj, "fec-data");
++	}
++}
++
+ static void verity_postsuspend(struct dm_target *ti)
+ {
+ 	struct dm_verity *v = ti->private;
+@@ -1815,6 +1886,53 @@ static void verity_postsuspend(struct dm_target *ti)
+ 	verity_security_clear_integrity(ti);
  }
  
 +/*
-+ * A client may be published in sysfs with dm_bufio_client_sysfs_add();
-+ * the directory lives until the client is destroyed.
++ * Publish the bufio clients under /sys/block/dm-N/dm-bufio/.  This runs
++ * from ->resume, not ->ctr, because the dm device's block device does not
++ * exist until the table is loaded.
 + */
-+
-+static ssize_t dm_bufio_attr_show(struct kobject *kobj, struct attribute *attr,
-+				  char *buf);
-+static ssize_t dm_bufio_attr_store(struct kobject *kobj, struct attribute *attr,
-+				   const char *buf, size_t size);
-+
-+#define DM_BUFIO_ATTR_RO(_name)						\
-+	static struct attribute dm_bufio_attr_##_name =			\
-+		{ .name = #_name, .mode = 0444 }
-+
-+#define DM_BUFIO_ATTR_RW(_name)						\
-+	static struct attribute dm_bufio_attr_##_name =			\
-+		{ .name = #_name, .mode = 0644 }
-+
-+DM_BUFIO_ATTR_RO(bdev);
-+DM_BUFIO_ATTR_RO(bdev_name);
-+DM_BUFIO_ATTR_RO(block_size);
-+DM_BUFIO_ATTR_RW(retain_bytes);
-+DM_BUFIO_ATTR_RO(current_bytes);
-+DM_BUFIO_ATTR_RO(buffers);
-+DM_BUFIO_ATTR_RO(minimum_buffers);
-+
-+static ssize_t dm_bufio_attr_show(struct kobject *kobj, struct attribute *attr,
-+				  char *buf)
++static void verity_register_bufio_sysfs(struct dm_verity *v)
 +{
-+	struct dm_bufio_client *c = container_of(kobj, struct dm_bufio_client, kobj);
++	struct mapped_device *md = dm_table_get_md(v->ti->table);
++	struct kobject *parent = &disk_to_dev(dm_disk(md))->kobj;
 +
-+	if (attr == &dm_bufio_attr_bdev)
-+		return sysfs_emit(buf, "%d:%d\n", MAJOR(c->bdev->bd_dev),
-+				  MINOR(c->bdev->bd_dev));
-+	if (attr == &dm_bufio_attr_bdev_name)
-+		return sysfs_emit(buf, "%pg\n", c->bdev);
-+	if (attr == &dm_bufio_attr_block_size)
-+		return sysfs_emit(buf, "%u\n", c->block_size);
-+	if (attr == &dm_bufio_attr_retain_bytes)
-+		return sysfs_emit(buf, "%lu\n", READ_ONCE(c->retain_bytes));
-+	if (attr == &dm_bufio_attr_current_bytes)
-+		return sysfs_emit(buf, "%llu\n",
-+				  (u64)cache_total(&c->cache) * c->block_size);
-+	if (attr == &dm_bufio_attr_buffers)
-+		return sysfs_emit(buf, "%lu\n", cache_total(&c->cache));
-+	if (attr == &dm_bufio_attr_minimum_buffers)
-+		return sysfs_emit(buf, "%u\n", c->minimum_buffers);
++	if (v->bufio_kobj)
++		return;
 +
-+	return -EINVAL;
-+}
-+
-+static ssize_t dm_bufio_attr_store(struct kobject *kobj, struct attribute *attr,
-+				   const char *buf, size_t size)
-+{
-+	struct dm_bufio_client *c = container_of(kobj, struct dm_bufio_client, kobj);
-+
-+	if (attr == &dm_bufio_attr_retain_bytes) {
-+		unsigned long new;
-+
-+		if (kstrtoul(buf, 0, &new))
-+			return -EINVAL;
-+
-+		dm_bufio_set_retain_bytes(c, new);
-+
-+		return size;
++	v->bufio_kobj = kobject_create_and_add("dm-bufio", parent);
++	if (!v->bufio_kobj) {
++		DMERR("cannot create dm-bufio sysfs directory");
++		return;
 +	}
 +
-+	return -EINVAL;
++	if (dm_bufio_client_sysfs_add(v->bufio, v->bufio_kobj, "hash"))
++		DMERR("cannot register hash bufio client in sysfs");
++
++	if (verity_fec_is_enabled(v)) {
++		if (dm_bufio_client_sysfs_add(v->fec->bufio, v->bufio_kobj, "fec"))
++			DMERR("cannot register FEC bufio client in sysfs");
++		if (dm_bufio_client_sysfs_add(v->fec->data_bufio, v->bufio_kobj, "fec-data"))
++			DMERR("cannot register FEC data bufio client in sysfs");
++	}
 +}
 +
-+static struct attribute *dm_bufio_attrs[] = {
-+	&dm_bufio_attr_bdev,
-+	&dm_bufio_attr_bdev_name,
-+	&dm_bufio_attr_block_size,
-+	&dm_bufio_attr_retain_bytes,
-+	&dm_bufio_attr_current_bytes,
-+	&dm_bufio_attr_buffers,
-+	&dm_bufio_attr_minimum_buffers,
-+	NULL,
-+};
-+ATTRIBUTE_GROUPS(dm_bufio);
-+
-+static const struct sysfs_ops dm_bufio_sysfs_ops = {
-+	.show	= dm_bufio_attr_show,
-+	.store	= dm_bufio_attr_store,
-+};
-+
-+static void dm_bufio_kobj_release(struct kobject *kobj)
++static void verity_resume(struct dm_target *ti)
 +{
-+	struct dm_bufio_client *c = container_of(kobj, struct dm_bufio_client, kobj);
++	struct dm_verity *v = ti->private;
 +
-+	/*
-+	 * The client is freed only after this completes, as in dm-sysfs.
-+	 */
-+	complete(&c->kobj_unregister);
-+}
-+
-+static const struct kobj_type dm_bufio_ktype = {
-+	.sysfs_ops	= &dm_bufio_sysfs_ops,
-+	.default_groups	= dm_bufio_groups,
-+	.release	= dm_bufio_kobj_release,
-+};
-+
-+static int dm_bufio_kobj_add(struct dm_bufio_client *c, struct kobject *parent,
-+			     const char *name)
-+{
-+	init_completion(&c->kobj_unregister);
-+
-+	return kobject_init_and_add(&c->kobj, &dm_bufio_ktype, parent, "%s",
-+				    name);
-+}
-+
-+/* Drop the sysfs reference and wait for the release method to run. */
-+static void dm_bufio_kobj_del(struct dm_bufio_client *c)
-+{
-+	kobject_put(&c->kobj);
-+	wait_for_completion(&c->kobj_unregister);
-+}
-+
-+int dm_bufio_client_sysfs_add(struct dm_bufio_client *c, struct kobject *parent,
-+			      const char *name)
-+{
-+	int r;
-+
-+	if (c->sysfs_added) {
-+		if (c->kobj.state_in_sysfs)
-+			return -EBUSY;
-+		/* re-attaching after dm_bufio_client_sysfs_detach() */
-+		init_completion(&c->kobj_unregister);
-+		return kobject_add(&c->kobj, parent, "%s", name);
++	if (v->bufio_kobj) {
++		/* detached by presuspend, or re-attached by presuspend_undo */
++		if (v->bufio_kobj->state_in_sysfs)
++			kobject_del(v->bufio_kobj);
++		kobject_put(v->bufio_kobj);
++		v->bufio_kobj = NULL;
 +	}
 +
-+	r = dm_bufio_kobj_add(c, parent, name);
-+	if (r) {
-+		/* kobject_cleanup() freed kobj.name; clear the kobject so
-+		 * a retried add does not free the dangling pointer again. */
-+		dm_bufio_kobj_del(c);
-+		memset(&c->kobj, 0, sizeof(c->kobj));
-+		return r;
-+	}
-+
-+	c->sysfs_added = true;
-+	return 0;
++	verity_register_bufio_sysfs(v);
 +}
-+EXPORT_SYMBOL_GPL(dm_bufio_client_sysfs_add);
 +
-+/*
-+ * Remove the directory from sysfs without releasing the kobject; it is
-+ * released in dm_bufio_client_destroy().  dm_bufio_client_sysfs_add()
-+ * puts the directory back.
-+ */
-+void dm_bufio_client_sysfs_detach(struct dm_bufio_client *c)
-+{
-+	if (c->sysfs_added && c->kobj.state_in_sysfs)
-+		kobject_del(&c->kobj);
-+}
-+EXPORT_SYMBOL_GPL(dm_bufio_client_sysfs_detach);
++static void verity_register_bufio_sysfs(struct dm_verity *v);
 +
+ static struct target_type verity_target = {
+ 	.name		= "verity",
+ /* Note: the LSMs depend on the singleton and immutable features */
+@@ -1824,7 +1942,10 @@ static struct target_type verity_target = {
+ 	.ctr		= verity_ctr,
+ 	.dtr		= verity_dtr,
+ 	.map		= verity_map,
++	.presuspend	= verity_presuspend,
++	.presuspend_undo = verity_presuspend_undo,
+ 	.postsuspend	= verity_postsuspend,
++	.resume		= verity_resume,
+ 	.status		= verity_status,
+ 	.prepare_ioctl	= verity_prepare_ioctl,
+ 	.iterate_devices = verity_iterate_devices,
+diff --git a/drivers/md/dm-verity.h b/drivers/md/dm-verity.h
+index e104a651c657..1bd625f5b45a 100644
+--- a/drivers/md/dm-verity.h
++++ b/drivers/md/dm-verity.h
+@@ -82,6 +82,8 @@ struct dm_verity {
+ 
+ 	struct dm_io_client *io;
+ 	mempool_t recheck_pool;
 +
- /*
-  * Create the buffering interface
-  */
-@@ -2661,6 +2826,9 @@ void dm_bufio_client_destroy(struct dm_bufio_client *c)
- {
- 	unsigned int i;
++	struct kobject *bufio_kobj;	/* /sys/block/dm-N/dm-bufio, or NULL */
+ };
  
-+	if (c->sysfs_added)
-+		dm_bufio_kobj_del(c);
-+
- 	drop_buffers(c);
- 
- 	shrinker_free(c->shrinker);
-diff --git a/include/linux/dm-bufio.h b/include/linux/dm-bufio.h
-index 9bf3f805c43c..ac168ac797e4 100644
---- a/include/linux/dm-bufio.h
-+++ b/include/linux/dm-bufio.h
-@@ -17,6 +17,7 @@
- 
- struct dm_bufio_client;
- struct dm_buffer;
-+struct kobject;
- 
- /*
-  * Flags for dm_bufio_client_create
-@@ -165,6 +166,14 @@ void dm_bufio_set_minimum_buffers(struct dm_bufio_client *c, unsigned int n);
- void dm_bufio_set_retain_bytes(struct dm_bufio_client *c, unsigned long bytes);
- unsigned long dm_bufio_get_retain_bytes(struct dm_bufio_client *c);
- 
-+/*
-+ * Publish the client as <name> under <parent> in sysfs; removed in
-+ * dm_bufio_client_destroy().
-+ */
-+int dm_bufio_client_sysfs_add(struct dm_bufio_client *c, struct kobject *parent,
-+			      const char *name);
-+void dm_bufio_client_sysfs_detach(struct dm_bufio_client *c);
-+
- unsigned int dm_bufio_get_block_size(struct dm_bufio_client *c);
- sector_t dm_bufio_get_device_size(struct dm_bufio_client *c);
- struct dm_io_client *dm_bufio_get_dm_io_client(struct dm_bufio_client *c);
+ struct pending_block {
 -- 
 2.43.0
 
