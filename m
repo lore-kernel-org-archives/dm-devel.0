@@ -1,57 +1,57 @@
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=100.103.45.18
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1795023807;
-	b=bPu3hX0M+wgczntE2HXHGXBj7B6Ilh07d09qbfQzFtry5vVlENGneY90l1fvCaQnx2vR
-	 iPL2bCpI4pCaa/2rd0OLtcH7nM8/+f58AGzg39TF/bG+3mNHnyS9bmjLVxK+Fv3i8Zo2A
-	 QGbMbluIWIn32uqk5vyl+zNEXxUP2ZANldkEFjHYKH+YWHQTfSjJbkk9CDzjVEc3HAk5K
-	 o3eaUa3JO6ZnnKjeuWxSXC0byGbCwLeLL8i9kiTx1qIHqyVRXnIuP+iogNxP+Ljf1YttB
-	 2im0E6wAC0Ap1hkiIN8lm1JU54TU1rfUdzMzTUvBDYzGObAObo/WomNi4swnr9C6OWA==
+	t=1795024210;
+	b=WJcwyYaJnLprfZXjhnuFG1+fl8jb0iWGecU/wSEThyaKByh2KjL/Do/8jMLBm20DStTN
+	 TytYjOehsjnLIjLRWEmCcdYHakYJGsAFWDU8LKo0JSRbTrdC237zt2UApWJrZ3pw0sl8H
+	 utIhBMj33vdrCa7NcMq7wfChDHslv2SPb3qWkkuj8U1jAQuEnNxyukad++P1sV5u3SOS6
+	 VopHL/kMKsoVy9FL8pxwIUtuyl8YFeSJLryU7QtYB4TfbLkr3Ve8xAIf85egk7e7ENy4P
+	 /C9XoHuLWDVSHlPaxM+tpfQD2+wflwqb6HjrsmQnppHtispxqWJo/cjrRBnBP5n/g7g==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1795023807;
+	a=rsa-sha256; c=relaxed/relaxed; t=1795024210;
 	h=Received:DKIM-Signature:Message-ID:From:Subject:Reply-To:To:Cc:
 	 In-Reply-To:References:Content-Type:Content-Transfer-Encoding:Date;
-	bh=A52iasclaMGn55CnoWsk9m1Kpv5JAEAAzN+HRgO3nPc=;
-	b=DT7HKEJbPTp7ED4AkGGP80VAOIORwZfQcsI/CLsLdxV3pgjBynj/05sGj3Wj71CCe7zW
-	 glOj0cyWarz1wp7ehmT5vFR9EcZ65oMfcXZ6siyS5xpyE+ynnWUhqxyFbiuWahWCrXLcz
-	 2d/T5mDbce2THSxlKvwIDDHndyCMXjL4uJTt27+7R0LZPSUuMHGPf5e/7/C5CVRjPBUqC
-	 mJLKKgDVbpiSwsIbSW9L66CnOGt7HLOIY5S0wISEt3l/uRtN+71xOh3Y0KKJc3j+Y7d71
-	 f4RjIxyOtT7QrB/Q8dO2uIpdBjT5AoAHkxYcvsVpSfKMKI+dlToOo9g+Gc12T+Y/0Zw==
+	bh=Rs92g8oh63ocRbobUL6srNX8QyIraXRPUM6Ng1CO8HY=;
+	b=ILyjY1n94ERSStmNNLa9ujiVJRwlrn/cFalLvH9Fp4cM+PMUBu2EMz5XsOJFVWVXDa4W
+	 uQvlvJI0tgnkx3QD5/WLA2buKU39MpAXL0FkCbLL2auEB5ytJcQyLQ+jhVh+UxL8oXNDV
+	 ADQf1oZ2qCph4U3XC2sbJA0U3yEoVkMWOPhPjztqJl+7rfk6jhS9venBnza1tOjeQi86a
+	 +t/5wpAhoJl1lq7kgsDKNN4QslKfyY2RGUbCvprLJgXI+DP6WQUuQC3/n19BTBf7JeTvm
+	 4RGXIZEZXpPDmwfb5u1uTzfT516etfLQ0OuNRU3s1XRmFOWu8V1F9Pc0o6ig8g+4jTA==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=VaUWvIui;
+	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b="i/9US7YI";
 	arc=none smtp.remote-ip=100.103.45.18
 Received: from smtp.kernel.org (quasi.space.kernel.org [100.103.45.18])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 957A8606A333
-	for <dm-devel@lists.linux.dev>; Wed, 18 Nov 2026 17:43:27 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8762F606A320
+	for <dm-devel@lists.linux.dev>; Wed, 18 Nov 2026 17:50:10 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=VaUWvIui
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 0BE011F000C6;
-	Wed, 18 Nov 2026 17:43:27 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=i/9US7YI
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 0949C1F000C5;
+	Wed, 18 Nov 2026 17:50:09 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
-	s=k20260515; t=1795023807;
-	bh=A52iasclaMGn55CnoWsk9m1Kpv5JAEAAzN+HRgO3nPc=;
+	s=k20260515; t=1795024210;
+	bh=Rs92g8oh63ocRbobUL6srNX8QyIraXRPUM6Ng1CO8HY=;
 	h=From:Subject:Reply-To:To:Cc:In-Reply-To:References:Date;
-	b=VaUWvIui4ObFC5TqrlvRTksqILEnqSF+GrHclfC0IzZ4tVUA8Xai/nl/HG9fiwFdf
-	 jy9TrKax4MofEhLBrDA/2+3RaGtDz4fwV96aZsFqn/V84mVbpzXq46m5wYYkbHY0C/
-	 CEob7t9JEX2Hiduo+Y07vdynBj0pdBugO/plfM73AAWrXP0EhuU13r2iggoatuWADH
-	 oNENzLWMODrZUKZRVcjEEe8bfaOMC/WxOEoud+ZM0H1ZtFOOYBe5ewRNaqKMT3zd4z
-	 COjiyKtbviPoAoucCg4YSbEceQDyVelI7MD23lr+RLJC0fbDlZWIFN7wze2GVU2BvJ
-	 eDbA9/V60SE8g==
-Message-ID: <sashiko-outbox-221679@kernel.org>
+	b=i/9US7YIQGz8dueDxteDlos6KvYJAXdPIfk/fl88ZUEmg0M1BuPkIu6KGzXcoFSNr
+	 2kQaY1zfxaPCO97dNgpXBcBHeugoXDBT9THtsVTCeBA3BqAfe1VzJzKkVRuwDwObE1
+	 nnJW5mxW4K4WgGzzbLltr4GxUzyYv1BuJYxZlTpUzY80qqRVRR0bPhEGG4UU5JuSSg
+	 NAUUsbjKKUoUg+Wkcm7UhLDfLakTECLOR5uueFAf4oMUL2nsWem5Bq+9AtqmIeFPFG
+	 LRAsNtb5cPyrnfgk0cquiJivQvkZ44hVzaQ74jDq/k5HHEiE+ogfWuVhb795cLcLlv
+	 F9U8Yfv8h1AJg==
+Message-ID: <sashiko-outbox-221697@kernel.org>
 From: sashiko-bot@kernel.org
-Subject: Re: [PATCH v2 4/4] dm-verity: add messages to inspect, prefetch and
- drop hash blocks
+Subject: Re: [PATCH v2 3/4] dm-verity: size the hash retain target from the
+ hash area
 Reply-To: sashiko-reviews@lists.linux.dev
 To: "Yongpeng Yang" <yangyongpeng.storage@gmail.com>, agk@redhat.com, bmarzins@redhat.com, dm-devel@lists.linux.dev, mpatocka@redhat.com, snitzer@kernel.org
 Cc: yangyongpeng@xiaomi.com
-In-Reply-To: <20261118172133.689163-6-yangyongpeng.storage@gmail.com>
+In-Reply-To: <20261118172133.689163-5-yangyongpeng.storage@gmail.com>
 References: <20261118172133.689163-2-yangyongpeng.storage@gmail.com>
- <20261118172133.689163-6-yangyongpeng.storage@gmail.com>
+ <20261118172133.689163-5-yangyongpeng.storage@gmail.com>
 Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: quoted-printable
-Date: Wed, 18 Nov 2026 17:43:26 +0000
+Date: Wed, 18 Nov 2026 17:50:09 +0000
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Post: <mailto:dm-devel@lists.linux.dev>
@@ -61,200 +61,166 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 List-Owner: <mailto:dm-devel+owner@lists.linux.dev>
 Precedence: list
 
-Thank you for your contribution! Sashiko AI review found 2 potential
+Thank you for your contribution! Sashiko AI review found 3 potential
 issues to consider:
-- [Medium] dm-verity: unsynchronized prefetch in verity_prefetch_hash()
-  across suspend
-- [Low] dm-verity: unchecked start when total is 0 and duplicated range
-  parsing
+- [Low] dm-verity: missing return on kobject_add() error in
+  verity_presuspend_undo()
+- [Low] dm-verity: redundant post-definition
+  verity_register_bufio_sysfs() prototype
+- [Low] dm-verity: dead code and redundant kobject reallocation in
+  verity_resume()
 --
 
-commit 836508fe811e1c71a731130ee4c4606452302695
+commit 2adf10b9bb56217937bcf599cad99cc4d02fedf6
 Author: Yongpeng Yang <yangyongpeng@xiaomi.com>
 
-dm-verity: add messages to inspect, prefetch and drop hash blocks
+dm-verity: size the hash retain target from the hash area
 
-This commit adds target messages to dm-verity to inspect or set the bufio
-retain target (retain_bytes), asynchronously prefetch hash blocks
-(prefetch_hash), and evict cached hash blocks (drop_hash), along with
-documentation in verity.rst.
+This commit sets the default dm-bufio retain target for a dm-verity hash
+client to a configurable percentage of the hash area and publishes the
+dm-bufio clients in sysfs under /sys/block/dm-N/dm-bufio/.
 
-> diff --git a/Documentation/admin-guide/device-mapper/verity.rst b/Documen=
-tation/admin-guide/device-mapper/verity.rst
-> index 9e9d4b8157c03..ec29cc6b6dc73 100644
-> --- a/Documentation/admin-guide/device-mapper/verity.rst
-> +++ b/Documentation/admin-guide/device-mapper/verity.rst
-> @@ -328,6 +328,49 @@ Status
+> diff --git a/drivers/md/dm-verity-target.c b/drivers/md/dm-verity-target.c
+> index 6d589867623c0..15dee27d58a7a 100644
+> --- a/drivers/md/dm-verity-target.c
+> +++ b/drivers/md/dm-verity-target.c
 
 [ ... ]
 
-> +Both cache commands still work while the device is suspended: prefetch
-> +reads are queued and complete on resume, and ``drop_hash`` finds an empty
-> +cache because verity resets the bufio client on suspend.
-> +
->  Example
->  =3D=3D=3D=3D=3D=3D=3D
->  Set up a device::
-> diff --git a/drivers/md/dm-verity-target.c b/drivers/md/dm-verity-target.c
-> index 15dee27d58a7a..78ae2e6bff186 100644
-> --- a/drivers/md/dm-verity-target.c
-> +++ b/drivers/md/dm-verity-target.c
-> @@ -1924,6 +1924,174 @@ static void verity_resume(struct dm_target *ti)
+> @@ -1797,6 +1825,49 @@ static inline void verity_security_clear_integrity=
+(struct dm_target *ti)
 > =20
->  static void verity_register_bufio_sysfs(struct dm_verity *v);
+>  #endif /* CONFIG_SECURITY */
 > =20
-> +static int verity_prefetch_hash(struct dm_verity *v, unsigned int argc,
-> +				char **argv, char *result, unsigned int maxlen)
+> +/* Detach the dm-bufio directories from sysfs, keeping the kobjects. */
+> +static void verity_detach_bufio_sysfs(struct dm_verity *v)
 > +{
-> +	sector_t total =3D v->hash_end - v->hash_start;
-> +	sector_t start, n;
-> +	unsigned long long value;
-> +	unsigned int sz =3D 0;
-> +
-> +	/*
-> +	 * On a no_sleep client a buffer being read cannot be evicted or
-> +	 * waited for, so an unfinished prefetch would outlive a suspend or
-> +	 * teardown; drop_hash rejects this case for the same reason.
-> +	 */
-> +	if (v->use_bh_wq) {
-> +		DMERR("prefetch_hash unsupported on tasklet-verifying device");
-> +		return -EOPNOTSUPP;
+> +	dm_bufio_client_sysfs_detach(v->bufio);
+> +	if (verity_fec_is_enabled(v)) {
+> +		dm_bufio_client_sysfs_detach(v->fec->bufio);
+> +		dm_bufio_client_sysfs_detach(v->fec->data_bufio);
 > +	}
 > +
-> +	if (argc =3D=3D 1) {
-> +		start =3D 0;
-> +		n =3D total;
-> +	} else if (argc =3D=3D 3) {
-> +		if (kstrtoull(argv[1], 0, &value) || (sector_t)value !=3D value)
-> +			return -EINVAL;
-> +		start =3D value;
-> +
-> +		if (kstrtoull(argv[2], 0, &value) || (sector_t)value !=3D value)
-> +			return -EINVAL;
-> +		n =3D value;
-> +	} else {
-> +		return -EINVAL;
-> +	}
-> +
-> +	if (start >=3D total) {
-> +		if (!total) {
-> +			n =3D 0;
-> +			goto out;
-> +		}
-> +		DMERR("prefetch_hash start %llu beyond hash area (%llu blocks)",
-> +		      (unsigned long long)start, (unsigned long long)total);
-> +		return -EINVAL;
-> +	}
-> +
-> +	n =3D min(n, total - start);
-> +	n =3D min_t(sector_t, n, UINT_MAX);
-> +
-> +out:
-> +	dm_bufio_prefetch(v->bufio, v->hash_start + start, n);
-
-[Severity: Medium]
-Can verity_prefetch_hash() race with verity_postsuspend() or submit reads
-while the target is suspended?
-
-target_message() runs under the live table SRCU lock without holding
-md->suspend_lock or checking dm_suspended(ti).  Unlike verity_prefetch_io(),
-which queues work on v->verify_wq that verity_postsuspend() drains before
-calling dm_bufio_client_reset(v->bufio), verity_prefetch_hash() calls
-dm_bufio_prefetch() directly in the ioctl context:
-
-CPU0                              CPU1
-target_message()
-  verity_prefetch_hash()
-    __dm_bufio_prefetch()
-      dm_bufio_lock(c)
-      b =3D __bufio_new(c, block, ...)
-        /* b->hold_count =3D 1 */
-      dm_bufio_unlock(c)
-                                  dm_suspend()
-                                    verity_postsuspend()
-                                      flush_workqueue(v->verify_wq)
-                                      dm_bufio_client_reset(v->bufio)
-                                        drop_buffers(c)
-                                          cache_iterate(..., warn_leak, ...)
-                                            WARN_ON(!(*warned))
-      submit_io(b, ...)
-      dm_bufio_release(b)
-
-drop_buffers() sees b->hold_count =3D=3D 1 and triggers WARN_ON in warn_lea=
-k()
-and WARN_ON(cache_count(&c->cache, i)); with
-CONFIG_DM_DEBUG_BLOCK_STACK_TRACING enabled, warn_leak() also resets
-b->hold_count to 0 and drop_buffers() frees b while CPU0 still passes b to
-submit_io() and dm_bufio_release(), causing a use-after-free and
-BUG_ON(!atomic_read(&b->hold_count)).
-
-In addition, because v->bufio is backed by v->hash_dev->bdev rather than
-the dm-verity mapped_device, calling prefetch_hash while suspended
-immediately submits read BIOs to v->hash_dev->bdev and populates v->bufio
-(which a subsequent drop_hash while suspended can then drop), rather than
-queueing reads until resume as described in verity.rst and expected by
-2de510fccbca ("dm-verity: fix prefetch-vs-suspend race").
-
-> +
-> +	DMEMIT("prefetch_hash: started %llu blocks", (unsigned long long)n);
-> +
-> +	return 1;
+> +	if (v->bufio_kobj && v->bufio_kobj->state_in_sysfs)
+> +		kobject_del(v->bufio_kobj);
 > +}
 > +
-> +static int verity_drop_hash(struct dm_verity *v, unsigned int argc,
-> +			    char **argv, char *result, unsigned int maxlen)
+> +/*
+> + * Free the directory names before a table reload resumes a new
+> + * instance.  Presuspend runs before the queue is frozen, so the kernfs
+> + * drain cannot block on I/O.
+> + */
+> +static void verity_presuspend(struct dm_target *ti)
 > +{
-> +	sector_t total =3D v->hash_end - v->hash_start;
-> +	sector_t start, n;
-> +	unsigned long long value;
-> +	unsigned int sz =3D 0;
+> +	verity_detach_bufio_sysfs(ti->private);
+> +}
 > +
-> +	/*
-> +	 * dm_bufio_forget_buffers() ends up in cache_remove_range(), which
-> +	 * cannot run on a client created with DM_BUFIO_CLIENT_NO_SLEEP.
-> +	 */
-> +	if (v->use_bh_wq) {
-> +		DMERR("drop_hash unsupported on tasklet-verifying device");
-> +		return -EOPNOTSUPP;
+> +static void verity_presuspend_undo(struct dm_target *ti)
+> +{
+> +	struct dm_verity *v =3D ti->private;
+> +	struct mapped_device *md =3D dm_table_get_md(v->ti->table);
+> +	struct kobject *parent =3D &disk_to_dev(dm_disk(md))->kobj;
+> +
+> +	if (!v->bufio_kobj)
+> +		return;
+> +
+> +	if (!v->bufio_kobj->state_in_sysfs &&
+> +	    kobject_add(v->bufio_kobj, parent, "%s", "dm-bufio"))
+> +		DMERR("cannot re-attach dm-bufio sysfs directory");
+> +
+> +	(void)dm_bufio_client_sysfs_add(v->bufio, v->bufio_kobj, "hash");
+> +	if (verity_fec_is_enabled(v)) {
+> +		(void)dm_bufio_client_sysfs_add(v->fec->bufio, v->bufio_kobj, "fec");
+> +		(void)dm_bufio_client_sysfs_add(v->fec->data_bufio, v->bufio_kobj, "fe=
+c-data");
 > +	}
-> +
-> +	if (argc =3D=3D 1) {
-> +		start =3D 0;
-> +		n =3D total;
-> +	} else if (argc =3D=3D 3) {
-> +		if (kstrtoull(argv[1], 0, &value) || (sector_t)value !=3D value)
-> +			return -EINVAL;
-> +		start =3D value;
-> +
-> +		if (kstrtoull(argv[2], 0, &value) || (sector_t)value !=3D value)
-> +			return -EINVAL;
-> +		n =3D value;
-> +	} else {
-> +		return -EINVAL;
-> +	}
-> +
-> +	if (start >=3D total) {
-> +		if (!total) {
-> +			n =3D 0;
-> +			goto out;
-> +		}
-> +		DMERR("drop_hash start %llu beyond hash area (%llu blocks)",
-> +		      (unsigned long long)start, (unsigned long long)total);
-> +		return -EINVAL;
-> +	}
+> +}
 
 [Severity: Low]
-When total is 0 (levels =3D=3D 0), should a non-zero start argument such as
-"prefetch_hash 100 10" or "drop_hash 100 10" still be rejected with
--EINVAL?
+Should verity_presuspend_undo() return early when kobject_add() fails to
+re-attach v->bufio_kobj?  Falling through passes the unattached
+v->bufio_kobj (with a NULL kernfs node) as the parent to
+dm_bufio_client_sysfs_add(), causing each child registration to fail with
+-ENOENT and emit additional kobject error messages.  Also, the client
+registration sequence here duplicates verity_register_bufio_sysfs().
 
-Both verity_prefetch_hash() and verity_drop_hash() take the !total branch
-even when start > 0, jumping to out: and computing v->hash_start + start
-with an unvalidated start offset.  Factoring the tasklet check, argument
-parsing, and range clamping into a shared helper that only treats
-(!start && !total) as an empty-range no-op would also remove the
-duplicated parsing code between the two functions.
+>  static void verity_postsuspend(struct dm_target *ti)
+>  {
+>  	struct dm_verity *v =3D ti->private;
+> @@ -1806,6 +1877,53 @@ static void verity_postsuspend(struct dm_target *t=
+i)
+>  	verity_security_clear_integrity(ti);
+>  }
+> =20
+> +/*
+> + * Publish the bufio clients under /sys/block/dm-N/dm-bufio/.  This runs
+> + * from ->resume, not ->ctr, because the dm device's block device does n=
+ot
+> + * exist until the table is loaded.
+> + */
+> +static void verity_register_bufio_sysfs(struct dm_verity *v)
+> +{
+> +	struct mapped_device *md =3D dm_table_get_md(v->ti->table);
+> +	struct kobject *parent =3D &disk_to_dev(dm_disk(md))->kobj;
+> +
+> +	if (v->bufio_kobj)
+> +		return;
+> +
+> +	v->bufio_kobj =3D kobject_create_and_add("dm-bufio", parent);
+> +	if (!v->bufio_kobj) {
+> +		DMERR("cannot create dm-bufio sysfs directory");
+> +		return;
+> +	}
+> +
+> +	if (dm_bufio_client_sysfs_add(v->bufio, v->bufio_kobj, "hash"))
+> +		DMERR("cannot register hash bufio client in sysfs");
+> +
+> +	if (verity_fec_is_enabled(v)) {
+> +		if (dm_bufio_client_sysfs_add(v->fec->bufio, v->bufio_kobj, "fec"))
+> +			DMERR("cannot register FEC bufio client in sysfs");
+> +		if (dm_bufio_client_sysfs_add(v->fec->data_bufio, v->bufio_kobj, "fec-=
+data"))
+> +			DMERR("cannot register FEC data bufio client in sysfs");
+> +	}
+> +}
+> +
+> +static void verity_resume(struct dm_target *ti)
+> +{
+> +	struct dm_verity *v =3D ti->private;
+> +
+> +	if (v->bufio_kobj) {
+> +		/* detached by presuspend, or re-attached by presuspend_undo */
+> +		if (v->bufio_kobj->state_in_sysfs)
+> +			kobject_del(v->bufio_kobj);
+> +		kobject_put(v->bufio_kobj);
+> +		v->bufio_kobj =3D NULL;
+> +	}
+> +
+> +	verity_register_bufio_sysfs(v);
+> +}
+
+[Severity: Low]
+Why does verity_resume() drop and reallocate v->bufio_kobj instead of
+re-attaching it?
+
+The commit message notes that presuspend keeps the kobjects until the
+table is destroyed, and verity_register_bufio_sysfs() checks if
+v->bufio_kobj is already allocated, which is dead code because
+verity_resume() is its only caller and always clears v->bufio_kobj first.
+In addition, if v->bufio_kobj->state_in_sysfs were ever set on entry to
+verity_resume(), calling kobject_del(v->bufio_kobj) without detaching the
+child client kobjects first would leave their state_in_sysfs flags set and
+cause the subsequent dm_bufio_client_sysfs_add() calls to fail with
+-EBUSY.
+
+> +
+> +static void verity_register_bufio_sysfs(struct dm_verity *v);
+
+[Severity: Low]
+This isn't a bug, but this forward declaration of
+verity_register_bufio_sysfs() is placed after both its definition and its
+caller.
 
 --=20
 Sashiko AI review =C2=B7 https://sashiko.dev/#/patchset/20261118172133.6891=
-63-2-yangyongpeng.storage@gmail.com?part=3D4
+63-2-yangyongpeng.storage@gmail.com?part=3D3
