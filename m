@@ -1,97 +1,94 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.215.169
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.216.51
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1795022352;
-	b=T+Tr2eCrnwe1JtwxceH/9lRhf1NwCn3BVf6PehaOCjY9UxLTRMDNKEuPP6pyT10nPeCI
-	 4QStR9P6KV14neYixxTQSJMjQ9PTZ86yMdWEaIrqGrNzwYljWTGgtU1zWTGvQxC9TM2Cv
-	 V/+45dm6RshCnTJwUcMZeWj3MfozyQOknBL4dkhJiZJpOeEVNkA4moftZw2BJkv5XLgd9
-	 Yi7+Gk8sp988eJXWADaGF0LqIc4i3eQzZKxTIYjew1IgGt+eefj61ALaqXGQiX6uyrHJu
-	 MrTsS/1x07eoWNvGcuejn0NzuVvh8xVXYdAffTWkqS/kQ3SrrT0/+JNFM/U3+A1RfqQ==
+	t=1795022514;
+	b=1Yu7AS5Bzaok38gEQdGvazWDvJh9VgT+KPSSL/Nc9pgKTfskxKlMrtR/wb/vb0KO22/x
+	 WruS08OqBBNGuCVAavNB22MFYg7TuowlAqf3+p7HEhvsCuE/0TXgXBCw9GETc1JTAsvwC
+	 vzgCaG8v4rdD4YUil/q26THurPPeif1SPZEuwXHoMna0TJlm3sL+3482RKNO/poIRMkpr
+	 4ntXAaIwC638bRvl3gvuZBrMoZh7OqnqXtaHFJrq3Rk/KvYdPSOYMsRMwnH8ijDQmWj/Y
+	 Ak2U6vUH+ZVJVnhFsZueEkBqlCyacPB/Rg45iB23GAyR11pVc1HHWb6mwH9v8EHGH4Q==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1795022352;
+	a=rsa-sha256; c=relaxed/relaxed; t=1795022514;
 	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
 	 X-Forwarded-Encrypted:X-Gm-Message-State:X-Gm-Gg:X-Received:Received:
-	 From:To:Cc:Subject:Date:Message-ID:X-Mailer:In-Reply-To:References:
-	 MIME-Version:Content-Transfer-Encoding;
-	bh=bIURRZURf2VUjBygPjSL4g06Fd8DFi1lyXNz0C36Unw=;
-	b=GMLln76f36NGQ5hvnkC01T4WF9Ir8wrZpYqayPWCeSTlguQQt56qOWTP7axwYT90G8BC
-	 DTBhO6hv59Wj1h8Ls4ok/TMPNgY1oNUZQfcwj/hU2Tn+QLpiSpgbIdJDBado3E8DDNzRz
-	 EfQNYU95jjmiby6s+2WvnsGodq64SsX7L7+DvVRQqjFwnjFCeBEk0+fbwKs0kG5dnIJ2+
-	 VajZVJNIbV62/tZ6XPR9TwH4gqAvNtHdnA4Rdh9we72aJkl15r5d+A0zhgGXEV2Qiu94+
-	 JCgLYByR9PDkquT8m9GZycw7A05+BgSfAAiAiRyeJQAEAMoWgFTSB3+oa8KXe8sVKHw==
+	 From:To:Cc:Subject:Date:Message-ID:X-Mailer:MIME-Version:
+	 Content-Transfer-Encoding;
+	bh=eQlqtTqVo4i1iQMXfdZwTxvtktVIkuGgoTezX3fYfUw=;
+	b=RK4O4FNV80BnhafDv7jWvDK8zkPOmrXwRUGpm/zTQRYq3Wmra93mC5oMuE0H00AUyD/u
+	 JCAmEw3Kz1nrl5nHBk9XI2h+2dPFnGVYeqEXn6wnND+JY4W2+tM9rtbbwsHIqCgAFQxt5
+	 VmX9CCsx/ZxEf7DqpHaRatjGmfvdbcjwPkZyg7MCQuw8s1csEAR7sdSMTdCb0vgnkyAlc
+	 bL1argidGge4hOvqToBTJla/2yyzzQ+n1Q3Xinmy9CnvEsUnG3IVBQ4oFOC8JbQPHJfkF
+	 HlBwlGeqyuLSE/7hApOtCJ4OALKpMQmWhjicQRP2yoTh1Y0oWCMKv24todmRrueU1kg==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
 	dmarc=pass header.from=gmail.com;
 	spf=pass smtp.mailfrom=gmail.com;
-	dkim=pass header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b="cZ/qP4pU";
-	arc=none smtp.remote-ip=209.85.215.169
-Received: from mail-pg1-f169.google.com (mail-pg1-f169.google.com [209.85.215.169])
+	dkim=pass header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=wxs4Jn9j;
+	arc=none smtp.remote-ip=209.85.216.51
+Received: from mail-pj1-f51.google.com (mail-pj1-f51.google.com [209.85.216.51])
 	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B7F05606A325
-	for <dm-devel@lists.linux.dev>; Wed, 18 Nov 2026 17:19:11 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org B7F05606A325
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B8E6E606A31C
+	for <dm-devel@lists.linux.dev>; Wed, 18 Nov 2026 17:21:53 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org B8E6E606A31C
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=cZ/qP4pU
-Received: by mail-pg1-f169.google.com with SMTP id 41be03b00d2f7-cddac941ed1so547734a12.2
-        for <dm-devel@lists.linux.dev>; Wed, 18 Nov 2026 09:19:11 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=wxs4Jn9j
+Received: by mail-pj1-f51.google.com with SMTP id 98e67ed59e1d1-3b197cd42b0so850305a91.2
+        for <dm-devel@lists.linux.dev>; Wed, 18 Nov 2026 09:21:53 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20260707; t=1795022351; x=1795627151; darn=lists.linux.dev;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:from:to:cc:subject:date
-         :message-id:reply-to:content-type;
-        bh=bIURRZURf2VUjBygPjSL4g06Fd8DFi1lyXNz0C36Unw=;
-        b=cZ/qP4pUNnYub1D+Orkcb5+A8QZ6kl+aGBB28gH6Z6b/qJk3LM2ruqLF0RafTVMM7M
-         EpBACYCCjoWDLPglntp/uc0FBytet4d7wGkv0HVta5/GqowkE3kGy0P1HIbC8JbZrj/a
-         2Br39NynNX4vYi3ct7/TTnBZBPNWBvB9fwpfhf4ABlsTFnEBCTY7ScetpHU0i2fWGhet
-         zOeVHnBt+jN3x/q7QkJap19xkllWQ0or591/wjs6Bc23znEdxZ4w81WQLxDi1GUWWM63
-         kSPtiRi4chJr7Lkp3J8CghUxfQuyd3z/TyXbl8jVMePtKdpDj9EEeEpqsPhTliQY3u4y
-         ro7w==
+        d=gmail.com; s=20260707; t=1795022513; x=1795627313; darn=lists.linux.dev;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:from:to:cc:subject:date:message-id:reply-to:content-type;
+        bh=eQlqtTqVo4i1iQMXfdZwTxvtktVIkuGgoTezX3fYfUw=;
+        b=wxs4Jn9j5smwVANVSle7n81xWKszLLlljaJtyT27yTCMHSVE4zPeVztq4l5gs0w256
+         uBqVsmXVEHHhNVN9jnh488+rNh3LRmQzCTVINWwagPRZvP/fcQrJS7DIR91rBYcq6CrA
+         d6trT8kzWMg1wc9/0PcB1aVRZaM+YooaZTCXpCxbzx7sxskypT1UP83HQiiIMM1/L4Lf
+         5pkpLhywniWKE3d0MKzYmPSjuFN4/id1pN1ZpKmEXEWWZHiL+itrffzk1qVsvu5w3a9b
+         c/3FqFYyJCKA3Xv6p6G0QUJV9lG32Ih4/BAzREklvA0Dcutuj2TcnZ8K3vbzRQcDoF0o
+         roqQ==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1795022351; x=1795627151;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:x-gm-gg:x-gm-message-state:from
-         :to:cc:subject:date:message-id:reply-to:content-type;
-        bh=bIURRZURf2VUjBygPjSL4g06Fd8DFi1lyXNz0C36Unw=;
-        b=xO2A7BTBrOQX3rL9zg7yHEd7KHFlcJEa4CH4aL1wqJNrLk5MU5FqF/w5vImkSb0rm2
-         AI5KW1EpR/NCyxMxDYwhOtAuuozww7d8Z11hXh9/j+2mHbHkm0UJphvRHbWEjl+AYxrf
-         f9LW6JQHoZDHdQCYGFpU2D0jWWc3shWq0fSpT/yKfyBxdqhRP2QVAkhJi3XhUVNUMIFf
-         UAu80da7AAWvZYr6iOKoBvhOmQ9WzHfr1UnHc6DCtZXn9JqeYMqMvmfn1O+6P3j2bica
-         abl8ldBHwFY9dYvNnGS1qCLrTz006umdHD0GtQxS+bOzQl0XkVkEk2Ny8JkaMDIMp+g+
-         QZ0A==
-X-Forwarded-Encrypted: i=1; AL+hErH5en1yaCe4ZcMHgCtQ92aZurVFcO8DNTXmGod+Kil66bW+TanBnyn8EYDw0uX5WsrFWEfve6DH/g==@lists.linux.dev
-X-Gm-Message-State: APuU4Z8Zg50jOcqgOftC+PN8TzVvh6cdjJO/NPzuLBcOKAS8QMi/439j
-	N1KtikZeuMo5qcFpDDPrm9XYfIqVCChpPZTgPxOVcmSkzPAs4K7fivOq
-X-Gm-Gg: AZFdTZel+ndsHDOEciliMmEbih7NBaM4QGBsCBwIzt7GA6s2v4NKAluvMkTeIbPH2WE
-	0LRdcHfQWpqReWOTZK76j3GYHu92t3vDCyDlb+r4WtlSCOam2VTA0mINCpMFfhPPj+VSjf/+Ps6
-	jKKfJ2W4gkP3AnqI8gstcJ8PUOsqee/diNClRGXnOAmwC5eESxZIPPCm+KmnF2WHc6RhBkWASRP
-	sDkZQu34lYTd2OXUFV0oa0KXhQ3NwyZvjdFZLfJCDJpujpEnvzRYQXfufXKdpDsfaseuRsM1wmn
-	3mpBowiyxTihsLhFn2pmz4DUzqQ5umUB2hZhMgT+0OeSulV8CpdvOopiAoj7qMiHfk3a6N0pfDh
-	/22NZkRjKZUSjT63B65vPHCAh5ts9yIyHls1FbOjZ5nkn8hu9shJbYhBp3EysJJ/tlsMS/xeRIv
-	eisu28OfwGopQZH/z4//YjWL7JtYu7i79PlMv52piOgXbwZHxxZpEy+k7a10/0UzEZAkQsrFyXa
-	0ckjIt4OFwhTPZ/uAdhJ7qha7MPnbYKwLCeUAzSPmejwKP9HjlZvQorPf+b2SbQd3ChLt1h4gPN
-	BeUR620jOi6g+KbErcc0wl8S6ze8YbjwDSgC8VfGuCQwbMfzljS9SMkGHv5yfjc6DY6GBDhdF68
-	KJcciBlhw
-X-Received: by 2002:a17:90a:dfc8:b0:3b1:b66a:c05 with SMTP id 98e67ed59e1d1-3b3d0763174mr2908317a91.14.1795022350440;
-        Wed, 18 Nov 2026 09:19:10 -0800 (PST)
+        d=1e100.net; s=20260707; t=1795022513; x=1795627313;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
+         :message-id:reply-to:content-type;
+        bh=eQlqtTqVo4i1iQMXfdZwTxvtktVIkuGgoTezX3fYfUw=;
+        b=1QS22F/CgsNjlNjlHb7SVqOVfyOyI2LwcGO2zdgii+yH6kRZqHLmbz+KXNPvcKiHSy
+         5NVj7PfwA6M8KKH2g4Ckm9ft/VLyei0188Wyr1abgTgpn3njH2swp/7WePFgvLFPKMYX
+         KL2uHOfcXKKoNXqb/GDRWfg9gGRaaPO/hqJLU9CsYKTLle+BAZVGg5HvrNzpZFC0q5iZ
+         H+Ei3FeHWcdqOXhPp7KhXODRyBj/iEhbMciyKE2Rz0yDMNe21Ir13qYOhhEKyhhCWrt+
+         6CueJrbp8abLDzQWCxY7JhzqaVzw/ndi41KmfRo2wufDjC5esgBadiE/u7moo90TTHUT
+         tPGw==
+X-Forwarded-Encrypted: i=1; AL+hErHVGQv0eXrbWmdBt3mZ4EjCssdV+8+B/t0IvFhMOdQaozLzTC0x6gUKxTnS4jblhShHtVi3XS4n7A==@lists.linux.dev
+X-Gm-Message-State: APuU4Z+UUerrpY+xj6aNpYDUMr+30YOlqDDzra80mdQJqGff8ZjQ5UVF
+	v2E9AAa8P8iER9g1ZX5bncMJzxDbmzowjCDJsVoT1aBtT5nCL5l4WSTYzfQJljif
+X-Gm-Gg: AZFdTZftoLnBKzRSTajVgdFL4p1Vn2XwtjB+YnJhbU8LPokqB/Io78G4MQZQcruU9p1
+	PAyXo3ukIaLaABH4n4N16v+sOD5offUZmSMYyDsqedaVkNs1/VoPnTLHClaKyIDxDQrimHuUTf9
+	lT0zvEGewol2vGguq7ARrHV88ZD55AZuHYQPOCSpmcBGEM1ynMGuqiGHGL9G8afjg1EcwyuWEGb
+	+RkQHm2CfuK+c7eH7dKcM1sk/rKMxX/zO2ekEuCpgMf9vo0994b/AA1te2lO/CMX2KBfDMWbfe1
+	f9v7YJNJSETg03IiEiJ3Dy3NvOOFsbHPLLPdQ8lxuK6SxsqliOI+JYztPKAku5UZ5kgJCGdv2Ck
+	5SafIGri3rbH9yAYV2CLfXn39jQXW6hVPMEoBOZyB7+2X+8kqH3LhYtastw77vDgPUXrq/gY2/L
+	HLGHgmdXI6tzmj6PzEgbAtlJq6brnqTaIW5LP5f7qY2aRf25tN4mehyhyfD+UeqAmHd6CillA9y
+	6MGQHkB565NlmwuRK8Zg44+EDP3BmeSciGB7vwzflOMpeB9w+R5adl58hkl7SKjgK6rH9jM/QHc
+	inDwdBDOXyLJ8sWW/EIELfLPI4fLCHUgleTfqIOMFOCdXFeJIzZU1PH8Su370umHzKxJuX4kqFy
+	qJr8SdY9f
+X-Received: by 2002:a17:90b:5643:b0:3b3:a74d:f848 with SMTP id 98e67ed59e1d1-3b3d076335emr2832306a91.15.1795022512854;
+        Wed, 18 Nov 2026 09:21:52 -0800 (PST)
 Received: from bj-kjy-standalone-yangyongpeng.mioffice.cn ([43.224.245.241])
-        by smtp.gmail.com with ESMTPSA id 98e67ed59e1d1-3b3f6f498e7sm124234a91.7.2026.11.18.09.19.08
+        by smtp.gmail.com with ESMTPSA id 98e67ed59e1d1-3b3f7067012sm135659a91.12.2026.11.18.09.21.50
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Wed, 18 Nov 2026 09:19:10 -0800 (PST)
+        Wed, 18 Nov 2026 09:21:52 -0800 (PST)
 From: Yongpeng Yang <yangyongpeng.storage@gmail.com>
-To: sashiko-bot@kernel.org
-Cc: agk@redhat.com,
-	snitzer@kernel.org,
-	mpatocka@redhat.com,
+To: agk@redhat.com,
 	bmarzins@redhat.com,
-	dm-devel@lists.linux.dev
-Subject: Re: [PATCH 4/4] dm-verity: add messages to inspect, prefetch and drop hash blocks
-Date: Thu, 19 Nov 2026 01:19:06 +0800
-Message-ID: <20261118171906.686218-1-yangyongpeng.storage@gmail.com>
+	dm-devel@lists.linux.dev,
+	mpatocka@redhat.com,
+	snitzer@kernel.org
+Cc: yangyongpeng@xiaomi.com
+Subject: [PATCH v2 0/4] dm-bufio: per-client retain target, sysfs and dm-verity cache control
+Date: Thu, 19 Nov 2026 01:21:30 +0800
+Message-ID: <20261118172133.689163-2-yangyongpeng.storage@gmail.com>
 X-Mailer: git-send-email 2.43.0
-In-Reply-To: <sashiko-outbox-218894@kernel.org>
-References: <sashiko-outbox-218894@kernel.org>
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Post: <mailto:dm-devel@lists.linux.dev>
@@ -103,265 +100,105 @@ Precedence: list
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-Subject: Re: [PATCH 4/4] dm-verity: add messages to inspect, prefetch and drop hash blocks
-In-Reply-To: <sashiko-outbox-218904@kernel.org>
+From: Yongpeng Yang <yangyongpeng@xiaomi.com>
 
-On Tue, 17 Nov 2026 at 01:49:07PM +0000, sashiko-bot@kernel.org wrote:
+Device-mapper's verity targets read their hash trees, and FEC parity
+when FEC is enabled, through dm-bufio.  dm-bufio has a single
+module-wide retain_bytes value shared by every client, no way to see
+or change one client's memory use, and no way to warm the cache ahead
+of the reads that need it.
 
+That fits poorly systems with many verified devices of very different
+sizes, such as Android, which mounts a dozen verity partitions plus
+per-app verified images: a large partition's hash tree (tens of MB) is
+evicted and re-read under memory pressure with the 256 KiB default,
+while raising the global value would make every small, idle verity
+device hold memory it does not need, and would still be the wrong size
+for most of them.  The same system also wants to preload a device's
+hash blocks at boot and to release the memory when the device is no
+longer in use, which today requires dropping caches globally.
 
-> > diff --git a/Documentation/admin-guide/device-mapper/verity.rst b/Documentation/admin-guide/device-mapper/verity.rst
-> > index 9e9d4b8157c03..8fea6130765bb 100644
-> > --- a/Documentation/admin-guide/device-mapper/verity.rst
-> > +++ b/Documentation/admin-guide/device-mapper/verity.rst
-> > @@ -328,6 +328,48 @@ Status
-> >  2. Number of corrected blocks by Forward Error Correction.
-> >     '-' if Forward Error Correction is not enabled.
-> >  
-> > +Metadata caching
-> > +================
-> > +
-> > +The hash blocks, and the FEC parity blocks when FEC is enabled, are cached in
-> > +memory by dm-bufio.  How much of the hash tree is kept cached is controlled by
-> > +the ``hash_retain_percent`` module parameter (default 10), settable at boot
-> > +time with ``dm_verity.hash_retain_percent=<0-100>`` or at run time through
-> > +``/sys/module/dm_verity/parameters/hash_retain_percent``.  A value of 0 or
-> > +above 100 leaves the dm-bufio default (256 KiB), which is also what the FEC
-> > +clients keep.  Only devices created afterwards are affected.
-> [Severity: High]
-> Does the hash_retain_percent calculation in verity_ctr() from commit
-> "dm-verity: size the hash retain target from the hash area" fail to link on
-> 32-bit architectures and truncate retain sizes at or above 4 GiB?
-> drivers/md/dm-verity-target.c:verity_ctr() {
->     ...
-> 	hash_retain_percent = READ_ONCE(dm_verity_hash_retain_percent);
-> 	if (hash_retain_percent <= 100)
-> 		dm_bufio_set_retain_bytes(v->bufio,
-> 			mult_frac((u64)(v->hash_end - v->hash_start) <<
-> 				  v->hash_dev_block_bits,
-> 				  hash_retain_percent, 100));
->     ...
-> }
-> mult_frac(x, n, d) uses typeof(x) and plain C '/' and '%' operators, so
-> passing a u64 first argument emits __udivdi3 and __umoddi3 calls on 32-bit
-> builds.  In addition, dm_bufio_set_retain_bytes() takes an unsigned long, so
-> a 64-bit byte count at or above 4 GiB wraps modulo 2^32 on 32-bit systems
-> unless clamped to ULONG_MAX.
+This series adds per-client granularity to dm-bufio and lets dm-verity
+size and manage its caches:
 
-Same answer as in patch 3: the link failure is a false positive
-(__udivdi3 exists everywhere), but the truncation is real, and v2 will
-compute the percentage with mul_u64_u32_div() and clamp the result at
-ULONG_MAX, as dm-bufio does for its own cache sizing.
+ 1. Move the retain target into struct dm_bufio_client, initialized
+    from the module parameter at creation.  The parameter keeps its
+    meaning as the default for new clients.
 
+ 2. Add dm_bufio_client_sysfs_add(), publishing a client in sysfs
+    under a caller-chosen kobject and name, with a writable
+    retain_bytes and the rest of the state read-only.  It is opt-in,
+    so targets that do not want it pay nothing.
 
-> > +
-> > +Each client's retain target and memory use are visible under
-> > +``/sys/block/dm-N/dm-bufio/<hash|fec|fec-data>/`` on the verity device's own
-> > +block device, and the target can be changed by writing that directory's
-> > +``retain_bytes`` attribute; see
-> > +Documentation/admin-guide/device-mapper/dm-bufio.rst.  The directories appear
-> [Severity: Medium]
-> Can exposing v->fec->data_bufio under fec-data in commit "dm-verity: size
-> the hash retain target from the hash area" cause a use-after-free on
-> c->bdev during verity_dtr()?
-> drivers/md/dm-verity-target.c:verity_dtr() {
->     ...
-> 	if (v->data_dev)
-> 		dm_put_device(ti, v->data_dev);
-> 	verity_fec_dtr(v);
->     ...
-> }
-> v->fec->data_bufio stores a raw pointer to v->data_dev->bdev, which
-> dm_bufio_attr_show() dereferences when reading fec-data/bdev or
-> fec-data/bdev_name.  Because verity_dtr() calls dm_put_device(ti,
-> v->data_dev) before verity_fec_dtr(v) destroys v->fec->data_bufio and
-> removes its sysfs kobject, a concurrent sysfs read during target teardown
-> can dereference v->data_dev->bdev after the device reference has been
-> dropped.
+ 3. dm-verity: size the hash client's retain target as
+    hash_retain_percent (default 10) of the hash area, and register
+    the hash, FEC parity and FEC data clients under
+    /sys/block/dm-N/dm-bufio/<hash|fec|fec-data>/.
 
-Same fix as patch 3: verity_fec_dtr() will run before the device
-puts, so the FEC bufio clients and their sysfs entries are gone first.
+ 4. dm-verity: add messages to report or set a client's retain target
+    and to prefetch or drop hash blocks, for warming the cache ahead
+    of use and releasing it afterwards.
 
+Nothing changes for existing users: every client starts with the value
+the module parameter holds, and only dm-verity opts into sysfs.
 
-> > +when the device is first activated and disappear with it.  Reloading the
-> > +table removes the old table's directories; the new table's reappear on the
-> > +next resume.
-> [Severity: Medium]
-> Does calling kobject_create_and_add("dm-bufio", parent) in
-> verity_register_bufio_sysfs() from commit "dm-verity: size the hash retain
-> target from the hash area" trigger a kernel warning and stack trace on every
-> table reload?
-> During do_resume(), dm_resume() invokes verity_resume() on the new table
-> before dm_table_destroy() runs verity_dtr() on the old table.  Because the
-> old table's "dm-bufio" kobject is still registered under the disk kobject,
-> kobject_create_and_add("dm-bufio", parent) fails with -EEXIST in
-> sysfs_create_dir_ns() and calls sysfs_warn_dup(), which prints a kernel
-> warning and calls dump_stack(), and then destroying the old table removes
-> /sys/block/dm-N/dm-bufio altogether.
+Changes since v1 [1]:
+ - Publish the sysfs directories from ->resume and detach them in
+   ->presuspend, keeping the kobjects until the table is destroyed.
+   A table reload then publishes its directories synchronously with
+   no collision, and no kernfs drain ever runs while the queue is
+   frozen, which would deadlock against userspace (udev) probing the
+   suspended device.
+ - Round a non-zero retain target up to a block boundary, so the
+   target keeps at least as many bytes as requested (Benjamin
+   Marzinski).
+ - Compute the percentage with mul_u64_u32_div() and clamp the result
+   at ULONG_MAX, the same way dm-bufio sizes its own cache, so a
+   large area cannot truncate to near-zero on 32-bit.
+ - Zero the kobject after a failed dm_bufio_client_sysfs_add() so a
+   retried call cannot free the already-freed name again.
+ - Destroy the FEC bufio clients before releasing the data and hash
+   devices in verity_dtr(), so a concurrent sysfs read cannot
+   dereference the block device after it is put.
+ - Reject prefetch_hash on try_verify_in_tasklet devices
+   (-EOPNOTSUPP): their no-sleep bufio client cannot evict or wait
+   for a buffer still being read.
+ - Accept prefetch_hash/drop_hash with no hash blocks (levels == 0)
+   as a no-op instead of failing.
+ - Document dm_verity.hash_retain_percent= in kernel-parameters.txt.
 
-Same fix as in patches 2 and 3: ->presuspend detaches the directories
-(names freed, kobjects kept) and ->resume publishes the new table's
-directories synchronously; no -EEXIST warning, no work, no deadlock.
+Tested on a VM running v7.4-rc1: message and sysfs write paths, the
+shrinker retain floor under memory pressure, suspend/resume cycles,
+table reloads, 100 create/destroy cycles watching slab counters for
+leaks, and error-path injection.  No kernel warnings.
 
+[1] https://lore.kernel.org/all/20261117131918.2745193-1-yangyongpeng.storage@gmail.com/
 
-> [ ... ]
->
-> > diff --git a/drivers/md/dm-verity-target.c b/drivers/md/dm-verity-target.c
-> > index d4fb06cb4e7ea..7f92bc14d39fe 100644
-> > --- a/drivers/md/dm-verity-target.c
-> > +++ b/drivers/md/dm-verity-target.c
-> > @@ -1865,6 +1865,154 @@ static void verity_resume(struct dm_target *ti)
-> >  	verity_register_bufio_sysfs(ti->private);
-> >  }
-> >  
-> > +static int verity_prefetch_hash(struct dm_verity *v, unsigned int argc,
-> > +				char **argv, char *result, unsigned int maxlen)
-> > +{
-> > +	sector_t total = v->hash_end - v->hash_start;
-> > +	sector_t start, n;
-> > +	unsigned long long value;
-> > +	unsigned int sz = 0;
-> > +
-> > +	if (argc == 1) {
-> > +		start = 0;
-> > +		n = total;
-> > +	} else if (argc == 3) {
-> > +		if (kstrtoull(argv[1], 0, &value) || (sector_t)value != value)
-> > +			return -EINVAL;
-> > +		start = value;
-> > +
-> > +		if (kstrtoull(argv[2], 0, &value) || (sector_t)value != value)
-> > +			return -EINVAL;
-> > +		n = value;
-> > +	} else {
-> > +		return -EINVAL;
-> > +	}
-> > +
-> > +	if (start >= total) {
-> > +		DMERR("prefetch_hash start %llu beyond hash area (%llu blocks)",
-> > +		      (unsigned long long)start, (unsigned long long)total);
-> > +		return -EINVAL;
-> > +	}
-> [Severity: Low]
-> Does the start >= total check in verity_prefetch_hash() and
-> verity_drop_hash() reject zero-argument calls on a valid 0-level verity
-> device?
-> When v->data_blocks <= 1, verity_ctr() sets v->levels = 0 and
-> v->hash_end = v->hash_start, so total is 0.  A zero-argument prefetch_hash
-> or drop_hash sets start = 0 and n = 0, hits start >= total, logs an error,
-> and fails with -EINVAL instead of succeeding as a 0-block no-op.
+Comments welcome.
 
-Will be fixed in v2: an empty hash area will succeed as a no-op and
-report 0 blocks.
+Signed-off-by: Yongpeng Yang <yangyongpeng@xiaomi.com>
+Assisted-by: LLM
 
+Yongpeng Yang (4):
+  dm-bufio: make the retain target per client
+  dm-bufio: allow exposing a client in sysfs under a caller-chosen
+    kobject
+  dm-verity: size the hash retain target from the hash area
+  dm-verity: add messages to inspect, prefetch and drop hash blocks
 
-> > +
-> > +	n = min(n, total - start);
-> > +	n = min_t(sector_t, n, UINT_MAX);
-> > +
-> > +	dm_bufio_prefetch(v->bufio, v->hash_start + start, n);
-> [Severity: Medium]
-> Can verity_prefetch_hash() race with verity_postsuspend() or submit reads to
-> v->hash_dev while the target is suspended?
-> CPU0                                  CPU1
-> target_message()
->   verity_message()
->     verity_prefetch_hash()
->       dm_bufio_prefetch(v->bufio, ...)
->         dm_bufio_lock(c)
->         b = __bufio_new(...)
->           /* b->hold_count == 1 */
->         dm_bufio_unlock(c)
->                                       dm_suspend()
->                                         verity_postsuspend()
->                                           flush_workqueue(v->verify_wq)
->                                           dm_bufio_client_reset(v->bufio)
->                                             drop_buffers(c)
->                                               cache_iterate(..., warn_leak)
->                                                 WARN_ON(!(*warned))
->                                               WARN_ON(cache_count(...))
->         submit_io(b, ...)
->         dm_bufio_release(b)
-> Unlike verity_prefetch_io(), which runs on v->verify_wq and is drained by
-> flush_workqueue(v->verify_wq) in verity_postsuspend() (see 2de510fccbca
-> ("dm-verity: fix prefetch-vs-suspend race")), target_message() calls
-> verity_message() without holding md->suspend_lock or checking
-> dm_suspended(ti).  If dm_bufio_client_reset() runs while
-> __dm_bufio_prefetch() has dropped dm_bufio_lock(c) with a buffer's
-> hold_count == 1, drop_buffers() cannot evict that buffer and triggers the
-> leak WARN_ONs in warn_leak() and drop_buffers() (and under
-> CONFIG_DM_DEBUG_BLOCK_STACK_TRACING, warn_leak() zeroes b->hold_count and
-> drop_buffers() frees b before submit_io() and dm_bufio_release(b) run,
-> causing a use-after-free).
-> In addition, because v->bufio submits reads directly to v->hash_dev->bdev
-> rather than the dm-verity mapped device, calling prefetch_hash while
-> suspended immediately issues reads to v->hash_dev->bdev and populates
-> v->bufio instead of queueing them until resume as described in verity.rst.
+ .../ABI/testing/sysfs-kernel-dm-bufio         |  76 +++++
+ .../admin-guide/device-mapper/dm-bufio.rst    |  54 ++++
+ .../admin-guide/device-mapper/index.rst       |   1 +
+ .../admin-guide/device-mapper/verity.rst      |  43 +++
+ .../admin-guide/kernel-parameters.txt         |   6 +
+ drivers/md/dm-bufio.c                         | 200 +++++++++++-
+ drivers/md/dm-verity-target.c                 | 292 +++++++++++++++++-
+ drivers/md/dm-verity.h                        |   2 +
+ include/linux/dm-bufio.h                      |  16 +
+ 9 files changed, 688 insertions(+), 2 deletions(-)
+ create mode 100644 Documentation/ABI/testing/sysfs-kernel-dm-bufio
+ create mode 100644 Documentation/admin-guide/device-mapper/dm-bufio.rst
 
-The hold_count == 1 window in this scenario doesn't exist: the
-prefetch loop releases each buffer while still holding dm_bufio_lock,
-so drop_buffers(), which takes the same lock, cannot observe the held
-state.  What remains is the in-flight B_READING state, which on a
-normal client is waited for via wait_on_bit_io(), not warned on.  So
-on a sleeping client this is a safe no-op or a wasted read, and on a
-no_sleep client it is the case below, to be rejected at the command
-level.  I therefore left the messages available while suspended, and
-verity.rst documents that a suspended prefetch queues reads that
-complete on resume.
+-- 
+2.43.0
 
-
-> > +
-> > +	DMEMIT("prefetch_hash: started %llu blocks", (unsigned long long)n);
-> > +
-> > +	return 1;
-> > +}
-> > +
-> > +static int verity_drop_hash(struct dm_verity *v, unsigned int argc,
-> > +			    char **argv, char *result, unsigned int maxlen)
-> > +{
-> > +	sector_t total = v->hash_end - v->hash_start;
-> > +	sector_t start, n;
-> > +	unsigned long long value;
-> > +	unsigned int sz = 0;
-> > +
-> > +	/*
-> > +	 * dm_bufio_forget_buffers() ends up in cache_remove_range(), which
-> > +	 * cannot run on a client created with DM_BUFIO_CLIENT_NO_SLEEP.
-> > +	 */
-> > +	if (v->use_bh_wq) {
-> > +		DMERR("drop_hash unsupported on tasklet-verifying device");
-> > +		return -EOPNOTSUPP;
-> > +	}
-> [Severity: High]
-> Can calling verity_prefetch_hash() on a v->use_bh_wq device leave in-flight
-> B_READING buffers that drop_buffers() cannot evict, leading to warnings and
-> a use-after-free on teardown?
-> drivers/md/dm-bufio.c:is_clean() {
->     ...
-> 	if (static_branch_unlikely(&no_sleep_enabled) && c->no_sleep &&
-> 	    unlikely(test_bit(B_READING, &b->state)))
-> 		return ER_DONT_EVICT;
->     ...
-> }
-> When v->use_bh_wq is enabled, v->bufio is created with
-> DM_BUFIO_CLIENT_NO_SLEEP (c->no_sleep = true).  verity_prefetch_hash() does
-> not reject v->use_bh_wq and submits asynchronous read BIOs to
-> v->hash_dev->bdev with B_READING set and b->hold_count == 0, returning to
-> userspace while those reads are still in flight.  If the device is then
-> suspended (dm_bufio_client_reset()) or destroyed (dm_bufio_client_destroy())
-> before all prefetched reads complete, __get_unclaimed_buffer() -> is_clean()
-> refuses to evict the B_READING buffers.  drop_buffers() then triggers
-> WARN_ON(!(*warned)) in warn_leak(), calls cond_resched() inside
-> __cache_iterate() while holding spin_lock_bh(&c->spinlock), and on target
-> destruction destroys c->slab_buffer and frees c while read_endio() is still
-> in flight.
-
-Confirmed.  On a normal client, reset and destroy wait for in-flight
-reads via __make_buffer_clean()'s wait_on_bit_io(B_READING), but a
-no_sleep client cannot wait by design, so its eviction simply refuses
-the buffer and teardown proceeds with the read still in flight.  Will
-be fixed in v2 the same way drop_hash handles it: prefetch_hash will
-fail with -EOPNOTSUPP on try_verify_in_tasklet devices.
-
-
-Thanks for the review,
-Yongpeng
