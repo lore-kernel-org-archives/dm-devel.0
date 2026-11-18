@@ -1,54 +1,87 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.167.197
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.167.53
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1795009840;
-	b=d6hsgFwFY+/Yw7cxq5vYvEQQxrKLeikYdXg/IhskZXGZ/Q7v4Deq+Y6rXkZyXfDwYqwh
-	 LZTC+uP3Sji+aj7+Vk+HxAQv7mWSbJlqgw7MiYvouysPsk0Jh719MWSo4YO9423RHaKhl
-	 eIcV+Vkaq5gQzGm3uKd/TOhO3lOgW5J1A1sWouG3woFwt6EJhZJT+gO2QGw/lFmw1bEGg
-	 H8kQHgfzr1i1kOhwYA5LvHOBjeZmHi29ZBbHsUOUgkDua6F+rZSD7UpmJUFr3OALDIkRi
-	 J/jIUHo/JVwSpFFDcbBGXh1RQQW492AbYQGYGGSvMpzCc3Iiwz7vG4CO6jMHvV0lpSA==
+	t=1795014181;
+	b=U9KJksGh2EOVn5pVLgo8sGJl4T1jg6O5hHHw0RMyE+NZIprIXRZt2Ai7U5dJzov+RK2+
+	 Z4FK2U+eIghWXM6sFSQtwP2TGhJb27w1OxLlK+lhd4EAt1yYPymjU7UF4j2KpLKSjKmZ1
+	 ycRT+VCt7vdT68v3ojMBa1oZdpW3Yc23pVnSEQ5VPBKrxs6un+S94B5VZqXLw14qMWejp
+	 WmUQEbJJW0TvMmvktwkR7HQCyxYzvN+qWM79VrdvZt175i4qgTFHI/OFxFoQdsSfTpZEv
+	 TP/wIZ5Hh1uOY9OpwmlicoN6gcBxuzZqZa7FZZRhckxWHUS+Jpvj+qK0qzmCddOqi6w==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1795009840;
-	h=DMARC-Filter:Received:X-Google-DKIM-Signature:X-Forwarded-Encrypted:
-	 X-Gm-Message-State:MIME-Version:X-Received:Date:In-Reply-To:
-	 X-Google-Appengine-App-Id:X-Google-Appengine-App-Id-Alias:Message-ID:
-	 Subject:From:To:Content-Type;
-	bh=oe3qxDxEEBCgkMf3LaoAvV0Pg0/IXg79f/nMkFBr+bY=;
-	b=JYtBbb89DsMyy7VAjOIRCwiQOWGfhd3l+7Qq9/g+OYGJlAM8cEKZGUl+3YpyTwlwFzeY
-	 Hip/DWAXA+sxl6dWI2kWu4B+26rhdI87avWHC2HBB7z/0D6sIOR8BqmgOveoqsuw/BFQp
-	 LDT9BLBMjc1VbMPZ9BXi061TbRsTzHna99t+BAUnOfGbGVXKHmhYH0Dk1UsPw5SQwz4vs
-	 S4d696iLiZ6JoBThpBAc8pJ2VgDnahtQJas79FRjNg6TvpHOieb8WHF7zY2InGfLH4KwK
-	 B38lIdKiT9eVYywHbNl+SOL8apuM3m314VnsuNnVKdhTxASlsZBCJbYT3JqMA7YIdDg==
+	a=rsa-sha256; c=relaxed/relaxed; t=1795014181;
+	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
+	 X-Forwarded-Encrypted:X-Gm-Message-State:X-Gm-Gg:X-Received:Received:
+	 Message-ID:Date:MIME-Version:Subject:To:Cc:References:
+	 Content-Language:From:In-Reply-To:Content-Type:
+	 Content-Transfer-Encoding;
+	bh=7RcE1P5ytrzgfUBFVZbPSBPyBdBAWa59NFxTcogpCig=;
+	b=0Vrm7vmbmrRr1zHNzX0ARLuym3VkZDnRznCYXuTO05HfQlitMrQSrvpzJfB4zLgRgcAs
+	 MJhFGdUlS11eI0I5FOHK5UXUMY2/1Exf7gOUThOiVus/t3hk1emICnwleIMOqyXlfWyxR
+	 9YihLCTgvVjZLmfOjx+TctL2p5uvz1WqC6FGfiKSuHSVUM8L2vMJVnA3D1ivsroJgG53t
+	 chvDjoxW/WKTzJ2Vvp9T6puREVZ1IQV1RdzWiuU77/31qzzVY3M6RHMCsQvyhQCRcdveF
+	 fIP+SWPo/h5355Bxscf5ZDjyzK7orC/8XClaOApbM99GNVjR9MjJmIcnF6B/qILGKYQ==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dmarc=fail header.from=syzkaller.appspotmail.com;
-	spf=pass smtp.mailfrom=M3KW2WVRGUFZ5GODRSRYTGD7.apphosting.bounces.google.com;
-	arc=none smtp.remote-ip=209.85.167.197
-Received: from mail-oi1-f197.google.com (mail-oi1-f197.google.com [209.85.167.197])
+	dmarc=pass header.from=gmail.com;
+	spf=pass smtp.mailfrom=gmail.com;
+	dkim=pass header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=PhKgmiy1;
+	arc=none smtp.remote-ip=209.85.167.53
+Received: from mail-lf1-f53.google.com (mail-lf1-f53.google.com [209.85.167.53])
 	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 91500606A32A
-	for <dm-devel@lists.linux.dev>; Wed, 18 Nov 2026 13:50:40 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 91500606A32A
-Authentication-Results: smtp.subspace.kernel.org; dmarc=fail (p=none dis=none) header.from=syzkaller.appspotmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=M3KW2WVRGUFZ5GODRSRYTGD7.apphosting.bounces.google.com
-Received: by mail-oi1-f197.google.com with SMTP id 5614622812f47-574ae6cc614so2039233b6e.1
-        for <dm-devel@lists.linux.dev>; Wed, 18 Nov 2026 05:50:40 -0800 (PST)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 2B9C2606A333
+	for <dm-devel@lists.linux.dev>; Wed, 18 Nov 2026 15:03:01 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 2B9C2606A333
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+Authentication-Results: smtp.subspace.kernel.org;
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=PhKgmiy1
+Received: by mail-lf1-f53.google.com with SMTP id 2adb3069b0e04-5c0ea47f5b8so124985e87.3
+        for <dm-devel@lists.linux.dev>; Wed, 18 Nov 2026 07:03:00 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20260707; t=1795014179; x=1795618979; darn=lists.linux.dev;
+        h=content-transfer-encoding:content-type:in-reply-to:from
+         :content-language:references:cc:to:subject:mime-version:date
+         :message-id:from:to:cc:subject:date:message-id:reply-to:content-type;
+        bh=7RcE1P5ytrzgfUBFVZbPSBPyBdBAWa59NFxTcogpCig=;
+        b=PhKgmiy1vrS5YX+h85z5cTZEeNLPoKX3F813SY4zzhJQOf12AYpKgjCtGcsCzztmrX
+         8IbpkwrByLKTgtG++mRkxRHFDNrBtVOF0mKcZxrqdZVRTuz47sWbcr8bx4951C3/gJM6
+         QXy4TBK0ORoZ9vvFGYKB80VM1u3S4678MUHKfCdKDfIACeoyvVqHdWaWrHaWpxGHs68c
+         MhlHtWVIxBJmUaXvXkeFM/27Er5nVHyU4Id6t5bTK5vqlDhgwAYTaP16FifMU6cH1P98
+         OGqAaHo3p5y4pUOYdpT9pYeCb4fCtuovG3D2xH4QYq7Wurg0/5A9bDb5ipT4NoN5newN
+         Qz3w==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1795009839; x=1795614639;
-        h=content-type:to:from:subject:message-id:in-reply-to:date
-         :mime-version:x-gm-message-state:from:to:cc:subject:date:message-id
-         :reply-to:content-type;
-        bh=oe3qxDxEEBCgkMf3LaoAvV0Pg0/IXg79f/nMkFBr+bY=;
-        b=1reBtRi44lGXsw9yjGDGOoTuT8TwcAfQbyHUOYUQuItgPuqxFajrpH9wlO3bY7ZhiR
-         MY2eZ++AUMolOOhvZseLXoXQCpFGlK5scmFctc99civogZifP2x4XSv/VakI/5vU0m9h
-         lWcOcKnd4FTX6d7/xrQ2FOg82N6Q3d4OtQ8HdS/NyRPoT28PVdRRK2qA9ppBe89sUe0I
-         9nYlrPgnJuvnhM9VXGjUTNV/sZiDIx34lSEavipR4l/UQ6sytjN844uaLiDsDrteXZGV
-         co1/2Z2KjmnN9OGprtZXWJzcIzrxKDDhjYf7qDdMhKR58VleQgQjdiYB2/EmVpRGLsr7
-         Svew==
-X-Forwarded-Encrypted: i=1; AL+hErHRLax+9kKf+zTGr8ZJQMVmrZJnTyM6aKmgaTq0eoZRq0dfaNT4GEDmcDy1Ss/pr43ZXU4pHEbcSg==@lists.linux.dev
-X-Gm-Message-State: APuU4Z9dsoKYbomJL0QJWSBOuoLJec9M9lqG02LCFw8hMWAXmwWKrfmc
-	ocdwNgQXSUUrx27t6qH/lqXRicTAsw1OKy/9HSb0+HiqQL26xaQPQEtK2a2U+fcrLccfm0BwdsR
-	0CBPYUSQBhocnhKgeLbzRZpFW3NJ2I4lsmkf+l+Z7K7QeVW74s+AvAUzbqaI=
+        d=1e100.net; s=20260707; t=1795014179; x=1795618979;
+        h=content-transfer-encoding:content-type:in-reply-to:from
+         :content-language:references:cc:to:subject:mime-version:date
+         :message-id:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
+         :message-id:reply-to:content-type;
+        bh=7RcE1P5ytrzgfUBFVZbPSBPyBdBAWa59NFxTcogpCig=;
+        b=2oLxr2NJiS01TjgXVGsQH3zYaA7cOKFFa5qTJ3bU9nx7OGiATpSuS66LqxaakwRPA7
+         6c6vwpxPCeiGrp0QtmQcItlTQnyh2aqvM/yVKybCHHju4htpLPnnwiTSJxtMG0iKVEEn
+         YMX9MJ+5geNnfqH5arvpGhS8mpBIzAp9YM5bJJ29nixOuQO3SgUBMfSvmuv/aQTvzaIu
+         zp4PjEJBtTx8i0BuBoJeXYdgdRCVB2ldds0SoTpEh2V/27soGyA2lCplfV2I7cAwcAhx
+         yxQlDQF2Oc+MxRlw1riPuQO1io2mY9sFUZw8wiWcQ6UBvCfpp3Xdf2LxNwt6vFCH62Iw
+         d1eg==
+X-Forwarded-Encrypted: i=1; AL+hErEs8cJ4r4S/dQ+typKDUBTLallZTuFxFbcPrRb7iTM3xeCsuC52tMddM17zjfderJbZ0nDcQwa6rw==@lists.linux.dev
+X-Gm-Message-State: APuU4Z/VTv3m8t/jda7n9+vLF861n8j6VLiU+c/DR0ZyxfISdSM8FAqs
+	R0c6yoAKPa+oZkQHNvEHmuRKXSZJnVaQOohBU7yQa2yuRuwf2cIK2Lo=
+X-Gm-Gg: AYBFou2hy2WsIBISNQHWmgpVNeBrs+fQLJ1U72Bg+g/e30phPvS82+Wt/toGiZ0PUJO
+	w0gEbDPmZuCKL554jJA/12/bB1rUuAfT4D+nUTcpf39m74rPhSVF4RKdwn6BYVJKxLUVaj/f2Un
+	ROqiJgZIHdPUeZwK8yfoFDGfcaiJe8SpaYI+imroiG7L9czRgu/zkfRzzsKYVsSEJLqISMfNhMK
+	HKKPhueP1bMhPyvDXKKyfjxOVI+Vcc71JFeUmvgVU51JnvSRhyIJpQkJbGSaR+AuJLH9HzYiw7P
+	HlEC6is/4s2PFX7bHK4XqH5dAZ7u3JC7icMLaBArG5xkOT1K712toCM0/fUkWEN1ue1gEoHiG2s
+	VFPO4OKEL2gR3sgxHPq/N495m4OkJSbrQtUVTiiybfKBtcZJQNDB/kuiUa6kOjMMbbgr8J7Y+7g
+	wbzuiEDbJKkYKeMabKSeaY8qL1DtRNqdhN70MWWvgjBlrq7FdUgByeM/KQ5w59SIcQzhiwv+AUk
+	u+RQK9DabHwk4cu9+FRYCiUhzNtfnA9NJl4lrunPPIJTc3pdNgPJ7f71MArt/Gb5Xwxp2As447t
+	VE4GjXEq0x5kSyZvY4UdPu8KEOEJT0LBxbd3XywdYBZqsKPg28LS5TVM7P5dzX8kjA==
+X-Received: by 2002:a05:6512:6201:b0:5bf:ba43:fa67 with SMTP id 2adb3069b0e04-5c1aa031659mr1205533e87.6.1795014179141;
+        Wed, 18 Nov 2026 07:02:59 -0800 (PST)
+Received: from localhost (69.red-80-39-28.staticip.rima-tde.net. [80.39.28.69])
+        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-4a656c11f1csm5743954f8f.53.2026.11.18.07.02.58
+        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+        Wed, 18 Nov 2026 07:02:58 -0800 (PST)
+Message-ID: <ac29a29d-9932-495a-b75f-1fe4fe7948c7@gmail.com>
+Date: Wed, 18 Nov 2026 16:02:58 +0100
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Post: <mailto:dm-devel@lists.linux.dev>
@@ -58,114 +91,37 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 List-Owner: <mailto:dm-devel+owner@lists.linux.dev>
 Precedence: list
 MIME-Version: 1.0
-X-Received: by 2002:a05:6808:c1d4:b0:4dd:f8bb:e1bd with SMTP id
- 5614622812f47-575dd62583amr4190167b6e.13.1795009839590; Wed, 18 Nov 2026
- 05:50:39 -0800 (PST)
-Date: Wed, 18 Nov 2026 05:50:39 -0800
-In-Reply-To: <6aec63fe.5f5735a5.290c1c.0004.GAE@google.com>
-X-Google-Appengine-App-Id: s~syzkaller
-X-Google-Appengine-App-Id-Alias: syzkaller
-Message-ID: <6afdad2f.15a38f0c.5f8d.0009.GAE@google.com>
-Subject: Re: [syzbot] [raid?] BUG: unable to handle kernel paging request in remove_spares
-From: syzbot <syzbot+a53c2918175b36cfd601@syzkaller.appspotmail.com>
-To: agk@redhat.com, bmarzins@redhat.com, dayou5941@163.com, 
-	dm-devel@lists.linux.dev, linux-kernel@vger.kernel.org, 
-	linux-raid@vger.kernel.org, liyouhong@kylinos.cn, magiclinan@didiglobal.com, 
-	mpatocka@redhat.com, sashiko-bot@kernel.org, snitzer@kernel.org, 
-	song@kernel.org, stable@vger.kernel.org, syzkaller-bugs@googlegroups.com, 
-	xiao@kernel.org, yukuai@fygo.io
-Content-Type: text/plain; charset="UTF-8"
+Subject: Re: [PATCH 01/13] multipath-tools: multipathd.8.in: fix mandoc
+ WARNINGs
+To: Benjamin Marzinski <bmarzins@redhat.com>
+Cc: Martin Wilck <mwilck@suse.com>,
+ Christophe Varoqui <christophe.varoqui@opensvc.com>,
+ DM_DEVEL-ML <dm-devel@lists.linux.dev>
+References: <20261113125549.504780-1-xose.vazquez@gmail.com>
+ <20261113125549.504780-2-xose.vazquez@gmail.com>
+ <avt3vc307mk4FHZK@redhat.com>
+Content-Language: en-US, en-GB, es-ES
+From: Xose Vazquez Perez <xose.vazquez@gmail.com>
+In-Reply-To: <avt3vc307mk4FHZK@redhat.com>
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 7bit
 
-syzbot has found a reproducer for the following issue on:
+On 11/16/26 10:38 PM, Benjamin Marzinski wrote:
 
-HEAD commit:    20eef29b7c84 Merge tag 'arc-fixes-7.4' of git://git.kernel..
-git tree:       upstream
-console output: https://syzkaller.appspot.com/x/log.txt?x=1186ff3d580000
-kernel config:  https://syzkaller.appspot.com/x/.config?x=1cf189394a856f11
-dashboard link: https://syzkaller.appspot.com/bug?extid=a53c2918175b36cfd601
-compiler:       gcc (Debian 14.2.0-19) 14.2.0, GNU ld (GNU Binutils for Debian) 2.44
-syz repro:      https://syzkaller.appspot.com/x/repro.syz?x=17f8f94d580000
-C reproducer:   https://syzkaller.appspot.com/x/repro.c?x=173f9411580000
+> On Fri, Nov 13, 2026 at 01:55:33PM +0100, Xose Vazquez Perez wrote:
 
-Downloadable assets:
-disk image (non-bootable): https://storage.googleapis.com/syzbot-assets/d900f083ada3/non_bootable_disk-20eef29b.raw.xz
-vmlinux: https://storage.googleapis.com/syzbot-assets/bb852a1ddb76/vmlinux-20eef29b.xz
-kernel image: https://storage.googleapis.com/syzbot-assets/4c636c3f4242/bzImage-20eef29b.xz
+>> @@ -77,7 +77,7 @@ multipathd executes the given command (see \fBCOMMANDS\fR below). If the
+>>   command contains whitespace or shell special characters, it needs to be quoted
+>>   like in \fImultipathd -k'show topology'\fR. No whitespace is allowed between
+>>   the \fB-k\fR and the command string.
+>> -
+>> +.br
 
-AI-generated root cause summary:
-In the MD (Multiple Devices / RAID) subsystem, md_start_sync is scheduled as a
-work item on the md_misc workqueue to initiate resynchronization or manage spare
-devices. For read-only arrays (!md_is_rdwr(mddev)), md_start_sync executes
-remove_and_add_spares(), which invokes remove_spares(). However, md_start_sync
-fails to verify whether the array's personality (mddev->pers) is still valid
-before calling into personality operations, and array stop/detach sequences do
-not ensure that mddev->sync_work is completely halted or prevented from running
-after mddev->pers is cleared. When remove_spares() executes with mddev->pers ==
-NULL, it attempts to invoke mddev->pers->hot_remove_disk (located at offset
-0x50), triggering a NULL pointer dereference crash.
+> Nitpick: If we don't want an actual blank line in the option
+> description, I'm not sure the line break really matters here.
+My intention was simply to replace the blank line that mandoc was
+complaining about and remove the visible empty line while keeping the
+rest of the formatting as is.
 
-full analysis:  https://syzkaller.appspot.com/x/ai_root_cause?x=a53c2918175b36cfd601
-
-IMPORTANT: if you fix the issue, please add the following tag to the commit:
-Reported-by: syzbot+a53c2918175b36cfd601@syzkaller.appspotmail.com
-
-Oops: general protection fault, probably for non-canonical address 0xdffffc000000000a: 0000 [#1] SMP KASAN NOPTI
-KASAN: null-ptr-deref in range [0x0000000000000050-0x0000000000000057]
-CPU: 2 UID: 0 PID: 66 Comm: kworker/2:2 Not tainted syzkaller #0 PREEMPT(full) 
-Hardware name: QEMU Standard PC (Q35 + ICH9, 2009), BIOS 1.16.3-debian-1.16.3-2 04/01/2014
-Workqueue: md_misc md_start_sync
-RIP: 0010:remove_spares+0x147/0x540 drivers/md/md.c:10182
-Code: 67 60 f9 45 84 ff 74 55 e8 e6 6c 60 f9 48 8b 44 24 10 80 38 00 0f 85 83 03 00 00 49 8b 45 08 48 8d 78 50 48 89 fa 48 c1 ea 03 <42> 80 3c 22 00 0f 85 78 03 00 00 48 89 de 4c 89 ef 48 8b 40 50 2e
-RSP: 0018:ffffc90000d47a10 EFLAGS: 00010206
-RAX: 0000000000000000 RBX: ffff888059649108 RCX: 0000000000000000
-RDX: 000000000000000a RSI: ffffffff88ae1bfa RDI: 0000000000000050
-RBP: 0000000000000000 R08: 0000000000000000 R09: 0000000000000001
-R10: ffff8880596491cf R11: 0000000000000000 R12: dffffc0000000000
-R13: ffff888059648058 R14: ffff888059648070 R15: 0000000000000001
-FS:  0000000000000000(0000) GS:ffff8880d4669000(0000) knlGS:0000000000000000
-CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
-CR2: 0000001b30924008 CR3: 0000000051ca3000 CR4: 0000000000352ef0
-Call Trace:
- <TASK>
- remove_and_add_spares+0x6c7/0x7f0 drivers/md/md.c:10207
- md_start_sync+0x736/0xea0 drivers/md/md.c:10323
- process_one_work+0xac7/0x1b10 kernel/workqueue.c:3495
- process_scheduled_works kernel/workqueue.c:3578 [inline]
- worker_thread+0x5ef/0xe50 kernel/workqueue.c:3659
- kthread+0x373/0x450 kernel/kthread.c:436
- ret_from_fork+0x730/0xd60 arch/x86/kernel/process.c:158
- ret_from_fork_asm+0x1a/0x30 arch/x86/entry/entry_64.S:245
- </TASK>
-Modules linked in:
----[ end trace 0000000000000000 ]---
-RIP: 0010:remove_spares+0x147/0x540 drivers/md/md.c:10182
-Code: 67 60 f9 45 84 ff 74 55 e8 e6 6c 60 f9 48 8b 44 24 10 80 38 00 0f 85 83 03 00 00 49 8b 45 08 48 8d 78 50 48 89 fa 48 c1 ea 03 <42> 80 3c 22 00 0f 85 78 03 00 00 48 89 de 4c 89 ef 48 8b 40 50 2e
-RSP: 0018:ffffc90000d47a10 EFLAGS: 00010206
-RAX: 0000000000000000 RBX: ffff888059649108 RCX: 0000000000000000
-RDX: 000000000000000a RSI: ffffffff88ae1bfa RDI: 0000000000000050
-RBP: 0000000000000000 R08: 0000000000000000 R09: 0000000000000001
-R10: ffff8880596491cf R11: 0000000000000000 R12: dffffc0000000000
-R13: ffff888059648058 R14: ffff888059648070 R15: 0000000000000001
-FS:  0000000000000000(0000) GS:ffff8880d4669000(0000) knlGS:0000000000000000
-CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
-CR2: 0000001b30924008 CR3: 0000000051ca3000 CR4: 0000000000352ef0
-----------------
-Code disassembly (best guess):
-   0:	67 60                	addr32 (bad)
-   2:	f9                   	stc
-   3:	45 84 ff             	test   %r15b,%r15b
-   6:	74 55                	je     0x5d
-   8:	e8 e6 6c 60 f9       	call   0xf9606cf3
-   d:	48 8b 44 24 10       	mov    0x10(%rsp),%rax
-  12:	80 38 00             	cmpb   $0x0,(%rax)
-  15:	0f 85 83 03 00 00    	jne    0x39e
-  1b:	49 8b 45 08          	mov    0x8(%r13),%rax
-  1f:	48 8d 78 50          	lea    0x50(%rax),%rdi
-  23:	48 89 fa             	mov    %rdi,%rdx
-  26:	48 c1 ea 03          	shr    $0x3,%rdx
-* 2a:	42 80 3c 22 00       	cmpb   $0x0,(%rdx,%r12,1) <-- trapping instruction
-  2f:	0f 85 78 03 00 00    	jne    0x3ad
-  35:	48 89 de             	mov    %rbx,%rsi
-  38:	4c 89 ef             	mov    %r13,%rdi
-  3b:	48 8b 40 50          	mov    0x50(%rax),%rax
-  3f:	2e                   	cs
+That said, if you prefer merging it into a single continuous paragraph,
+I have no objection to dropping the .br in v2.
