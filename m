@@ -1,99 +1,57 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.221.51
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=100.103.45.18
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1794999767;
-	b=2S0grYt2zLzKRNWZju1293QUfTBXEUtqbb+PKuqeVaMsOGxa83kszZK9DfshDH2v14fZ
-	 c8G0HlYDXOwbXSnHui/T+qc/ydWO2+Ff45ob28TPPRAiwwkVWZKD0v/waMR8GAnf0rVib
-	 NfCCA+UmCpRdSa0xGibnh68iy9MAcn/RUEQizdk9VYt2HV8u+jCC7e3rD/qgdDN7PjhGa
-	 LVqORIVX3OpxbJskMN+Xhchp5oIlz+VcVMxqjeWZmn51J1Fnu5itx4nac0NQmRIax5lH7
-	 ueC6FHAdMC08A15+gOXgLEZPLECT+CYlmEgt3bSEAsc6Gbl+MgMTI1aChFsSinCX13g==
+	t=1795001129;
+	b=xIX6YcdG6/iyoxUEDRTK9LDAvd1nKHfwdN1eC/vXMkygFRykNnGjcQwpprYrKvPgNO73
+	 vR2ID8EyybfD2tezqUWbVifI1W7Sh5knaU4+YN4sYZO0Rdrz3VfSayCfkFrDw767bLDT3
+	 +DR9IXRpewbeoSGDwNvCnlJ86ULTbBGHtVpueg9v2q8NDcfNPfJ2dCQKZZSqjIORCCRJn
+	 MXVDq7jpnSwzq9sXO2RbJbuGb0z9lKq2G9/VzQZy3qI+X5Lf4S+39xucOmGhNRyLPUwP9
+	 hiDf2OTzaPxd/GTcCAbH1qTqtAMqVCC0RdEr22zfhu7dTa0UETO2dUJIm4Nn5NQrtzg==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1794999767;
-	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
-	 X-Forwarded-Encrypted:X-Gm-Message-State:X-Gm-Gg:X-Received:Received:
-	 From:To:Cc:Subject:Date:Message-ID:X-Mailer:In-Reply-To:References:
-	 MIME-Version:Content-Transfer-Encoding;
-	bh=aaVCz9shF8ZFyzO5/5N6GKpW3bexM2Ih05SHuYmSwNk=;
-	b=jKha3okgGsKMSW6M0X8mlFe5eKhw7BqEqw3dTBiLe5zlQzw6xWnMv8cp7F9lVfZYjO55
-	 eZSU0jMDDbQkI4P9gQyXXCbp8jm+1tj+i6mc3akfDURJpa9LDH/Sd7sW7+jJPtgu6wkGH
-	 ir6+9v2GKwOyoyEbex6CZ5WahjeljQKYS+C5eybbiYxquA9bulxvAgvya0atHW6aQXbM/
-	 37PpXqzCXFOj0tBtn/a5jBNEyYlUQNg87Ks9nSzqeMAjYT2+2v3BuooznvmP/hRL1XrEt
-	 vXxS1Rejp+aLaXkJmysWi4Jq5b+EGMsGMqWMDESMY/YW1a89iX+pi+XUUrfS67O4cwg==
+	a=rsa-sha256; c=relaxed/relaxed; t=1795001129;
+	h=Received:DKIM-Signature:Message-ID:From:Subject:Reply-To:To:Cc:
+	 In-Reply-To:References:Content-Type:Content-Transfer-Encoding:Date;
+	bh=FjK7gTpOa1gQAwwu83TL9TJ5qYruXRzfkIPcVwvf4RE=;
+	b=Ab5/jeDI/F+S7BO5tGFDxin+deGLUZ/rirwN1Ktl0ygMfFnWTFsg+u/dxYVOCm9OBrwZ
+	 AVvoC1DYaJbOpAF/m+PYMUdh38LWL2QjZ2KUsuSGEopeQSHIDofda/2sC7FQ3HZmBl/Bh
+	 DnZDTvaSN2QGK75ZCmXWw5je15kAPb++3P6ereXhPalnOK5TULNys0fyZCcGsgrohjI2B
+	 2SjmOOF8IUs9a9PPI285xx9fd7fz54MFXN//Rn7IHJIjsVN3veuB0hJ5sm8if1k1Qes1H
+	 WGwTAMajtdrs5EmfM2t/G4F+0OImkyH6U/D8K+LWS5ft1De5Vbz9lMbYFiWzglsJrcQ==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dmarc=pass header.from=openvz.org;
-	spf=pass smtp.mailfrom=openvz.org;
-	dkim=pass header.d=openvz.org header.i=@openvz.org header.a=rsa-sha256 header.s=google header.b=ec+1kIez;
-	arc=none smtp.remote-ip=209.85.221.51
-Received: from mail-wr1-f51.google.com (mail-wr1-f51.google.com [209.85.221.51])
-	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
-	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
+	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=XjRANpu9;
+	arc=none smtp.remote-ip=100.103.45.18
+Received: from smtp.kernel.org (quasi.space.kernel.org [100.103.45.18])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature ECDSA (prime256v1))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7B3DE606A33F
-	for <dm-devel@lists.linux.dev>; Wed, 18 Nov 2026 11:02:47 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 7B3DE606A33F
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=openvz.org
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=openvz.org
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 372BA606A320
+	for <dm-devel@lists.linux.dev>; Wed, 18 Nov 2026 11:25:28 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=openvz.org header.i=@openvz.org header.a=rsa-sha256 header.s=google header.b=ec+1kIez
-Received: by mail-wr1-f51.google.com with SMTP id ffacd0b85a97d-4a357b1c649so444176f8f.3
-        for <dm-devel@lists.linux.dev>; Wed, 18 Nov 2026 03:02:47 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=openvz.org; s=google; t=1794999766; x=1795604566; darn=lists.linux.dev;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:from:to:cc:subject:date
-         :message-id:reply-to:content-type;
-        bh=aaVCz9shF8ZFyzO5/5N6GKpW3bexM2Ih05SHuYmSwNk=;
-        b=ec+1kIez2g8JMAOmdTtMvD8b8j7n33cegpzvFJQLOPqgosF7wucCF9j1kcxBsi4lXi
-         kul/+1ythjpU2W55VNGGMidYTdLpKCN4YsPDzxrlV1+FdXs+BV4U/Hv95Sy48V2EliIl
-         Nsh4HVKQW6dwoK9bClfaZBU+U9bT+gmRgls7THMXmEr+sBGJjNZUtreOHpVVxfH35a6F
-         KaB9lI3Ighyukc7fLBOErRV9SiQ4Rae6I06rBSyS9FY9xPyXQQsjTchnE6+u2DaVgQR7
-         i55Qs8ksl8IIBZOL9Bo3vX6GUTwAr5Iq/aHPhbq2/CqLWg4eRWiBRt7/9nTAuRZky2lP
-         1WWg==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1794999766; x=1795604566;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:x-gm-gg:x-gm-message-state:from
-         :to:cc:subject:date:message-id:reply-to:content-type;
-        bh=aaVCz9shF8ZFyzO5/5N6GKpW3bexM2Ih05SHuYmSwNk=;
-        b=2VWEabVyiqu4zlVatpYDq0l8PlPyAVnzAueTyw1EcTjgiUd20YdcdhZimLPFwEYQk4
-         6DAaHyGtRCIJC4JTmOD+5akvY5KCR2NsAsQKVd+dbMQ5boVSokohIlq6raSUOkHbrY+I
-         dK38PBezFDQ6fJOs1sQej6VDNl76BU1PNq+xKnk5w99hr9lo/bShLOekVfTcc54k7Sfq
-         T58cr7ZiDLV8iaXQhslqGq2N7QwV6ZH/DQmNH7eqYYpaaWZokRcgAbzJ9lsUSmH3icrH
-         xJRvhftyNtVWZxBepcRZBh2S1soyLD8r6Z38t7jMI23x/NJnxVlfSNSwzvAmBLA0Pl5e
-         ZB1Q==
-X-Forwarded-Encrypted: i=1; AL+hErGI64GBzlv20zvB+h3PSiuEH+6P5vvX3tm4QqejO1TPQMmS33pUprjUrBkdP7msJErO+gokTHVbag==@lists.linux.dev
-X-Gm-Message-State: APuU4Z+QnJ8pS7Q5O4m9JX6Pmk7cXyNOJEm2Ds10XY8GEt4EF1L9zjhC
-	lqOoJlhfP3KrALTWe8ygojHWHwkMseCwShNMvS/aicvC9IHQjZCnhXJnCofzXlCT9qU=
-X-Gm-Gg: AZFdTZfAaRqGAgVk/2Lmn9dv1Et7WbnBBx3OnmtxzDAdCenwAGBbm6eCvwRvFEG0dCh
-	/YUYKDpoP/t2bWZCrLn/dZq0Nz1x60B3az+TN/s9hxnWrFnzZcqXGRBujUX/Ky4NhtzVsMuayTs
-	uoQ/otSLlwq/0K16eHOxQB6hifgzmjZ7tskshbq2F80mC70rlbHjCtvzNW3/9Rc0Z7UNr5rRFyE
-	j6Es2X3vnC/onZPehbJqMOc1Tw5JgOT/NKZ+GMNJDz0Afsw/966tL186Q/m3dI6WEthIB8k5Pbz
-	Qy5oXv+RJdnjF6vM4QHdcZE4XWn5mwgL+q850ZDorg97FDdlfGVd5f4PqDjjrtfJDqKY85bN8CD
-	TpdB/7R8yyUiMmJIXk3US5zt+WI9MFU3/fu2XrYnR9/+Cb618vMhVXDPwGcEu1n5lI1g/u0brX8
-	Xiuvb3XcI0zG1eEnZrxUnJ7hYnndNdcUJPhymMtgumzM452ay6eOXws458jId+MskeEOIzAw5oI
-	77D3D0Uym/v4tF4Sl2jdoV0IvPMiw8tGX727++MIIdfhQF+PCVh0HY/ps0xnabPrgebwMhMzk5/
-	CVVUyOD2HH8TsW/+9V1+mLXCkqM=
-X-Received: by 2002:a05:6000:40ce:b0:4a4:6669:7f9 with SMTP id ffacd0b85a97d-4a63cd0f053mr5455559f8f.49.1794999765938;
-        Wed, 18 Nov 2026 03:02:45 -0800 (PST)
-Received: from artemis.sw.ru ([2a06:5b06:b600:300:8c09:3cc3:6efa:ac1f])
-        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-4a656c1145esm3943277f8f.52.2026.11.18.03.02.45
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Wed, 18 Nov 2026 03:02:45 -0800 (PST)
-From: "Denis V. Lunev" <den@openvz.org>
-To: agk@redhat.com,
-	snitzer@kernel.org,
-	mpatocka@redhat.com,
-	dm-devel@lists.linux.dev
-Cc: bmarzins@redhat.com,
-	thornber@redhat.com,
-	linux-kernel@vger.kernel.org,
-	stable@vger.kernel.org,
-	den@openvz.org
-Subject: [PATCH 3/3] dm era: construct the target suspended
-Date: Wed, 18 Nov 2026 12:02:39 +0100
-Message-ID: <20261118110239.2910290-4-den@openvz.org>
-X-Mailer: git-send-email 2.55.0
-In-Reply-To: <20261118110239.2910290-1-den@openvz.org>
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=XjRANpu9
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id E4BDE1F000C4;
+	Wed, 18 Nov 2026 11:25:25 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
+	s=k20260515; t=1795001128;
+	bh=FjK7gTpOa1gQAwwu83TL9TJ5qYruXRzfkIPcVwvf4RE=;
+	h=From:Subject:Reply-To:To:Cc:In-Reply-To:References:Date;
+	b=XjRANpu9MeAYUzOCobTMN9QfSS7XEgqlXp9807tF2L+ALFbZvBcmCmlP92k66up/P
+	 mr/x8apyicFwEDfsp5fLc+ejfb1HChg3f63NBsfH1PaY2+38XAdsNPecahJzNtrnuv
+	 9MQOTmsXrNHhocxU+4uKpP7m95Ogm9ipTbOFTPqhwd9k1eHMcIGOIy0ezBqFc7mniO
+	 br2KwybMiAJ+mpmNOXjXlGET24GynP6yQBd7KGFLp81Vj3oYg8aoKzfKGhyiMVhao2
+	 +Z3lbxAfKM7Wc18CZ8MBorIZI4B4YYWn832uTv/JjiQnR9eEOMWCArlw+4lijhyPyb
+	 Y5oMfH0tpFK/w==
+Message-ID: <sashiko-outbox-220821@kernel.org>
+From: sashiko-bot@kernel.org
+Subject: Re: [PATCH 1/3] dm persistent data: drop the original block only
+ once it is copied
+Reply-To: sashiko-reviews@lists.linux.dev
+To: "Denis V. Lunev" <den@openvz.org>, agk@redhat.com, snitzer@kernel.org, mpatocka@redhat.com, dm-devel@lists.linux.dev
+Cc: bmarzins@redhat.com, thornber@redhat.com
+In-Reply-To: <20261118110239.2910290-2-den@openvz.org>
 References: <20261118110239.2910290-1-den@openvz.org>
+ <20261118110239.2910290-2-den@openvz.org>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+Date: Wed, 18 Nov 2026 11:25:25 +0000
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Post: <mailto:dm-devel@lists.linux.dev>
@@ -102,56 +60,100 @@ List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 List-Owner: <mailto:dm-devel+owner@lists.linux.dev>
 Precedence: list
-MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
 
-From: Denis V. Lunev <den@openvz.org>
+Thank you for your contribution! Sashiko AI review found 2 potential
+issues to consider:
+- [High] dm persistent data: __shadow_block() exceeds max concurrent
+  locks
+- [Medium] dm persistent data: space map block leak on error in
+  __shadow_block()
+--
 
-era_preresume() resizes the era array and commits the metadata in the
-thread that resumes the device, and starts the worker only once that is
-done. That is safe only while the worker cannot run, and nothing makes
-it so: struct era is zeroed, so era->suspended reads as running from
-the moment the target is constructed, and an rpc arriving before the
-resume wakes the worker alongside the resize. Both allocate from the
-same space map and take the same metadata block, which corrupts it:
+commit f51a9340a7ed4ff57bea163d1f75e930e3c7038c
+Author: Denis V. Lunev <den@openvz.org>
 
- device-mapper: block manager: validator mismatch (old=array vs new=index)
- device-mapper: space map common: unable to decrement block
- device-mapper: era: metadata_commit: pre commit failed
+dm persistent data: drop the original block only once it is copied
 
-Every commit after that fails the same way, the target reports "era
-Error", and the writes it tracks fail, which takes the workload's
-filesystem read-only.
+This commit moves the dm_sm_dec_block() call in __shadow_block() after
+the original block is read, copied into the newly allocated block, and
+unlocked.
 
-Userspace gets there without trying. multipathd asks every
-device-mapper target appearing on the node for its status, over its own
-uevent socket, to learn whether the target is a multipath map, so a
-target is asked exactly while it resumes.
+> diff --git a/drivers/md/persistent-data/dm-transaction-manager.c b/driver=
+s/md/persistent-data/dm-transaction-manager.c
+> index 7401add01d12e..159aac9da07ae 100644
+> --- a/drivers/md/persistent-data/dm-transaction-manager.c
+> +++ b/drivers/md/persistent-data/dm-transaction-manager.c
+> @@ -297,10 +297,6 @@ static int __shadow_block(struct dm_transaction_mana=
+ger *tm, dm_block_t orig,
+>  	if (r < 0)
+>  		return r;
+> =20
+> -	r =3D dm_sm_dec_block(tm->sm, orig);
+> -	if (r < 0)
+> -		return r;
+> -
+>  	r =3D dm_bm_read_lock(tm->bm, orig, v, &orig_block);
+>  	if (r < 0)
+>  		return r;
+> @@ -322,7 +318,14 @@ static int __shadow_block(struct dm_transaction_mana=
+ger *tm, dm_block_t orig,
+>  	       dm_bm_block_size(tm->bm));
+> =20
+>  	dm_bm_unlock(orig_block);
+> -	return r;
+> +
+> +	r =3D dm_sm_dec_block(tm->sm, orig);
+> +	if (r < 0) {
+> +		dm_bm_unlock(*result);
+> +		return r;
+> +	}
+> +
+> +	return 0;
+>  }
 
-Mark the target suspended when it is constructed, which is the state
-start_worker() already assumes it is leaving. The resize and the commit
-then run with the worker held back, as they must, and a status query in
-that window is refused rather than served beside them.
+[Severity: High]
+Can calling dm_sm_dec_block() while *result is still write-locked exceed
+the maximum concurrent block locks reserved by dm-bufio and deadlock under
+memory pressure?
 
-Fixes: cca2c6aebe86 ("dm era: only resize metadata in preresume")
-Cc: stable@vger.kernel.org # v5.12+
-Signed-off-by: Denis V. Lunev <den@openvz.org>
----
- drivers/md/dm-era-target.c | 1 +
- 1 file changed, 1 insertion(+)
+Previously, __shadow_block() ran in three sequential phases that each held
+at most two locks internally: dm_sm_new_block(), dm_sm_dec_block(), and
+dm_bm_read_lock(orig) + dm_bm_write_lock_zero(new).  Commit 490ae017f54e
+("dm thin metadata: THIN_MAX_CONCURRENT_LOCKS should be 6") sized
+THIN_MAX_CONCURRENT_LOCKS to 6 for rebalance3(), which holds 4 locks (2 in
+the shadow spine plus left and center children) when init_child() calls
+dm_tm_shadow_block() for the right child (4 + 2 =3D 6).
 
-diff --git a/drivers/md/dm-era-target.c b/drivers/md/dm-era-target.c
-index 29b0602e7849..d40a98169b04 100644
---- a/drivers/md/dm-era-target.c
-+++ b/drivers/md/dm-era-target.c
-@@ -1557,6 +1557,7 @@ static int era_ctr(struct dm_target *ti, unsigned int argc, char **argv)
- 
- 	spin_lock_init(&era->rpc_lock);
- 	INIT_LIST_HEAD(&era->rpc_calls);
-+	atomic_set(&era->suspended, 1);
- 
- 	ti->private = era;
- 	ti->num_flush_bios = 1;
--- 
-2.55.0
+With dm_sm_dec_block(tm->sm, orig) moved after dm_bm_write_lock_zero(),
+*result is already held when dm_sm_dec_block() runs.  When
+smm->recursion_count is 0 and orig's bitmap block has not been shadowed yet
+in the current transaction, sm_metadata_dec_blocks() -> sm_ll_dec() ->
+__sm_ll_dec() -> shadow_bitmap() recursively enters __shadow_block() for
+the bitmap block and takes dm_bm_read_lock() and dm_bm_write_lock_zero().
+That brings the peak lock count to caller_locks + 3, reaching 7 concurrent
+locks in rebalance3() (exceeding THIN_MAX_CONCURRENT_LOCKS =3D 6) and 6 in
+rebalance2() (exceeding ERA_MAX_CONCURRENT_LOCKS =3D 5,
+CACHE_MAX_CONCURRENT_LOCKS =3D 5, and DM_CLONE_MAX_CONCURRENT_LOCKS =3D 5).
+When dm-bufio falls back to its reserved_buffers pool under memory
+pressure, a single metadata thread holding all reserved buffers cannot
+evict its own held buffers and blocks forever in
+__alloc_buffer_wait_no_callback() -> __wait_for_free_buffer().
 
+[Severity: Medium]
+Does __shadow_block() also leak the newly allocated block new in the space
+map when dm_bm_read_lock(), dm_bm_write_lock_zero(), or dm_sm_dec_block()
+fails?
+
+At the start of __shadow_block(), dm_sm_new_block(tm->sm, &new) allocates
+new with a reference count of 1.  If a transient read error in
+dm_bm_read_lock() (or a failure in dm_bm_write_lock_zero() or
+dm_sm_dec_block(tm->sm, orig)) aborts the shadow and a subsequent commit
+succeeds, new is never released with dm_sm_dec_block(tm->sm, new) (unlike
+dm_tm_new_block() right above, which decrements new_block on error) and
+remains permanently allocated in the space map with no metadata pointing to
+it.  On the dm_sm_dec_block(tm->sm, orig) failure path,
+dm_bm_unlock(*result) also marks the buffer for new dirty in dm-bufio.
+
+--=20
+Sashiko AI review =C2=B7 https://sashiko.dev/#/patchset/20261118110239.2910=
+290-1-den@openvz.org?part=3D1
