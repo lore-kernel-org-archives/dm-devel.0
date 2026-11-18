@@ -1,57 +1,96 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=100.103.45.18
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=74.125.82.171
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1795024675;
-	b=iB10wlrpndPvmJEto+lyXYPaTxggDiNtWwLquI0t78mtOl7QFIb4e8PcPPPNisOrFZ28
-	 aOouuz39bYVE5MrsV+dtJaPFsFTBiwlceDoPfKkKtOuqgx+uykRcq/BhsouT3EczsLXVZ
-	 66I8mMp2PQGWb2oBp3Ww0RrLibw7aHggnDGKBs4/h9FRHOiRG3cHxtkDu/jRjkqC09mE+
-	 S4v1rO/k4HiTyzqXsEmXqgMXLKgAzAPlulsFmeIWjK/Y7sjIdQgv9IbP4dRZM6SJpmXVz
-	 FerkvhJIMRvyBOQVGM8PBgCie0MXrEC68GpTmKA/I52tjA5pgJs0tm7zrPyRB5ddKxQ==
+	t=1795041309;
+	b=Tc3n+wkjePBJKoFID0sP7fIhCc+qDqbXbtY0b6jUiZ9KOOerTZntp2pV7D3tslNP06Hd
+	 F+5e7QXRP1+LFfWX9C/rK1VXS/TqHoBr3ykYD/kPopoNwmnY75Pfhbr3MdJtGDjuWDrl/
+	 Bo1MZ+Otgna1viTj4VKQfDQdRW9OvjE7fSH4TC5UYG+Jf1XW6QvUH051+PTsT+y7lX5hO
+	 i08MrkAiH5qItaYxlfZfnaiak8768Rfh+Bp+8mpEPW51nManCjVUn+LTWHDrDAUckVbKY
+	 Tp6FXWx7PCuATxW2ErCl3CojDcNxI373NC8d9FYIuha9HLOWJroDs9CBJLau88ydt1A==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1795024675;
-	h=Received:DKIM-Signature:Message-ID:From:Subject:Reply-To:To:Cc:
-	 In-Reply-To:References:Content-Type:Content-Transfer-Encoding:Date;
-	bh=svj0BHG168+ZLom5aMPF2ldJYlU9TXd2YpuIAAYm1vY=;
-	b=i1cqSYngufxg7TAVuvX3D1IPdEW03tj3IkvX+kUCVcnxFCGPVLNZj+SLgQPMjGkvZhzz
-	 lMucAE+aCnbaQA9om0sLMh0LqgrqDmDwBBfI1YZzvdPnAltxQRoecrtVVThdZlcskCCpJ
-	 OKVxP2WzHKkd3oS5e50m3mto6Q+HXY+AUycGLFwZbYAs0/HXAR6ze5amyWOEOgn9Rq1m6
-	 oGsQe4972oNHLEUVW2ets+Ojz1jRCX3gBgoCDFN+RtyqKzUY8FKGfQYWMGqYIm5rYO59t
-	 saLl1GKRBa/bteMZzUNWtpOvx0WTo8HX31cZh+rdKTsAMOlAkAbojFPKq1X1YTSgJUA==
+	a=rsa-sha256; c=relaxed/relaxed; t=1795041309;
+	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
+	 X-Forwarded-Encrypted:X-Gm-Message-State:X-Gm-Gg:X-Received:Received:
+	 From:To:Cc:Subject:Date:Message-ID:X-Mailer:In-Reply-To:References:
+	 MIME-Version:Content-Transfer-Encoding;
+	bh=Up7v7Cv7cOXcZcQhblA3mDO0YbIQN9mCvrqNMQVdMP0=;
+	b=quGDTFliwLbADmjVcV6QfLYDhd+IobHkxAhWeJeZrZtdD6V9Azm7vIE7OTlBVqD8Pf8D
+	 MQP/BjPOvjbQCQU4sKgCWAZEIV7yikpUliYC+prF/e2S9Ql7vVD4SZw3nlF32G8L6WwYw
+	 k0zIeF0CdU0tse4LO75gvUi3Kr4FB79AyR06jtn1ZEN2r1lfKdVdYCoQdu5AqYfU0faJ2
+	 BsE2XeEZxxu7nJigziIYgg6rao2nXcz/8HB/Hn6Q6/6NGjiQOrPuwBel+ThaCS/m/dYkS
+	 AzKlFh5Tpk3jy1kxQSj8fPFy0X0rup3J3Q8GrvncEjB4YilRSQROMoDpF8F7Xbs40jQ==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=KUwbD8Nt;
-	arc=none smtp.remote-ip=100.103.45.18
-Received: from smtp.kernel.org (quasi.space.kernel.org [100.103.45.18])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature ECDSA (prime256v1))
+	dmarc=pass header.from=purestorage.com;
+	spf=pass smtp.mailfrom=purestorage.com;
+	dkim=pass header.d=purestorage.com header.i=@purestorage.com header.a=rsa-sha256 header.s=google2022 header.b=CT5rGIVz;
+	arc=none smtp.remote-ip=74.125.82.171
+Received: from mail-dy1-f171.google.com (mail-dy1-f171.google.com [74.125.82.171])
+	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
+	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id CFB5F606A31C
-	for <dm-devel@lists.linux.dev>; Wed, 18 Nov 2026 17:57:55 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5A139606A320
+	for <dm-devel@lists.linux.dev>; Wed, 18 Nov 2026 22:35:08 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 5A139606A320
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=reject dis=none) header.from=purestorage.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=purestorage.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=KUwbD8Nt
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 51B4E1F000C5;
-	Wed, 18 Nov 2026 17:57:55 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
-	s=k20260515; t=1795024675;
-	bh=svj0BHG168+ZLom5aMPF2ldJYlU9TXd2YpuIAAYm1vY=;
-	h=From:Subject:Reply-To:To:Cc:In-Reply-To:References:Date;
-	b=KUwbD8NtRLB7cf/Zqax1RbBzg2JJb7565695lsdzoYuoy6Zer+FXMt5fBeP9zvVzy
-	 s1h7sr1FZj0JaBlBPugQ/CZmcxBuVS6QKr5WF/nyN+pdq1jq5Df87xRaleUb3BeKM3
-	 ICGTYN9HIGv8GCA4+z070fJYJuAJ9pxg6fJlZjpmRLpKG2O3nGXmd0kr9+eyuajiX+
-	 icpKBwnZ3cwcEt5ujBiz6W0oVoe1ZexhdYI0HHMq9MNm1Vxyz7ic3+gIUllBadoeem
-	 VZEurgEnKa2q6FOtnJKs5cxRFCWp2F+XrEvYv+5KT5tlmPGCQKCW22OB4tjFjaaA1M
-	 0BkQl4pmHnvQQ==
-Message-ID: <sashiko-outbox-221706@kernel.org>
-From: sashiko-bot@kernel.org
-Subject: Re: [PATCH v2 2/4] dm-bufio: allow exposing a client in sysfs under
- a caller-chosen kobject
-Reply-To: sashiko-reviews@lists.linux.dev
-To: "Yongpeng Yang" <yangyongpeng.storage@gmail.com>, agk@redhat.com, bmarzins@redhat.com, dm-devel@lists.linux.dev, mpatocka@redhat.com, snitzer@kernel.org
-Cc: yangyongpeng@xiaomi.com
-In-Reply-To: <20261118172133.689163-4-yangyongpeng.storage@gmail.com>
-References: <20261118172133.689163-2-yangyongpeng.storage@gmail.com>
- <20261118172133.689163-4-yangyongpeng.storage@gmail.com>
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: quoted-printable
-Date: Wed, 18 Nov 2026 17:57:54 +0000
+	dkim=pass (2048-bit key, unprotected) header.d=purestorage.com header.i=@purestorage.com header.a=rsa-sha256 header.s=google2022 header.b=CT5rGIVz
+Received: by mail-dy1-f171.google.com with SMTP id 5a478bee46e88-382c3c9671fso1920721eec.0
+        for <dm-devel@lists.linux.dev>; Wed, 18 Nov 2026 14:35:08 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=purestorage.com; s=google2022; t=1795041307; x=1795646107; darn=lists.linux.dev;
+        h=content-transfer-encoding:mime-version:references:in-reply-to
+         :message-id:date:subject:cc:to:from:from:to:cc:subject:date
+         :message-id:reply-to:content-type;
+        bh=Up7v7Cv7cOXcZcQhblA3mDO0YbIQN9mCvrqNMQVdMP0=;
+        b=CT5rGIVzhU8WOPUi1jN0mPkIrOjHlzKln1H8jmnNVIefAADzOqFQenyOSOKalk4Ujs
+         gB9XIWTmKT7i+p0+lSMaejWARJiyP7ZpPFsHh5sP8AI+IaBYnMuaFpFEP6qwFUosMXzb
+         jgu6uxE0xuzhawN0zKGByuXeHTlT+0FGhJRR3Fbm/8DYuXh1lxj3kJXV/og0XWuzHUZh
+         vqnNM44UADnBPKd5ILa01SGnL6t8Dmdlt04P72UvKMLeUukEe/0pPx7rbiSCzIb+C3aL
+         CCC1d86N0MY33zHGiBq/OPVKaV/Ekb3Trs0JWCIL0aGAKsVJHDC97P63KnW6oEv9TyGd
+         sEtQ==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20260707; t=1795041307; x=1795646107;
+        h=content-transfer-encoding:mime-version:references:in-reply-to
+         :message-id:date:subject:cc:to:from:x-gm-gg:x-gm-message-state:from
+         :to:cc:subject:date:message-id:reply-to:content-type;
+        bh=Up7v7Cv7cOXcZcQhblA3mDO0YbIQN9mCvrqNMQVdMP0=;
+        b=bd2v8Np4KqeoC+JGc3XY+zBvgjiqVhF3hU1cZ+RZTcAxZMUEE1c5t/rE4z67cRv3t/
+         KpTF0MlXlmVDAq3zovWZM9EHgEAjOnxOkanRx8opaLgUkDBef9/b8VNDf//st9rAy8We
+         0cGpSBCDAg4MLeNtgRip8iot0L6Hi+G4VJuCskea9rUW6gpKey2Pw4b6aMuRWERkoBBt
+         FokKcqbOm/3ua7LV/NpJt+1cdS2bbPpR0XlfotGQ4qZMERmabZbuVR8gEAp+tzQ+hr5a
+         CdIg+gpSbzFhBK4KeNDyDGFG+eJkiRsHa6IzDYJONHWhzalulAdo6hkyn/Igs7q7WtPM
+         UzjQ==
+X-Forwarded-Encrypted: i=1; AL+hErHp5dHnXtvpRltTl6N6uYHvK9rQFYg33wE2jOdEGOiHfHcbvyeJlbaQRaadtJmaIBcFNTA9dzxefQ==@lists.linux.dev
+X-Gm-Message-State: APuU4Z817QjB4eXu30OvMBJbqggvDUny9Fli4B4jvwc8NNHKpyVpPgyO
+	PjI0RzzlhgjZAdNnfTSzuG46H+iC7FJravQnNp3AUEzhRLqXnos+yD74XmMI9tTBJQg=
+X-Gm-Gg: AZFdTZd05Y1VxJmFoajbH74iwlIGc0QSN2FKAoXf4yzJDvMCI7G4se/86evG+cTMYz9
+	NYcl8zWaYaG3HOlCapLIBEDqOw8KBK/VOS/5nfXSkHdhYaKETSXXT6oLY5PP0S9ZarGpM2DyL5Q
+	W5Uht4G5PNJnNsX+21OX+G50PZ2k2ZdxJ8dfkxHJcFdT18zldvSklKWEdNyRo83roxeKmcDDTKD
+	yKP5mIdoTwp8sVLayIfdBItpY1hvQvwNBIELBgP7YuVw9oxyarhNVHhaKjdpDzpy+jJwBwNmLuR
+	wBiOEBEqlxOmAxPC9SwhDL2MSeA6J45msmcN5RQ2ro4rK7tJ7UF2wZqACp1j4jlzygn32MlEGbS
+	Puq78+VMm/dIpIJradl+JarTIC3/hI7FOdtH14qn1w1chLVY00hVDrum+NMNr3lRWMWOL6JBlla
+	PWzJ7EKExSwLR8MFeSFZwj7ajCNAXYBkeXVyL/195dFCczYvTOQlNX2wRo4YPygzPUopCdpZc0P
+	AZewh2fgo3xMsSMfWIuwbWG1WUp+/JEZWQDcAydKZa5ckGq8I8IZgynwAwdIBpkqFuuw1qo1FiC
+	qnFDgJGXjULmPXlUQXuS6oe8dB9xNCpGbrdf2gLDcvRIrIDzrWCprALUmAVhtCytib4tLOim6IS
+	K+8kRBLVnyKy19521wZORLeL9cz4KkAmYsQRvwuwnOOvM6Z6TAuNNlowOvbR1XmNo+xTC6A3noG
+	ykwZkO825cpGN9qzpApKNXeuKu
+X-Received: by 2002:a05:693c:88d3:20b0:37e:9a3b:76a3 with SMTP id 5a478bee46e88-3827fa88224mr3648654eec.11.1795041307021;
+        Wed, 18 Nov 2026 14:35:07 -0800 (PST)
+Received: from brian--MacBookPro18.purestorage.com ([170.85.204.93])
+        by smtp.gmail.com with ESMTPSA id 5a478bee46e88-382a172a0a8sm9405866eec.0.2026.11.18.14.35.06
+        (version=TLS1_3 cipher=TLS_CHACHA20_POLY1305_SHA256 bits=256/256);
+        Wed, 18 Nov 2026 14:35:06 -0800 (PST)
+From: Brian Bunker <brian@purestorage.com>
+To: Benjamin Marzinski <bmarzins@redhat.com>,
+	Martin Wilck <mwilck@suse.com>
+Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>,
+	dm-devel@lists.linux.dev
+Subject: Re: [PATCH v4 1/1] multipathd: recheck WWIDs of re-added paths with the device
+Date: Wed, 18 Nov 2026 14:34:49 -0800
+Message-ID: <20261118223449.85519-1-brian@purestorage.com>
+X-Mailer: git-send-email 2.56.0
+In-Reply-To: <1a6a0493ef4f510a047647db2385cf89f7424b68.camel@suse.com>
+References: <20261111181642.51912-1-brian@purestorage.com> <20261111181642.51912-2-brian@purestorage.com> <179452227264.147392.9708937185980533136.b4-review@b4> <avdQNjzddtu7o18n@redhat.com> <9259d20188a042cb280bad95f8be9783d1b9c1fd.camel@suse.com> <avtdexYN1B3pJLmL@redhat.com> <1a6a0493ef4f510a047647db2385cf89f7424b68.camel@suse.com>
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Post: <mailto:dm-devel@lists.linux.dev>
@@ -60,164 +99,40 @@ List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 List-Owner: <mailto:dm-devel+owner@lists.linux.dev>
 Precedence: list
+MIME-Version: 1.0
+Content-Transfer-Encoding: 8bit
 
-Thank you for your contribution! Sashiko AI review found 3 potential
-issues to consider:
-- [High] dm-bufio: sysfs client exposure retained despite maintainer
-  direction
-- [Medium] dm-bufio: module unload race in dm_bufio_kobj_release()
-- [Low] dm-bufio: undocumented dm_bufio_client_sysfs_detach() and
-  lifetime claims
---
+Martin, Ben,
 
-commit a1c1b2bd57f6306f0bce7f21a188c32909bec5c3
-Author: Yongpeng Yang <yangyongpeng@xiaomi.com>
+Thanks, both. Two points before I do a v5.
 
-dm-bufio: allow exposing a client in sysfs under a caller-chosen kobject
+On Mon, 2026-11-16, Benjamin Marzinski wrote:
+> If this code was only run when we got a wwid before and then it
+> changed, then requiring a matching WWID from the device seems much
+> more reasonable.
 
-This commit adds dm_bufio_client_sysfs_add() and
-dm_bufio_client_sysfs_detach() to expose a dm-bufio client's attributes and
-writable retain_bytes target in sysfs under a caller-supplied kobject.
+Agreed, and that changes my earlier position. With PATH_ADD_REINIT
+passed only from the changed-WWID branch, the check only runs when the
+path already had a WWID and udev now reports a different one. In that
+case, if the device doesn't confirm the new WWID, including when SG_IO
+fails, I'd keep the path out and let the checker retrigger, as for a
+mismatch.
 
-> diff --git a/Documentation/ABI/testing/sysfs-kernel-dm-bufio b/Documentat=
-ion/ABI/testing/sysfs-kernel-dm-bufio
-> new file mode 100644
-> index 0000000000000..bccd679c1b607
-> --- /dev/null
-> +++ b/Documentation/ABI/testing/sysfs-kernel-dm-bufio
-> @@ -0,0 +1,76 @@
-> +What:		/sys/block/<dm-device>/dm-bufio/<name>/
-> +Date:		November 2026
-> +KernelVersion:	7.4
-> +Contact:	dm-devel@lists.linux.dev
-> +Description:
-> +		Directory exposing one dm-bufio client whose user opted in
-> +		through dm_bufio_client_sysfs_add().  <name> is chosen by that
-> +		user; dm-verity, which places the directory under the block
-> +		device of its own dm device, uses <name> "hash" for the hash
-> +		tree client, "fec" for the FEC parity client and "fec-data"
-> +		for the FEC data client.  The directory lives from
-> +		registration until the client is destroyed, independently of
-> +		any device-mapper table loaded on the device, so a suspend or
-> +		table reload never leaves dangling entries behind.  The
-> +		read-only counters are instantaneous snapshots and may be
-> +		approximate.
+check_path_wwid_change() returns false both for a match and for an SG_IO
+failure, so v5 would need to tell those apart.
 
-[Severity: High]
-As reported by Mikulas Patocka on v1 [1], should dm-bufio clients be
-exposed in sysfs at all?
+> we never reset pp->retriggers once we have a reasonable WWID
 
-Multiple targets in a device-mapper table would clash under the same
-/sys/block/<dm-device>/dm-bufio/ directory, and reloading a table creates a
-new dm_bufio_client and discards any retain_bytes value configured in
-sysfs.  The maintainer requested configuring dm-bufio parameters through
-device-mapper target messages or constructor arguments instead.
+On Mon, 2026-11-16, Martin Wilck wrote:
+> I don't see an issue with resetting retrigger_tries once the issues
+> with path's WWID are sorted out, in both cases.
 
-[ ... ]
+I'm fine with resetting pp->retriggers once a path has a confirmed WWID,
+so that "no WWID from udev" and "WWID didn't match" don't share one
+budget for the life of the path. Would you rather have that in this
+patch or as a separate one? I lean towards a separate patch, since it
+also changes the existing missing-udev handling.
 
-> diff --git a/drivers/md/dm-bufio.c b/drivers/md/dm-bufio.c
-> index 367f878c17dc1..a2991dcd532fb 100644
-> --- a/drivers/md/dm-bufio.c
-> +++ b/drivers/md/dm-bufio.c
-[ ... ]
-> @@ -2505,6 +2511,165 @@ static unsigned long dm_bufio_shrink_count(struct=
- shrinker *shrink, struct shrin
-[ ... ]
-> +static void dm_bufio_kobj_release(struct kobject *kobj)
-> +{
-> +	struct dm_bufio_client *c =3D container_of(kobj, struct dm_bufio_client=
-, kobj);
-> +
-> +	/*
-> +	 * The client is freed only after this completes, as in dm-sysfs.
-> +	 */
-> +	complete(&c->kobj_unregister);
-> +}
-> +
-> +static const struct kobj_type dm_bufio_ktype =3D {
-> +	.sysfs_ops	=3D &dm_bufio_sysfs_ops,
-> +	.default_groups	=3D dm_bufio_groups,
-> +	.release	=3D dm_bufio_kobj_release,
-> +};
-> +
-> +static int dm_bufio_kobj_add(struct dm_bufio_client *c, struct kobject *=
-parent,
-> +			     const char *name)
-> +{
-> +	init_completion(&c->kobj_unregister);
-> +
-> +	return kobject_init_and_add(&c->kobj, &dm_bufio_ktype, parent, "%s",
-> +				    name);
-> +}
-> +
-> +/* Drop the sysfs reference and wait for the release method to run. */
-> +static void dm_bufio_kobj_del(struct dm_bufio_client *c)
-> +{
-> +	kobject_put(&c->kobj);
-> +	wait_for_completion(&c->kobj_unregister);
-> +}
+If you're both fine with this, I'll send v5.
 
-[Severity: Medium]
-Can dm-bufio.ko be unloaded while dm_bufio_kobj_release() is still
-executing?
-
-CONFIG_DM_BUFIO is tristate, and when the release callback runs
-asynchronously (for example via kobject_delayed_cleanup() under
-CONFIG_DEBUG_KOBJECT_RELEASE=3Dy, or when another task drops the last kobje=
-ct
-reference), the caller waiting in dm_bufio_kobj_del() unblocks as soon as
-complete() is called:
-
-CPU0                              CPU1
-dm_bufio_client_destroy()
-  dm_bufio_kobj_del()
-    kobject_put(&c->kobj)
-    wait_for_completion()
-                                  kobject_release()
-                                    dm_bufio_kobj_release()
-                                      complete(&c->kobj_unregister)
-                                      <preempted>
-  kfree(c)
-sys_delete_module("dm_bufio")
-                                      return;  <-- unmapped module text
-
-2995fa78e423 ("dm sysfs: fix a module unload race") added
-dm_kobject_release() in drivers/md/dm-builtin.c (always built into vmlinux
-when CONFIG_BLK_DEV_DM is enabled) so kobject release callbacks that signal
-a completion do not reside in unloadable module text.
-
-> diff --git a/include/linux/dm-bufio.h b/include/linux/dm-bufio.h
-> index 9bf3f805c43c2..ac168ac797e4f 100644
-> --- a/include/linux/dm-bufio.h
-> +++ b/include/linux/dm-bufio.h
-[ ... ]
-> @@ -165,6 +166,14 @@ void dm_bufio_set_minimum_buffers(struct dm_bufio_cl=
-ient *c, unsigned int n);
->  void dm_bufio_set_retain_bytes(struct dm_bufio_client *c, unsigned long =
-bytes);
->  unsigned long dm_bufio_get_retain_bytes(struct dm_bufio_client *c);
-> =20
-> +/*
-> + * Publish the client as <name> under <parent> in sysfs; removed in
-> + * dm_bufio_client_destroy().
-> + */
-> +int dm_bufio_client_sysfs_add(struct dm_bufio_client *c, struct kobject =
-*parent,
-> +			      const char *name);
-> +void dm_bufio_client_sysfs_detach(struct dm_bufio_client *c);
-
-[Severity: Low]
-This comment, the commit message, Documentation/ABI/testing/sysfs-kernel-dm=
--bufio,
-and Documentation/admin-guide/device-mapper/dm-bufio.rst all state that the
-sysfs directory lives from registration until the client is destroyed in
-dm_bufio_client_destroy(), without mentioning dm_bufio_client_sysfs_detach()
-or that dm_bufio_client_sysfs_add() can re-attach a detached directory
-across suspend and table reload.
-
-[1] https://lore.kernel.org/r/d4fc9150-4768-f747-ca97-688bc9bebc46@redhat.c=
-om
-
---=20
-Sashiko AI review =C2=B7 https://sashiko.dev/#/patchset/20261118172133.6891=
-63-2-yangyongpeng.storage@gmail.com?part=3D2
+Brian
