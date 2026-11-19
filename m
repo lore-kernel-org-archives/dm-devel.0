@@ -1,84 +1,84 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.210.173
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.210.172
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1795105914;
-	b=W4wTmrXYSwD/Twy2UMTSiFZYb/iZMrU6j+YGr743OHzgdF6CWcdNNtyuel2PATN3cbti
-	 5aKW9Rxv1d9jWetGLP8IWdPXZVwDELCevRARUZj+Blj+/pmPP51Beg2fjeBNYGheUqmt6
-	 iTlkDpPi1s9bIveqE4xiqcOBR9P4VGZEJEMdruQQwUQXs3pKegesIrgIUz2bWUoUYWDXR
-	 h9CRQsjslxplZ1FFJaxuOnhzOVYxcoOSKCZhVGI5Vi/Th9NCgsSahRUATgAQM+Y6tadnO
-	 xtOphKvls8nzikThxC/msKPWkGrkfflTPg1ahWGtmzj0kLOpmqP5lJcolNcwaaikrrA==
+	t=1795105919;
+	b=i3O6tuJ2Yp6+wvOogXGulMpvo8S5n5eFq8GpTGH6eosqbKZ/AIKyhTWiumjtqqPNy/M2
+	 OKONCTmCgjyijK1R7PPmky2Hn6GTdg6/O+kf2MLu8TTFn0/g9hIaRdGjEmS1ySlyT0i8R
+	 Tfk+n9WtT/2yvn/WcYUsBfk67YUY7Q3lmB7lQhpdGXczBFKRUvzachimW4cL7NpyYsMbh
+	 8KxfRWYpWjLy33ADG78a7B4E1t7fBkJ01zY1pqWCXXUoHuRyKCyeeLZbBla1r9yUQ/Epx
+	 zQorRp6X5LJPoCZAwumPeij3XvxUYZZGnkeoAwYxyiOwh5+REIl/6O8TWQxZ6MynBFQ==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1795105914;
+	a=rsa-sha256; c=relaxed/relaxed; t=1795105919;
 	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
 	 X-Forwarded-Encrypted:X-Gm-Message-State:X-Gm-Gg:X-Received:Received:
 	 From:To:Cc:Subject:Date:Message-ID:X-Mailer:In-Reply-To:References:
 	 MIME-Version:Content-Transfer-Encoding;
-	bh=/a5S7NDVrBgrgw1pAmaajiZXprBonkqhFFDCPxOrong=;
-	b=IedvrXPEotrO49Nw2R/daPyizKSz0bGj7ic9zourwCd6kmtC4chYku8ldlefxhJ7WCXU
-	 WwFZqoxgXpg/BhxM18TKX09jgQRF5v5ZOujmGRXnhosVDzVQN/Qeqg79JMkiFe+OveVDb
-	 iIRhWaw46dJQ13pyUPhBv7bxDJeu4MtLJo8pNrgbBxOwyRhfpo66SvVcxXm3fH3lXllgb
-	 6fKHrAJjLRvGEn1Lieaeb2XrZa0VmvotJ5o0dB3hNdGIkJW2UzrRautoAjSTSfEV0Ld4I
-	 ZScMKHAbnTgXapQqFMJYbwcn02KRTjWaV5AqJl1j4YIwWJhIeuqqTRjCoz2ufpqRyiQ==
+	bh=Zay5NM38LdRSXjjzGLm1APSNiwliv7IJpZUmOyP3DMs=;
+	b=ytFGOXVz9UQNNxMuTNsPIucLG9l8xYZY1xwU/dRSieCJRJrDovUhZ8RVRfeGxTcKvWox
+	 861+CNZNluZLcBGcmK0RdWfzE7IPUgzJeSzYqWlyy8O4UPnjl5jhjvY8ZCDkLnkLmNiJV
+	 fCGVW1/Y4CFzud7nTHq+cf4AZt2ULO08vcBMjjLJ1V9CSsZDobs1CQ2yJFHddbLjjZnV0
+	 tdv3SublBxSFVvAHjDaDvhnL2dmZ+gZQHqaHd3XzLyeDiuV8R024fi6bxA0gh2ZwSNXzo
+	 FFwAptDH/41QlM75pIPa0ZzLSbMFad1boV8yZx+TDB9PDQjcGVXUuJ7pBonyjhh2jMg==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
 	dmarc=pass header.from=gmail.com;
 	spf=pass smtp.mailfrom=gmail.com;
-	dkim=pass header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=fljHNhqM;
-	arc=none smtp.remote-ip=209.85.210.173
-Received: from mail-pf1-f173.google.com (mail-pf1-f173.google.com [209.85.210.173])
+	dkim=pass header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=UtXzSUPS;
+	arc=none smtp.remote-ip=209.85.210.172
+Received: from mail-pf1-f172.google.com (mail-pf1-f172.google.com [209.85.210.172])
 	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 22358606A33A
-	for <dm-devel@lists.linux.dev>; Thu, 19 Nov 2026 16:31:53 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 22358606A33A
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 49973606A320
+	for <dm-devel@lists.linux.dev>; Thu, 19 Nov 2026 16:31:58 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 49973606A320
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=fljHNhqM
-Received: by mail-pf1-f173.google.com with SMTP id d2e1a72fcca58-8b5e5e64494so1607561b3a.1
-        for <dm-devel@lists.linux.dev>; Thu, 19 Nov 2026 08:31:53 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=UtXzSUPS
+Received: by mail-pf1-f172.google.com with SMTP id d2e1a72fcca58-886e61fa30fso1197138b3a.1
+        for <dm-devel@lists.linux.dev>; Thu, 19 Nov 2026 08:31:58 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20260707; t=1795105913; x=1795710713; darn=lists.linux.dev;
+        d=gmail.com; s=20260707; t=1795105918; x=1795710718; darn=lists.linux.dev;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to:content-type;
-        bh=/a5S7NDVrBgrgw1pAmaajiZXprBonkqhFFDCPxOrong=;
-        b=fljHNhqMowfw8JUGmLB/4/dCUiioCwN/Q8DVXyWqd/GUcAFvMvIMeppNcpp62api6L
-         6Suc4u6h8jm88BjCn8Do9QXbLabwWGSbvsiet4JQxOdumrtc9Vdxdun4whcxCd2KPxKq
-         KTFPSorfuvD0kePaA7KsG6Qmi8BU7G2GXLZbn1zOoDznbuE7V3JGxfk9NjIXzDTV6H0x
-         fEHp581/Zl4vH64muf4Rwfdd5F/Gg/UEAiH6IoTTM2opZMJGLKQUZzxlkLBgwN0tjt/7
-         lYD9oOL7QMTSkBofeaiYDjx39ulcQWjSEEMk4L6UUbDTQbfG523mzAajVnHCbIWFtJoT
-         MByg==
+        bh=Zay5NM38LdRSXjjzGLm1APSNiwliv7IJpZUmOyP3DMs=;
+        b=UtXzSUPSrATeWwjXPdzuvULA6KY0eOZWqD94NxUIqm/yTNdu41tnukr8blpQI0eZSZ
+         jJT8FCWk/c+aBSUefF6zTUQXgH1TZFA2XX5ncvoNdbXSQ02is7vdDtkxI092cX38DVah
+         h3DfLqE7W9e+ar1Tge01g3Boy6grHi3dISwOdlK+aofDj8aMyhM6pCtmajo2hkD6/pzB
+         9pYWjPl8WmCi9MqMR07D8MyiVCzuYr9UJvqeTWG+vLBknCuhgIPaz8VqUtE8Y9a0Vksa
+         Nwv8TEUF38y/FqO5y1BnV2+vMKGyypnXM3j1mrZu+Utt6lZFX6E0EF1DzY42WhMSZn10
+         q0Dw==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1795105913; x=1795710713;
+        d=1e100.net; s=20260707; t=1795105918; x=1795710718;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:x-gm-gg:x-gm-message-state:from
          :to:cc:subject:date:message-id:reply-to:content-type;
-        bh=/a5S7NDVrBgrgw1pAmaajiZXprBonkqhFFDCPxOrong=;
-        b=Z29sXGMrL0LAFDySB9rX1NBQpZ79xDd7yvWdQh2dnn5zWzC33KaW7HZvvS/JCdiAIo
-         Q91PVAtE3VyeC8tgH1oFa9DzETqDnox3OeZ3nMZ7QxCAI9uLZLKqvNicG4dycQNIMaN6
-         ccSF8eA18OMPAJ6O8bk8pEcvNVPjUxNpGWjMoRdOWDf1iHd8XzYCCSVdrFulRqWQ8xcz
-         ajJd/CdKL1/xCA7jLw5196K+DH3DOiL7XNJ6tHh3fmlMx/9+nH55Q6je4QXi17haZpDn
-         cP9VvIsOUa1eglUOfd86AcCxvoI81OGttoWp4mtV88hAuPExjqqGxpKRUHAX+hkbYBpi
-         1hmA==
-X-Forwarded-Encrypted: i=1; AL+hErHcBx4G8DaPXIwEc2ZFH/DMms/IzE4iOvsKzN4dlgrZooiQ7SBhaoTL+FfxUmvcQi2y3RDg7Vn+qg==@lists.linux.dev
-X-Gm-Message-State: APuU4Z8QgbWuqyxw8Kndi2NXuknmv/BBvK5l9MhObMfbvZKH9IL9xZfq
-	Qaua+fn1yvT8GrkdK7e7hD7vxzVXicxwaysifLhLvP9mr728cYU/1Uzc
-X-Gm-Gg: AYBFou2TYcVqhJtz4P+iH1CL7BW/21gq2VSU/Zkwmju5D5OHX8HwRoJHqNKb01SoSKp
-	IWFplst80DLl96h14dio6QZwueXS3G3t0MucOFcYWlYAMCPsBTjg06rMrw/3ot+uV3nylrdUaFO
-	DpotZekO1b/02k920OFpcVOJjyeoy0jXp06OMav5Zkmcxe2NvX2Uf8nXl2Au1GIknKHq1WZc652
-	BAWNCe8zek1Lm30bT6CRRZ1pXSOfl5iz2zreMbxF566eJcGmNmrvaIAh/30E1zTa9tYkOPKDc0b
-	JC2HzTJ3sjh11DipcGxzpLPWIZ69vjDa059nc/OByP3JQ0KmIAk2P9NqEq8RK6hyipfChCZg1Vi
-	RH8PT/uT+aFNUahZNNgmuW3k9l4fzFLsE3VhqXOgXXYDUokKC3Fy0upFDNgRaKn5qQ2IGtt6PXL
-	Nxe1va0gf92nWwtutPVs705dqu+rNG1zu4m0RRDHZTyhPBi4oWoR0FHoFEHFL5S0J8S5v56EJnG
-	Dpqk7o96/ZZ68hZlbhWQRO9SFdVb+18Q97hA8f6nIoqpBRuCQXvVoDf5d47GFK255OoACxG/cWp
-	hAnKfolMRwoVGcfNG+Be16+gP1fPxsZ7NXFIr1g/lo8/9w97WoPSo1PviX8vzzNFVOoLL8zhJR8
-	s8GlSrbDx
-X-Received: by 2002:a05:6a00:4299:b0:8a0:7dc4:95c0 with SMTP id d2e1a72fcca58-8c87b8da5a6mr172951b3a.15.1795105913098;
-        Thu, 19 Nov 2026 08:31:53 -0800 (PST)
+        bh=Zay5NM38LdRSXjjzGLm1APSNiwliv7IJpZUmOyP3DMs=;
+        b=kk5Qt26CSu0UKxQ5xKInRfItUIcQPR+lUCck2Nmu9I9hurkFZDYCyH42a1OpZB54cy
+         oypLJXLSYMIEAgr00mAGogUnacPJeHYHpt0kF4Ejyl2SbvcrHmfLK7Bw3hIFAcXsuNy2
+         XPZwsB+bbWaVmzGh0RBMoSMHDRsFj+dqEGICWPrySCHvW/SOp2QeMMUHWRoE6RhH7sTd
+         JM5l0F7A93aBHEEccDEFVazojLMpBWepXGBt+0MTx3BBOsstGMBscWoJA+SmLnFZGaIZ
+         TeloZ070rzRneY+LZo0Vs3bGrBHSGKaNJOGlTr4qO2dkazoNePw/GZL1zaQN10Rx48I0
+         C1YQ==
+X-Forwarded-Encrypted: i=1; AL+hErHZA56jhxMXVolpEzo8baIq83a5N/e5fIn+StNkn6pVnityOoH2VZFJO3ThOMo3F/IbR5pO2ta6+g==@lists.linux.dev
+X-Gm-Message-State: APuU4Z+YQBswr0r/sfnDYR+DxFE36qxOBUypkt81khk+k3bUCoDiU6xg
+	yaGiNaYJ0mcf3vMV99kd9hXiUQGfTlRd9MaOR2ZnDzfEb8ImjtNzU92K
+X-Gm-Gg: AYBFou08PIyxjbSJFY7UpJ64fv9XjzqBw/RbJNhdLNZmiSR3N5y8XdJNOwPPkseKLmv
+	kDK0I8B12RFU9y5YmmFwfNnGIwFwAns/1X120vK66tqMMrKt75ajH9K/JnuxRvwXFoEa0bk+VTo
+	iGlt3cks0cHCHGx4OIIc7Pzdh6YsLty7ej63uRZ7mNuYzCNwmvVv49uVLczYMvk1OnxyH5uyusN
+	tSa+2eMqHSTuazv6AjJj43AKN2vazNSp9ZPhXnHeoNWJe1VHYPSpenyzrqwOqwnng9cwZc9ZEhu
+	+gxOoVtx7WMxiBCKCAX71cmLoHRE/Fa4+LZXCetIsNyW1opsb7K0rrSRj9WPqygZm+NLPGvdHEE
+	4gJ/cpjOmHXsjk17rWpc/OEolxV/3ARTVLnKad6wFCTTAoPxAVfsDPc0alD39CaJUw57DQuw6WI
+	xhLhbrsZUdKgngNV0scO6w5gYJUMMn/2CTS/mJHvHLE0x2Ip/MlFwody3MXSW3IcBvjBPcQrhD3
+	oJyxCezjNgow55XL/YFunjm3JVtgrbx1Wgr1L6bweSn4H1P0X5ekZfT2NAgw39Rklp+RJD3TNPa
+	hIlUC3pyDR00qcCphfFHRt9E3zJOzEcDFpYc/OonWtUfBInrB+C1/wHO6GPnHZ0M9eVCNmzT8wr
+	Y8ysSoQrP
+X-Received: by 2002:a05:6a00:44c7:b0:8b5:b5cb:762b with SMTP id d2e1a72fcca58-8c87d5188ffmr134496b3a.53.1795105917528;
+        Thu, 19 Nov 2026 08:31:57 -0800 (PST)
 Received: from bj-kjy-standalone-yangyongpeng.mioffice.cn ([43.224.245.241])
-        by smtp.gmail.com with ESMTPSA id d2e1a72fcca58-8c87420be40sm132589b3a.57.2026.11.19.08.31.50
+        by smtp.gmail.com with ESMTPSA id d2e1a72fcca58-8c87420be40sm132589b3a.57.2026.11.19.08.31.54
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Thu, 19 Nov 2026 08:31:52 -0800 (PST)
+        Thu, 19 Nov 2026 08:31:57 -0800 (PST)
 From: Yongpeng Yang <yangyongpeng.storage@gmail.com>
 To: agk@redhat.com,
 	bmarzins@redhat.com,
@@ -88,9 +88,9 @@ To: agk@redhat.com,
 	zkabelac@redhat.com,
 	dm-devel@lists.linux.dev
 Cc: yangyongpeng@xiaomi.com
-Subject: [PATCH v3 2/4] dm-verity: size the hash retain target from the hash area
-Date: Fri, 20 Nov 2026 00:31:10 +0800
-Message-ID: <20261119163110.1630269-5-yangyongpeng.storage@gmail.com>
+Subject: [PATCH v3 3/4] dm-verity: add retain_bytes message to inspect and tune the cache floor
+Date: Fri, 20 Nov 2026 00:31:11 +0800
+Message-ID: <20261119163110.1630269-6-yangyongpeng.storage@gmail.com>
 X-Mailer: git-send-email 2.43.0
 In-Reply-To: <20261119163110.1630269-2-yangyongpeng.storage@gmail.com>
 References: <20261119163110.1630269-2-yangyongpeng.storage@gmail.com>
@@ -107,145 +107,128 @@ Content-Transfer-Encoding: 8bit
 
 From: Yongpeng Yang <yangyongpeng@xiaomi.com>
 
-With the dm-bufio default of 256 KiB a large device re-reads hash
-blocks evicted under memory pressure, while a small device holds far
-more than it needs.
+Nothing lets a user see how much memory a verity device keeps cached,
+or tune it for one device without touching every future client.
 
-Set the hash client's target to hash_retain_percent (default 10) of
-the hash area, computed with mul_u64_u32_div() and clamped at
-ULONG_MAX so a large area cannot truncate to near-zero on 32-bit.  A
-percentage above 100 is ignored, leaving the dm-bufio default.
-
-The parameter only affects devices created afterwards.
+Add the retain_bytes <hash|fec> [<bytes>] message.  It reports the
+selected client's retain target, or sets it when <bytes> is given (0
+resets to the dm-bufio default); the reply also reports the bytes and
+buffers currently cached, so memory use can be watched through the
+message itself.
 
 Signed-off-by: Yongpeng Yang <yangyongpeng@xiaomi.com>
 Assisted-by: LLM
 ---
 v3:
-- The leftover sysfs-era bufio_kobj field is removed.
-v2:
-- Compute the percentage with mul_u64_u32_div() and clamp it at
-  ULONG_MAX, so a large area cannot truncate to near-zero on 32-bit.
+- The reply now also reports current_bytes and buffers, replacing the
+  v1/v2 sysfs interface, which is dropped entirely.
 ---
- .../admin-guide/device-mapper/verity.rst      | 15 +++++++++++
- .../admin-guide/kernel-parameters.txt         |  6 +++++
- drivers/md/dm-verity-target.c                 | 26 +++++++++++++++++--
- 3 files changed, 45 insertions(+), 2 deletions(-)
+ .../admin-guide/device-mapper/verity.rst      | 10 +++
+ drivers/md/dm-verity-target.c                 | 63 +++++++++++++++++++
+ 2 files changed, 73 insertions(+)
 
 diff --git a/Documentation/admin-guide/device-mapper/verity.rst b/Documentation/admin-guide/device-mapper/verity.rst
-index 9e9d4b8157c0..7d6e567cef33 100644
+index 7d6e567cef33..1e532c4251ae 100644
 --- a/Documentation/admin-guide/device-mapper/verity.rst
 +++ b/Documentation/admin-guide/device-mapper/verity.rst
-@@ -328,6 +328,21 @@ Status
- 2. Number of corrected blocks by Forward Error Correction.
-    '-' if Forward Error Correction is not enabled.
+@@ -343,6 +343,16 @@ The retain target is a floor applied by the memory shrinker, not a cap: when
+ there is no memory pressure a fully warmed cache may grow past it, and when
+ memory is short dm-bufio evicts buffers until the target is met again.
  
-+Metadata caching
-+================
++Messages
++========
 +
-+The hash blocks, and the FEC parity blocks when FEC is enabled, are cached in
-+memory by dm-bufio.  How much of the hash tree is kept cached is controlled by
-+the ``hash_retain_percent`` module parameter (default 10), settable at boot
-+time with ``dm_verity.hash_retain_percent=<0-100>`` or at run time through
-+``/sys/module/dm_verity/parameters/hash_retain_percent``.  A value of 0 or
-+above 100 leaves the dm-bufio default (256 KiB), which is also what the FEC
-+clients keep.  Only devices created afterwards are affected.
-+
-+The retain target is a floor applied by the memory shrinker, not a cap: when
-+there is no memory pressure a fully warmed cache may grow past it, and when
-+memory is short dm-bufio evicts buffers until the target is met again.
++``retain_bytes <hash|fec> [<bytes>]``
++    Report the retain target of the hash or FEC parity client, or set it
++    (0 resets to the dm-bufio default).  ``fec`` requires FEC to be
++    enabled.  The reply is
++    ``retain_bytes=<bytes> current_bytes=<bytes> buffers=<n>``, so the
++    client's actual memory use can be watched through the message.
 +
  Example
  =======
  Set up a device::
-diff --git a/Documentation/admin-guide/kernel-parameters.txt b/Documentation/admin-guide/kernel-parameters.txt
-index 0b3c140babd9..914da403c5de 100644
---- a/Documentation/admin-guide/kernel-parameters.txt
-+++ b/Documentation/admin-guide/kernel-parameters.txt
-@@ -1351,6 +1351,12 @@ Kernel parameters
- 			For details see:
- 			Documentation/admin-guide/hw-vuln/reg-file-data-sampling.rst
- 
-+	dm_verity.hash_retain_percent=
-+			[DM] Percentage of the hash area that dm-verity
-+			asks dm-bufio to keep cached for a new device.
-+			Defaults to 10; 0 or a value above 100 leaves the
-+			dm-bufio default.
-+
- 	dm_verity.keyring_unsealed=
- 			[KNL] When set to 1, leave the dm-verity keyring
- 			unsealed after initialization so userspace can
 diff --git a/drivers/md/dm-verity-target.c b/drivers/md/dm-verity-target.c
-index 451c75e30a8f..0e8af1a57d75 100644
+index 0e8af1a57d75..bd2368312b05 100644
 --- a/drivers/md/dm-verity-target.c
 +++ b/drivers/md/dm-verity-target.c
-@@ -32,6 +32,8 @@
- #define DM_VERITY_DEFAULT_PREFETCH_SIZE	262144
- #define DM_VERITY_USE_BH_DEFAULT_BYTES	8192
+@@ -1837,6 +1837,68 @@ static void verity_postsuspend(struct dm_target *ti)
+ 	verity_security_clear_integrity(ti);
+ }
  
-+#define DM_VERITY_DEFAULT_HASH_RETAIN_PERCENT	10
++/*
++ * retain_bytes <hash|fec> [<bytes>]
++ *
++ * Report the selected client's retain target, or set it (0 resets to the
++ * dm-bufio default, non-zero is rounded up to a block boundary).  The reply
++ * also reports the bytes and buffers currently cached by the client.
++ */
++static int verity_retain_bytes(struct dm_verity *v, unsigned int argc,
++			       char **argv, char *result, unsigned int maxlen)
++{
++	struct dm_bufio_client *bufio;
++	unsigned long long value;
++	unsigned long buffers;
++	unsigned int sz = 0;
 +
- #define DM_VERITY_MAX_CORRUPTED_ERRS	100
- 
- #define DM_VERITY_OPT_LOGGING		"ignore_corruption"
-@@ -50,6 +52,13 @@ static unsigned int dm_verity_prefetch_cluster = DM_VERITY_DEFAULT_PREFETCH_SIZE
- 
- module_param_named(prefetch_cluster, dm_verity_prefetch_cluster, uint, 0644);
- 
-+/* Default fraction of the hash tree that dm-bufio is asked to keep cached. */
-+static unsigned int dm_verity_hash_retain_percent = DM_VERITY_DEFAULT_HASH_RETAIN_PERCENT;
++	if (argc < 2 || argc > 3)
++		return -EINVAL;
 +
-+module_param_named(hash_retain_percent, dm_verity_hash_retain_percent, uint, 0644);
-+MODULE_PARM_DESC(hash_retain_percent,
-+	"Percentage of the hash area to keep cached by default");
-+
- static unsigned int dm_verity_use_bh_bytes[4] = {
- 	DM_VERITY_USE_BH_DEFAULT_BYTES,	// IOPRIO_CLASS_NONE
- 	DM_VERITY_USE_BH_DEFAULT_BYTES,	// IOPRIO_CLASS_RT
-@@ -1084,14 +1093,14 @@ static void verity_dtr(struct dm_target *ti)
- 
- 	kfree(v->alg_name);
- 
-+	verity_fec_dtr(v);
-+
- 	if (v->hash_dev)
- 		dm_put_device(ti, v->hash_dev);
- 
- 	if (v->data_dev)
- 		dm_put_device(ti, v->data_dev);
- 
--	verity_fec_dtr(v);
--
- 	kfree(v->signature_key_desc);
- 
- 	if (v->use_bh_wq)
-@@ -1421,6 +1430,7 @@ static int verity_ctr(struct dm_target *ti, unsigned int argc, char **argv)
- 	struct dm_verity_sig_opts verify_args = {0};
- 	struct dm_arg_set as;
- 	unsigned int num;
-+	unsigned int hash_retain_percent;
- 	unsigned long long num_ll;
- 	int r;
- 	int i;
-@@ -1638,6 +1648,18 @@ static int verity_ctr(struct dm_target *ti, unsigned int argc, char **argv)
- 		goto bad;
- 	}
- 
-+	/* Keep a configurable fraction of the hash tree cached by default. */
-+	hash_retain_percent = READ_ONCE(dm_verity_hash_retain_percent);
-+	if (hash_retain_percent <= 100) {
-+		u64 retain = mul_u64_u32_div((u64)(v->hash_end - v->hash_start) <<
-+					     v->hash_dev_block_bits,
-+					     hash_retain_percent, 100);
-+
-+		if (retain > ULONG_MAX)
-+			retain = ULONG_MAX;
-+		dm_bufio_set_retain_bytes(v->bufio, retain);
++	if (!strcasecmp(argv[1], "hash")) {
++		bufio = v->bufio;
++	} else if (!strcasecmp(argv[1], "fec")) {
++		if (!verity_fec_is_enabled(v)) {
++			DMERR("FEC is not enabled");
++			return -EINVAL;
++		}
++		bufio = v->fec->bufio;
++	} else {
++		return -EINVAL;
 +	}
 +
- 	/*
- 	 * Using WQ_HIGHPRI improves throughput and completion latency by
- 	 * reducing wait times when reading from a dm-verity device.
++	if (argc == 3) {
++		if (kstrtoull(argv[2], 0, &value) ||
++		    (unsigned long)value != value)
++			return -EINVAL;
++		dm_bufio_set_retain_bytes(bufio, value);
++	}
++
++	buffers = dm_bufio_get_cached_buffers(bufio);
++
++	DMEMIT("retain_bytes=%lu current_bytes=%llu buffers=%lu",
++	       dm_bufio_get_retain_bytes(bufio),
++	       (u64)buffers * dm_bufio_get_block_size(bufio), buffers);
++
++	return 1;
++}
++
++static int verity_message(struct dm_target *ti, unsigned int argc, char **argv,
++			  char *result, unsigned int maxlen)
++{
++	struct dm_verity *v = ti->private;
++
++	if (!argc)
++		return -EINVAL;
++
++	if (!strcasecmp(argv[0], "retain_bytes"))
++		return verity_retain_bytes(v, argc, argv, result, maxlen);
++
++	DMERR("unknown message '%s'", argv[0]);
++
++	return -EINVAL;
++}
++
+ static struct target_type verity_target = {
+ 	.name		= "verity",
+ /* Note: the LSMs depend on the singleton and immutable features */
+@@ -1848,6 +1910,7 @@ static struct target_type verity_target = {
+ 	.map		= verity_map,
+ 	.postsuspend	= verity_postsuspend,
+ 	.status		= verity_status,
++	.message	= verity_message,
+ 	.prepare_ioctl	= verity_prepare_ioctl,
+ 	.iterate_devices = verity_iterate_devices,
+ 	.io_hints	= verity_io_hints,
 -- 
 2.43.0
 
