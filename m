@@ -1,97 +1,83 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.210.172
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=170.10.129.124
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1795060921;
-	b=lBNVQVYGqY1gQg81LXMlJ2OiM9kYdUjLyiMkklmlP6sPikXQguy7B0+tkZ5kFuxW80Yr
-	 Md2JCDe6ixZpO4FEOEIdZF4QIH3Iuw9sDzzWgYKBTKt9LijYy1eAzSNyKz/Zkwed69hU7
-	 xTBoJ6NJqwrAqlFLUnUz/N6UT4iHlnjbN8EQet3LDkQylBZXhAYgffKyxSkXGq81B4U2+
-	 tIfRM4EvV9Bah4rog97h2I3iR0LFF3z+37VPzSYIeOXYpR0cz7eMPUxyzQDN+Zm3V4yBG
-	 gGGGLxH1HKLwXpN3iS6p66Fv4avfSR8lyYLQD5aWuQ55A5FEg86FrjSvFFEc4nlTysw==
+	t=1795065389;
+	b=zA1gjMifURQd2lLtiMtNtezYdyjQRRY49xtppGDFtf8BQZuJ73QNEHXq0XI2foB2fgt6
+	 ih1nlylrAHrV/jzcL6u0Xb3U0KX7zOUn56HLs33F1gh3msGySR4ksVQw64KH7wsZs1ROX
+	 f/Gj+6s/AwLOyErILV25z/n59ZBxC/KPPLYqyoOfRoIJ+sIKmPj4TqY8dxmzEVu7owlt6
+	 komq3Zy6i5HFFxoMNCod5wLQf8k9i8FVuLM/ya+R24UmAtpSFa2Wp5rUWCNdZgM8u3IYi
+	 cZNYQm4l6UBjCAHOqXdM9HbaKYwr8qWR8EtLFFCFpuvRwI7tsFuJ7BLlxrk2EPRd8pw==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1795060921;
-	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
-	 X-Forwarded-Encrypted:X-Gm-Message-State:X-Gm-Gg:X-Received:Received:
-	 From:To:Cc:Subject:Date:Message-ID:X-Mailer:In-Reply-To:References:
-	 MIME-Version:Content-Transfer-Encoding;
-	bh=fJtfrhmQx1vX1xY6U2FJkZOWiHHtkvB17JwO8I1Z3tA=;
-	b=3s9XBzJDEmERRt29MJVK4DbpowrvaTEcH5oxXm+YJGbaqrnO/cXI8LEpDCGEfpfcy+NX
-	 1s3wWOUEVntGUy59YDpmpF5P2bw0YbJ15ivtUAgFFecEuH8CHQmrmkdR8VZY7QEOmTd3c
-	 9lldGB1cUWdiHOUIOKrx3OI4F+pBsAubflWDjbcVzrBEvaQ+bw+x9gqgRQg83Ph0fG4wC
-	 NWcqOsjiXoUjkVwxM+TcmZ9ugyvZwvM2KSjANXnG4IowVNiMrab8b01DOr0XRz+QGLFUu
-	 zWEZ+UA1nwn7buuvjkeG2iZYkhrUStA9CHw99BYcodO7Kyd2yRdPPtjfeBlJEKDZvlA==
+	a=rsa-sha256; c=relaxed/relaxed; t=1795065389;
+	h=DMARC-Filter:DKIM-Signature:Received:X-MC-Unique:
+	 X-Mimecast-MFC-AGG-ID:Received:Received:Received:Received:From:To:Cc:
+	 Subject:Date:Message-ID:In-Reply-To:References:MIME-Version:
+	 X-Scanned-By:X-Mimecast-MFC-PROC-ID:X-Mimecast-Originator:
+	 Content-Transfer-Encoding:content-type;
+	bh=/eFrMJdRmbyCVilWFFOcN9CVbywZeEfhI5uZ77W7ufg=;
+	b=Pm/xguisJLbTuPN6ntwI1EKhP0yeoa/qvBim9JatzB0QuXjvbDgSbRWpYerYYZBcvzCO
+	 HeO0X7NybWNSUkKoxeVjZeF0U16oO7ClBfNRzVPW4M4bicfWwRf+Rsg1SkTFHVdk/DDxj
+	 Go0zcIaesv0tCWUq4qGc/2mG9MIPdYxmQTpbyz787pXP5Y26qOJHC2EqM+oqjhn6XGfd/
+	 /fzHv3b9zvHOEolrF4PTP9N5JfsFC1+JElZRMtMJ3ctOyfn90Zy/MdRJDNkZu9EXh63Q2
+	 HQSYMUp9tgQf0iT9JFkaO2XaFGRWEIsUDDCUkb7iIdCz4eUKmHcksUBDsiZh9Nh4ocw==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dmarc=pass header.from=gmail.com;
-	spf=pass smtp.mailfrom=gmail.com;
-	dkim=pass header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=p6ykFh5q;
-	arc=none smtp.remote-ip=209.85.210.172
-Received: from mail-pf1-f172.google.com (mail-pf1-f172.google.com [209.85.210.172])
-	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
+	dmarc=pass header.from=redhat.com;
+	spf=pass smtp.mailfrom=redhat.com;
+	dkim=pass header.d=redhat.com header.i=@redhat.com header.a=rsa-sha256 header.s=mimecast20190719 header.b=YZye1VRn;
+	arc=none smtp.remote-ip=170.10.129.124
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5F7AD606A32A
-	for <dm-devel@lists.linux.dev>; Thu, 19 Nov 2026 04:02:01 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 5F7AD606A32A
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 10FED606A320
+	for <dm-devel@lists.linux.dev>; Thu, 19 Nov 2026 05:16:28 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 10FED606A320
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=p6ykFh5q
-Received: by mail-pf1-f172.google.com with SMTP id d2e1a72fcca58-8a60f90a924so852366b3a.3
-        for <dm-devel@lists.linux.dev>; Wed, 18 Nov 2026 20:02:01 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20260707; t=1795060921; x=1795665721; darn=lists.linux.dev;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:from:to:cc:subject:date
-         :message-id:reply-to:content-type;
-        bh=fJtfrhmQx1vX1xY6U2FJkZOWiHHtkvB17JwO8I1Z3tA=;
-        b=p6ykFh5qHEZ3sr0wmsXLZ+gzFr4H321ukFMUU+RdQa6r79NfbNKonXWDo7K2Wghtq6
-         piBscdQwiCdjkzJr0RV287gYCt13MAteZMtylaNcBPLKpzAJDGFhK4h6B7YGIfOblwkE
-         KC8BDsuatFzcfn+MlYL0bWW44eXZj5AdtH1dC9QlZn/XVuKaBqqLoPykW+BQHWG16tkM
-         98+P8ySaSt7rRUM4QI/TaT540ujUL8lVJ9R1baLzgzmSHAYJ0Jf/E6qnePUvOG0IyV9c
-         Sgr07KKzhD499gbnm6PAoYqp6QJm82lDQ2/8Qc7SZGZ+NEdx7CYwny0BCbdXT9kJAMaa
-         j7Aw==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1795060921; x=1795665721;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:x-gm-gg:x-gm-message-state:from
-         :to:cc:subject:date:message-id:reply-to:content-type;
-        bh=fJtfrhmQx1vX1xY6U2FJkZOWiHHtkvB17JwO8I1Z3tA=;
-        b=bkCZxO6JryjidpaYZwiQ0UUZIaI7ZsfK64O0DpCWkkhhh6y+HkxAiSCqHtPfGHPx41
-         g65u5xcYWKWl5td81CnwEruakGRDjA5hEt2nkj2umu81dqV81bBMNi5Xo25ZXwS3H+G1
-         x8/57KNV2bk889I4oKGtIZCKNLkX/PWk35oqzofP1T53cj61P8JXw1KgPUCGbXtHoVdz
-         qe6UOEjCIJ9MJDfNDVRT7BAXu/U7dw/fbED9zUQvWUDuP2J5tYmjWqowwaHt1b1gs5hm
-         Hs9vHx0F/2mFFGpNZyN7/8exGXCpXj1Pf1ZKLRC16qfw06rgpbm4hjQsdGYQliD+Aq8m
-         B15Q==
-X-Forwarded-Encrypted: i=1; AL+hErFgJds0WeUAg2PXPYdUDKXnGHXKxm2r9gTZlbSZbQs2qc1WTaXu3J7VwrwMecin4gcweXR8dOAa6g==@lists.linux.dev
-X-Gm-Message-State: APuU4Z/dC9z/QbwpA4eQn7d7gmskaGgpOwvLbjbVSi9e+xUdYX06GJ5Z
-	zbxKQISEpUpOU5lVdwI0HGTWI+Cz0S0UP9kvVaXU5Y8jpnz2qJ50lxp2
-X-Gm-Gg: AYBFou3xlv72GTETnZE1B5Lu45AEkLLevoKrwQTY+vSn1fO+ZaEiH3+QuLTbRknH8yT
-	5vTHGElZkPixk2sWSWTIU4C96GO28UhJ8fIq0hfdgP7W+W2/uRmUWhCShwcZurLCdQk2xhXLt6a
-	1LPUKp16eq4TpX0TyvgrXaEfxyB1xO+XeCpwTLG+PXXpha9L/EWPr+2L6o85OKUf0pJI+LNbGUF
-	ESpO3ZU5Ht4f5z9xfoOJzM9u4YMx7eOlvqdM0cE9AZTE4Qsg/CrExluXoDYDxaNR8SqYnKIMoDb
-	ubW1vSWwDtib4Z5UC+U8XFWIQ6zakvLIpHRMPe1gDiOFsvhsdeMW5jzv5DQis1JOLwW7u2yPWpP
-	kDvTLSqzki9GHrhcl6u5eHKHA0zgacxeFSjzoLRQHhLu7153KU59Fcd5Qd1yCVJ7H9JFAn2710x
-	XYw+C2rMp7SArfCPSYnv7Rbma5rXwWI9daL5gJazoctV0iDKKfBWIsSQI20pz5RlclGClI2khC2
-	xOnnY37pvAOwyVjpF8WfjI+gj7xA5YRt58rndkxgs/ptRmAavy+stDn3xIunYZuoMcmQyWSMjlF
-	TsRz/TgpNhL7vJShx2MaSX2Ip/u2jtSKojkCRD4KooobfMsrB42jXyyE1rpz8BxXpSx/jVtoBad
-	zj5IyUvnW
-X-Received: by 2002:a05:6372:a713:b0:3fb:5869:81e9 with SMTP id adf61e73a8af0-3fe97aefad9mr4332724637.27.1795060920424;
-        Wed, 18 Nov 2026 20:02:00 -0800 (PST)
-Received: from bj-kjy-standalone-yangyongpeng.mioffice.cn ([43.224.245.241])
-        by smtp.gmail.com with ESMTPSA id 41be03b00d2f7-cde534aec9bsm920462a12.22.2026.11.18.20.01.57
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Wed, 18 Nov 2026 20:01:59 -0800 (PST)
-From: Yongpeng Yang <yangyongpeng.storage@gmail.com>
-To: mpatocka@redhat.com
-Cc: agk@redhat.com,
-	snitzer@kernel.org,
-	bmarzins@redhat.com,
-	zkabelac@redhat.com,
-	dm-devel@lists.linux.dev
-Subject: Re: [PATCH 2/4] dm-bufio: allow exposing a client in sysfs under a caller-chosen kobject
-Date: Thu, 19 Nov 2026 12:01:55 +0800
-Message-ID: <20261119040155.1076781-1-yangyongpeng.storage@gmail.com>
-X-Mailer: git-send-email 2.43.0
-In-Reply-To: <d4fc9150-4768-f747-ca97-688bc9bebc46@redhat.com>
-References: <d4fc9150-4768-f747-ca97-688bc9bebc46@redhat.com>
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.a=rsa-sha256 header.s=mimecast20190719 header.b=YZye1VRn
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1795065388;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=/eFrMJdRmbyCVilWFFOcN9CVbywZeEfhI5uZ77W7ufg=;
+	b=YZye1VRn1rdSyd0rWsIK1DbV4I16A1G3aUqyUYvTcPqjmuSdJPPpI3OJ3hSdONm5PZvNiT
+	3y/UsTb81W3zoIxd/KhZw8YC8FUJ2S6pkl2igw1KDXRnIaZVfw0N6Hldz+3MgkBsW6j+3p
+	iYJiq0HC9aNLg2db5p+VupHlxcO6YQY=
+Received: from mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-673-3oJFR0IDMJOMiJ-eBNvvnA-1; Thu,
+ 19 Nov 2026 00:16:24 -0500
+X-MC-Unique: 3oJFR0IDMJOMiJ-eBNvvnA-1
+X-Mimecast-MFC-AGG-ID: 3oJFR0IDMJOMiJ-eBNvvnA_1795065383
+Received: from mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.17])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 5910E1956058;
+	Thu, 19 Nov 2026 05:16:23 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (bmarzins-01.fast.eng.rdu2.dc.redhat.com [10.6.23.12])
+	by mx-prod-int-05.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id F302A195B3C0;
+	Thu, 19 Nov 2026 05:16:22 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.17.1) with ESMTPS id 6AJ5GLvg507198
+	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
+	Thu, 19 Nov 2026 00:16:21 -0500
+Received: (from bmarzins@localhost)
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.18.1/Submit) id 6AJ5GKRq507197;
+	Thu, 19 Nov 2026 00:16:20 -0500
+From: Benjamin Marzinski <bmarzins@redhat.com>
+To: Qiliang Yuan <qiliang.yuan@linux.dev>, Alasdair Kergon <agk@redhat.com>,
+        Mike Snitzer <snitzer@kernel.org>,
+        Mikulas Patocka <mpatocka@redhat.com>
+Cc: dm-devel@lists.linux.dev, linux-kernel@vger.kernel.org
+Subject: [PATCH v2] dm thin: free thins with kfree_rcu() instead of waiting in thin_dtr()
+Date: Thu, 19 Nov 2026 00:16:20 -0500
+Message-ID: <20261119051620.507189-1-bmarzins@redhat.com>
+In-Reply-To: <20261116-bug-dm-thin-rcu-gp-v1-2-14ed3567da3e@linux.dev>
+References: <20261116-bug-dm-thin-rcu-gp-v1-2-14ed3567da3e@linux.dev>
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Post: <mailto:dm-devel@lists.linux.dev>
@@ -101,47 +87,208 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 List-Owner: <mailto:dm-devel+owner@lists.linux.dev>
 Precedence: list
 MIME-Version: 1.0
+X-Scanned-By: MIMEDefang 3.0 on 10.30.177.17
+X-Mimecast-MFC-PROC-ID: lBs76ip9FHvF1WutNY8NH4AYkjV-VcCinhptlXf9cRM_1795065383
+X-Mimecast-Originator: redhat.com
 Content-Transfer-Encoding: 8bit
+content-type: text/plain; charset="US-ASCII"; x-default=true
 
-On Wed, Nov 18, 2026 at 05:41:42PM +0100, Mikulas Patocka wrote:
-> There may be multiple targets in a table - if you use the name of the md
-> device as the base directory, they will clash.
+From: Qiliang Yuan <qiliang.yuan@linux.dev>
 
-That would be a real problem, but none of the existing dm-bufio users
-can reach it for now: dm-verity, dm-thin and dm-integrity are all
-DM_TARGET_SINGLETON, so a table can hold at most one of them and the
-directory under a device holds at most one "hash"/"fec"/"fec-data"
-client per role.  If a custom targe_type which allows multi target and
-each of them have a dm-bufio client, that will be hard to handle. I just
-want to show the client info through sysfs, how about show such info via
-message?
+get_first_thin() and get_next_thin() find a thin on pool->active_thins
+under rcu_read_lock() and take a reference on it. thin_dtr() removes the
+thin from the list and waits for a grace period before dropping its own
+reference, so that no walker takes one after the last is gone. Removing
+a thin device thus waits for a full grace period in thin_dtr(), before
+it waits for the references that are still held.
 
-> There may be at most two tables for a given "md" device (the active table
-> and the inactive table). Each will have its own dm-bufio instance and they
-> will clash.
+Additionally, thin_dtr() can take a thin off the active_thins list,
+while it's being held by a worker. The refcount keeps it from being
+deleted. But once the thin is removed from the list, there's nothing
+that guarantees that tc->list.next is still meaningful. If "dmsetup
+remove" is called on the thin device that is next in the active_thins
+list, that thin_dtr() call can free the thin pointed to by the original
+tc->list.next pointer. So when the worker calls get_next_thin(), it
+will access freed memory.
 
-That did collide in v1; in v2 the directories are detached in
-->presuspend (names freed, kobjects kept until the table is
-destroyed), so the new table's directories are created synchronously
-at resume, with no warning.
+Instead of removing thins from the active_thins list at the start of
+thin_dtr(), mark them as dying. This keeps active_thins walkers from
+grabbing them, while thin_dtr() waits for the refcount to drop to zero.
+It's racy, but no more than removing the thin from the list was.
 
-> Another problem is that if you reload a dm table, you lose all dm-bufio
-> settings that were set by the user in sysfs.
+Also, take the references with refcount_inc_not_zero() and skip the
+thins who are dying or whose last reference is gone, so that thin_dtr()
+only waits for the references already taken. Free the thin with
+kfree_rcu(), as requeue_bios() and error_retry_list_with_code() may
+still look at it under rcu_read_lock().
 
-That applies equally to messages. The default is recomputed from
-hash_retain_percent at every ctr, only an explicit runtime tweak is
-lost. Most of the sysfs content is state anyway (current_bytes/buffers),
-not settings.
+Removing 100 thin devices of an idle pool with dmsetup remove takes per
+device (mean of five rounds, min-max of the rounds in parentheses). The
+queue freeze in del_gendisk() waits for a grace period of its own, which
+the one in thin_dtr() used to overlap, so only part of it is saved:
 
-> What do you think? Which of these two possibilities is better?
+  before (ms)        after (ms)         change
+  16.9 (15.8-17.3)   14.4 (13.8-15.3)     -15%
 
-I prefer messages, please review [PATCH 4/4]:
-1. The constructor line would have to be taught to veritysetup,
-   dmctl in android and lvm2; a message is one command, no userspace
-   change.
-2. This knob wants runtime adjustment (raise at boot, drop later);
-   persisting it in the table line makes every tweak a suspend/resume
-   reload, while a message adjusts the live device directly.
+Fixes: 17181fb7a0c3 ("dm thin: fix a race in thin_dtr")
+Signed-off-by: Qiliang Yuan <qiliang.yuan@linux.dev>
+Co-developed-by: Benjamin Marzinski <bmarzins@redhat.com>
+Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+---
 
-Thanks for the review,
-Yongpeng
+Qiliang, does this version work for you? Could you rerun the timing?
+
+I'm squashed my changes together with your patch, because my changes 
+depend on your patch to actually fix 17181fb7a0c3. I just moved the list
+removal till after refcount drops to zero (which depends on your
+refcount_inc_not_zero changes to be safe), and added a dying variable to 
+keep active_thins walkers from grabbing the thin, while thin_dtr() is
+waiting for the existing holders to drop it (just like what removeing it
+from the list did).
+
+If people want this split into a fix and a feature patch, that's fine.
+However, the feature patch would just be swapping the synchronize_rcu() 
+for kfree_rcu(), which seemed to me kind of pointless to move to a   
+separate patch.
+
+ drivers/md/dm-thin.c | 54 +++++++++++++++++++++++++++++---------------
+ 1 file changed, 36 insertions(+), 18 deletions(-)
+
+diff --git a/drivers/md/dm-thin.c b/drivers/md/dm-thin.c
+index bdd250d1eb2e..e695fc356c4d 100644
+--- a/drivers/md/dm-thin.c
++++ b/drivers/md/dm-thin.c
+@@ -355,11 +355,17 @@ struct thin_c {
+ 	struct rb_root sort_bio_list; /* sorted list of deferred bios */
+ 
+ 	/*
+-	 * Ensures the thin is not destroyed until the worker has finished
+-	 * iterating the active_thins list.
++	 * Ensures the thin stays on the active_thins list until the workers
++	 * have moved past it while iterating the list.
+ 	 */
+ 	refcount_t refcount;
+ 	struct completion can_destroy;
++	struct rcu_head rcu;
++	/*
++	 * Keeps new active_thin walkers from grabbing the table while
++	 * thin_dtr() is waiting for the existing holders to finish.
++	 */
++	bool dying;
+ };
+ 
+ /*----------------------------------------------------------------*/
+@@ -652,8 +658,11 @@ static void error_retry_list_with_code(struct pool *pool, blk_status_t error)
+ 	struct thin_c *tc;
+ 
+ 	rcu_read_lock();
+-	list_for_each_entry_rcu(tc, &pool->active_thins, list)
++	list_for_each_entry_rcu(tc, &pool->active_thins, list) {
++		if (READ_ONCE(tc->dying))
++			continue;
+ 		error_thin_bio_list(tc, &tc->retry_on_resume_list, error);
++	}
+ 	rcu_read_unlock();
+ }
+ 
+@@ -2318,25 +2327,29 @@ static void process_thin_deferred_cells(struct thin_c *tc)
+ 	} while (!list_empty(&cells));
+ }
+ 
+-static void thin_get(struct thin_c *tc);
++static bool thin_tryget(struct thin_c *tc);
+ static void thin_put(struct thin_c *tc);
+ 
+ /*
+  * We can't hold rcu_read_lock() around code that can block.  So we
+  * find a thin with the rcu lock held; bump a refcount; then drop
+- * the lock.
++ * the lock. Skip the thins marked as dying or whose refcount thin_dtr()
++ * already dropped to zero.
+  */
+ static struct thin_c *get_first_thin(struct pool *pool)
+ {
+-	struct thin_c *tc = NULL;
++	struct thin_c *tc;
+ 
+ 	rcu_read_lock();
+-	tc = list_first_or_null_rcu(&pool->active_thins, struct thin_c, list);
+-	if (tc)
+-		thin_get(tc);
++	list_for_each_entry_rcu(tc, &pool->active_thins, list) {
++		if (thin_tryget(tc)) {
++			rcu_read_unlock();
++			return tc;
++		}
++	}
+ 	rcu_read_unlock();
+ 
+-	return tc;
++	return NULL;
+ }
+ 
+ static struct thin_c *get_next_thin(struct pool *pool, struct thin_c *tc)
+@@ -2345,7 +2358,8 @@ static struct thin_c *get_next_thin(struct pool *pool, struct thin_c *tc)
+ 
+ 	rcu_read_lock();
+ 	list_for_each_entry_continue_rcu(tc, &pool->active_thins, list) {
+-		thin_get(tc);
++		if (!thin_tryget(tc))
++			continue;
+ 		thin_put(old_tc);
+ 		rcu_read_unlock();
+ 		return tc;
+@@ -2817,6 +2831,8 @@ static void requeue_bios(struct pool *pool)
+ 
+ 	rcu_read_lock();
+ 	list_for_each_entry_rcu(tc, &pool->active_thins, list) {
++		if (READ_ONCE(tc->dying))
++			continue;
+ 		spin_lock_irq(&tc->lock);
+ 		bio_list_merge(&tc->deferred_bio_list, &tc->retry_on_resume_list);
+ 		bio_list_init(&tc->retry_on_resume_list);
+@@ -4131,9 +4147,9 @@ static struct target_type pool_target = {
+  * Thin target methods
+  *--------------------------------------------------------------
+  */
+-static void thin_get(struct thin_c *tc)
++static bool thin_tryget(struct thin_c *tc)
+ {
+-	refcount_inc(&tc->refcount);
++	return !READ_ONCE(tc->dying) && refcount_inc_not_zero(&tc->refcount);
+ }
+ 
+ static void thin_put(struct thin_c *tc)
+@@ -4146,14 +4162,15 @@ static void thin_dtr(struct dm_target *ti)
+ {
+ 	struct thin_c *tc = ti->private;
+ 
+-	spin_lock_irq(&tc->pool->lock);
+-	list_del_rcu(&tc->list);
+-	spin_unlock_irq(&tc->pool->lock);
+-	synchronize_rcu();
++	WRITE_ONCE(tc->dying, true);
+ 
+ 	thin_put(tc);
+ 	wait_for_completion(&tc->can_destroy);
+ 
++	spin_lock_irq(&tc->pool->lock);
++	list_del_rcu(&tc->list);
++	spin_unlock_irq(&tc->pool->lock);
++
+ 	mutex_lock(&dm_thin_pool_table.mutex);
+ 
+ 	__pool_dec(tc->pool);
+@@ -4161,7 +4178,8 @@ static void thin_dtr(struct dm_target *ti)
+ 	dm_put_device(ti, tc->pool_dev);
+ 	if (tc->origin_dev)
+ 		dm_put_device(ti, tc->origin_dev);
+-	kfree(tc);
++	/* Let RCU readers of active_thins finish with tc before freeing it */
++	kfree_rcu(tc, rcu);
+ 
+ 	mutex_unlock(&dm_thin_pool_table.mutex);
+ }
+-- 
+2.56.0
+
