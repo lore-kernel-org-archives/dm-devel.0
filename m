@@ -1,56 +1,66 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=95.215.58.248
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=95.215.58.28
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1795067152;
-	b=Wn+FDq4YJ0hQ9ppGr1cWdqJuBOPbHENBWW+V42mHLfd3Ht4St9Qy5OvB0d5QDCQ0zp6D
-	 ndNfLBWdcvuxWZ1j0WPjXYbNQaryOwBhc2ZSyg/KeysDE/DmufgLy+lqJmuYWBTeiVOym
-	 9DfW2F96U1Q9Bc6qEwcy3MHt6gjxCj7FpQZRGfBCVLQdAFN5Ab1/8DJ+fmbszRP0xRBrH
-	 qHyFkfLr7ceG4c65SFKVetyJy9NB9fpHLqjoJPIzwMwbCPUtqjR0Eybft1jV42EUsh/ks
-	 K4O0oVmjI02tKVxNj1KUYfgB9riUV7NMfE4Hu8RUr1iYF9vVuisDnQkVNGQTbpTCv+A==
+	t=1795067220;
+	b=XcT5ZhLLhgnitPozP9zp/AIGNp72q84SRQivYogPVhggly/MCDWgdEtF1UvhyVYNf3uu
+	 AjYgYFrZQYCp+KVU5OqiEz8/XZSBhalOV8JpXXJOmugyQq/W/wadVy3xaK4J+lbz7p8fi
+	 rHGlrWoL1JKMCJfmAYafQb7BOpGPNbu/GXGMQvFnYbzrQ03Yy78SIPIhZG3PZwQQR3GTk
+	 suKV/hJp6EQKObVqaIUDAQE+hjE0ztiQixf8JELewJdBwzTeUPWsG6VPahh8yc7W6zu2r
+	 gS2j3luclb2bPvkRrCs9w178S7xXf4I5Bvr5QkDDmBgVE6gtfE51l14VxIZgRI+Hvqg==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1795067152;
+	a=rsa-sha256; c=relaxed/relaxed; t=1795067220;
 	h=DMARC-Filter:X-Envelope-To:DKIM-Signature:X-Envelope-To:Received:
-	 X-Mizu-Trace-ID:X-Migadu-Flow:From:Date:Subject:MIME-Version:
-	 Content-Type:Content-Transfer-Encoding:Message-Id:References:
-	 In-Reply-To:To:Cc:X-Mailer;
-	bh=VVrWeoLyvky1fcgODekhdtwxogAAzSz6gjdJU75YmvQ=;
-	b=FXw4W3Rs5jEDpwvEsbPegOKQqi+EmhcvmH7kX5cX7IhtYvrMbm7G6fxkw6xMv7WX7VPM
-	 8o514rodHHg6b4D/5PqvRPHQV2zqsAuHVY94Eu5fS4vRXEPW142ANcKoh7J4EQP6hALWt
-	 W/35pKtqDcgB5aXCPlyVimLIfhX9kJlzxx7HAJ2n4K5k/Mg7rILMPaYgSGLU8//Q5zjXZ
-	 zshmm0QKJqbqPP1pvFIaglx99ohBfWprYZEQxhoQyNBLDLbiaFzhR/c30PkcZlNuOEbii
-	 YfgOLFZJzeEhoGuKMuooBVrWk6TwKKEDRUAHEJrewXl1aONfYKydjbKBSHoaB//fqJQ==
+	 X-Mizu-Trace-ID:X-Migadu-Flow:From:To:Cc:Subject:Date:Message-ID:
+	 X-Mailer:In-Reply-To:References:MIME-Version:
+	 Content-Transfer-Encoding;
+	bh=gR/d3sVuSaw7bvm69LGQxAn6nDe+aBGt6oIrlYJdRPc=;
+	b=eEigUpkOwdQtnbF3khGufz8tVv5i0dy8kX++ZkrkZLQb0u++ockqHlUQOHuyOBQaWW8Z
+	 Yvlzq03tyQcbqsRPyIT9UTCJ6ibhKSPTRwOy7wC3/wnor+Lx4raMUn4SJtWUJdnNJjRgt
+	 R+zXJTNnHs32u6d+V6Wgkd8bqnkoLKFGGdrfnZD84llWA6Sc4LjnzmQqVKydmAzIbQ4m9
+	 yeWqxtEQXRzhwvsX5qQ1YbPoKWTxAKve4jc0Cc+LJHf9TGmGc4XEond24Gt8fktX6Y5FO
+	 iB7AqdjhgNzv78YBT8618U3sDmFISL3TqLOiH1qjkUkDqOZtCK4YWal9W8uIv4AfMTA==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
 	dmarc=pass header.from=linux.dev;
 	spf=pass smtp.mailfrom=linux.dev;
-	dkim=pass header.d=linux.dev header.i=@linux.dev header.a=rsa-sha256 header.s=key1 header.b=PE+DUfcG;
-	arc=none smtp.remote-ip=95.215.58.248
-Received: from mta1.migadu.com (out-248.mta1.migadu.com [95.215.58.248])
+	dkim=pass header.d=linux.dev header.i=@linux.dev header.a=rsa-sha256 header.s=key1 header.b=m083Z65m;
+	arc=none smtp.remote-ip=95.215.58.28
+Received: from mta1.migadu.com (out-28.mta1.migadu.com [95.215.58.28])
 	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4F5A860A2623
-	for <dm-devel@lists.linux.dev>; Thu, 19 Nov 2026 05:45:51 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 4F5A860A2623
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6F1A7606A325
+	for <dm-devel@lists.linux.dev>; Thu, 19 Nov 2026 05:46:59 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 6F1A7606A325
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.dev
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.dev
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key, unprotected) header.d=linux.dev header.i=@linux.dev header.a=rsa-sha256 header.s=key1 header.b=PE+DUfcG
+	dkim=pass (1024-bit key, unprotected) header.d=linux.dev header.i=@linux.dev header.a=rsa-sha256 header.s=key1 header.b=m083Z65m
 X-Envelope-To: dm-devel@lists.linux.dev
-DKIM-Signature: a=rsa-sha256; bh=WHFgyKpY02mIunkOLDQ0vqEf6qoDQheEPXtKq57nqd4=;
+DKIM-Signature: a=rsa-sha256; bh=gR/d3sVuSaw7bvm69LGQxAn6nDe+aBGt6oIrlYJdRPc=;
  c=simple/simple; d=linux.dev;
  h=from:to:subject:date:message-id:mime-version:content-type; s=key1;
- t=1795067150; v=1; x=1795671950;
- b=PE+DUfcGZsnIi4sDI/YrgR9AU5NLQT8OrgwAzfzl6PcFgTZWRvGuQ2gofQGQ38T5hhILqGuB
- cltMRsTzKM4dgTvOwgddYTb0shQSryTTZ/VZ7DYcPGRThpkQ1wEvfmrlQkqkU0jG/MVV+3e3fgd
- 2O+eOPMkO9ZZI4mNblNe3w+c=
+ t=1795067217; v=1; x=1795672017;
+ b=m083Z65mRkbpRYxEOJcDV6p+IkhlkwB5N4s5NYctTVsxEiMQPyiv+WFOB9N6quFlaUEm8BFt
+ NuyFpJyjuMlzD8+243OD0cd3wvQtBcZlH4VFgLEOa3XYCet0QXOJ7T9UiPnAL9rUzHGmQTmE+ey
+ UuXYeIOm0UeNZmVAZaVoTbbo=
 X-Envelope-To: dm-devel@lists.linux.dev
-Received: by smtp.migadu.com with ESMTPS id cba1dd314961dd08;
-	Thu, 19 Nov 2026 05:45:50 +0000
-X-Mizu-Trace-ID: cba1dd314961dd08
+Received: by smtp.migadu.com with ESMTPS id 857f00a320d0ce5e;
+	Thu, 19 Nov 2026 05:46:57 +0000
+X-Mizu-Trace-ID: 857f00a320d0ce5e
 X-Migadu-Flow: FLOW_OUT
 From: Qiliang Yuan <qiliang.yuan@linux.dev>
-Date: Thu, 19 Nov 2026 00:45:34 -0500
-Subject: [PATCH v2 3/3] dm thin: free thins with kfree_rcu() instead of
- waiting in thin_dtr()
+To: Benjamin Marzinski <bmarzins@redhat.com>
+Cc: Qiliang Yuan <qiliang.yuan@linux.dev>,
+	Alasdair Kergon <agk@redhat.com>,
+	Mike Snitzer <snitzer@kernel.org>,
+	Mikulas Patocka <mpatocka@redhat.com>,
+	dm-devel@lists.linux.dev,
+	linux-kernel@vger.kernel.org
+Subject: Re: [PATCH 0/2] dm thin: stop waiting for grace periods when activating and removing thins
+Date: Thu, 19 Nov 2026 00:46:50 -0500
+Message-ID: <20261119054650.990874-1-qiliang.yuan@linux.dev>
+X-Mailer: git-send-email 2.43.0
+In-Reply-To: <av6IBa44Erp0gWBN@redhat.com>
+References: <20261116-bug-dm-thin-rcu-gp-v1-0-14ed3567da3e@linux.dev> <av6IBa44Erp0gWBN@redhat.com>
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Post: <mailto:dm-devel@lists.linux.dev>
@@ -60,73 +70,36 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 List-Owner: <mailto:dm-devel+owner@lists.linux.dev>
 Precedence: list
 MIME-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: 7bit
-Message-Id: <20261119-bug-dm-thin-rcu-gp-v2-3-055d627763c3@linux.dev>
-References: <20261119-bug-dm-thin-rcu-gp-v2-0-055d627763c3@linux.dev>
-In-Reply-To: <20261119-bug-dm-thin-rcu-gp-v2-0-055d627763c3@linux.dev>
-To: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>, 
- Mikulas Patocka <mpatocka@redhat.com>, 
- Benjamin Marzinski <bmarzins@redhat.com>
-Cc: dm-devel@lists.linux.dev, linux-kernel@vger.kernel.org, 
- Qiliang Yuan <qiliang.yuan@linux.dev>
-X-Mailer: b4 0.13.0
+Content-Transfer-Encoding: 8bit
 
-thin_dtr() waits until the last reference on the thin is dropped, which
-also takes it off pool->active_thins, and then for a grace period, so
-that requeue_bios() and error_retry_list_with_code(), which walk the
-list under rcu_read_lock(), are done with the thin before it is freed.
+On Thu, Nov 19, 2026 at 12:24:21AM -0500, Benjamin Marzinski wrote:
+> I posted an alternate version of your [PATCH 2/2] that fixes the issue
+> I mentioned. Can you verify that it works for you?
+>
+> I squashed it with your patch, since it your original patch did most of
+> the work of fixing the issue, and it seemed easier to just have one
+> patch to backport to fix it. I could refactor it into two patches: one
+> the fixes the bug, and a second that just swaps the synchronize_rcu()
+> for kfree_rcu(), if people would rather not mix the bug fix and feature.
 
-Removing a thin device thus waits for a full grace period in thin_dtr(),
-although those readers only need the memory of the thin to stay around.
+Thanks. I had a v2 ready along the same lines and sent it before seeing
+this:
 
-Free the thin with kfree_rcu() instead of waiting for the grace period.
+https://lore.kernel.org/r/20261119-bug-dm-thin-rcu-gp-v2-0-055d627763c3@linux.dev
 
-Removing 100 thin devices of an idle pool with dmsetup remove takes per
-device (mean of five rounds, min-max of the rounds in parentheses). The
-queue freeze in del_gendisk() waits for a grace period of its own, which
-the one in thin_dtr() used to overlap, so only part of it is saved:
+It carries the fix as its own patch 2/3, ahead of the kfree_rcu()
+change in 3/3. It differs from your version in two places: it takes the
+thin off the list in the thin_put() that drops the last reference,
+under pool->lock, where yours does it in thin_dtr() after the
+completion, which is simpler; and it does not skip dying thins in
+requeue_bios() and error_retry_list_with_code(), which yours does.
 
-  before (ms)        after (ms)         change
-  16.6 (16.2-17.0)   13.5 (13.2-14.0)     -19%
+Your Fixes tag is the right one. 17181fb7a0c3 moved list_del_rcu()
+ahead of waiting for the references; v2 points at b10ebd34cccae, which
+is wrong.
 
-Signed-off-by: Qiliang Yuan <qiliang.yuan@linux.dev>
----
- drivers/md/dm-thin.c | 6 +++---
- 1 file changed, 3 insertions(+), 3 deletions(-)
+I have not run your version yet. I will run the KASAN reproducer and
+the timing on it and report back.
 
-diff --git a/drivers/md/dm-thin.c b/drivers/md/dm-thin.c
-index f79f5982ae36c..9d9b3cd817f7a 100644
---- a/drivers/md/dm-thin.c
-+++ b/drivers/md/dm-thin.c
-@@ -362,6 +362,7 @@ struct thin_c {
- 	refcount_t refcount;
- 	struct completion can_destroy;
- 	bool dead;
-+	struct rcu_head rcu;
- };
- 
- /*----------------------------------------------------------------*/
-@@ -4166,8 +4167,6 @@ static void thin_dtr(struct dm_target *ti)
- 	WRITE_ONCE(tc->dead, true);
- 	thin_put(tc);
- 	wait_for_completion(&tc->can_destroy);
--	/* Let RCU readers of active_thins finish with tc */
--	synchronize_rcu();
- 
- 	mutex_lock(&dm_thin_pool_table.mutex);
- 
-@@ -4176,7 +4175,8 @@ static void thin_dtr(struct dm_target *ti)
- 	dm_put_device(ti, tc->pool_dev);
- 	if (tc->origin_dev)
- 		dm_put_device(ti, tc->origin_dev);
--	kfree(tc);
-+	/* Let RCU readers of active_thins finish with tc before freeing it */
-+	kfree_rcu(tc, rcu);
- 
- 	mutex_unlock(&dm_thin_pool_table.mutex);
- }
-
--- 
-2.43.0
-
+Thanks,
+Qiliang
