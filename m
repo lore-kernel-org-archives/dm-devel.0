@@ -1,73 +1,97 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=170.10.129.124
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.210.172
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1795052689;
-	b=ooaqyeiT6YfDCkK5l1N52iR2Br8Q91BdsouRKNmHtw952dQV51IaEts0kyr/81aVovP6
-	 KEKM/c0RAgJMEUH9d7NB1uWkOQ4gRJ6igVpHgXiIMO30QFiCc2HzzEr2aTzgT8SkNcWfG
-	 ClYEcTbrJ/vyx7uaknPBD5eZg/YRH+j6cQzigBeZV3npKbSQPjTTHsd2XinP1mB3lJbtB
-	 /u7+uUnfSk630qZTMcdCs8L3D/7YbhneE6WOmvNQDFeGdbPfg+nXDWSi0n0QeolwknngP
-	 s3MHSIQ+OzJMOwaIJ3Htf25eBICEZXc63L2DAVyEFjTi+4SgifYqAXf0uol0Ko359iw==
+	t=1795060921;
+	b=lBNVQVYGqY1gQg81LXMlJ2OiM9kYdUjLyiMkklmlP6sPikXQguy7B0+tkZ5kFuxW80Yr
+	 Md2JCDe6ixZpO4FEOEIdZF4QIH3Iuw9sDzzWgYKBTKt9LijYy1eAzSNyKz/Zkwed69hU7
+	 xTBoJ6NJqwrAqlFLUnUz/N6UT4iHlnjbN8EQet3LDkQylBZXhAYgffKyxSkXGq81B4U2+
+	 tIfRM4EvV9Bah4rog97h2I3iR0LFF3z+37VPzSYIeOXYpR0cz7eMPUxyzQDN+Zm3V4yBG
+	 gGGGLxH1HKLwXpN3iS6p66Fv4avfSR8lyYLQD5aWuQ55A5FEg86FrjSvFFEc4nlTysw==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1795052689;
-	h=DMARC-Filter:DKIM-Signature:Received:X-MC-Unique:
-	 X-Mimecast-MFC-AGG-ID:Received:Received:From:To:Cc:Subject:Date:
-	 Message-ID:MIME-Version:X-Scanned-By:X-Mimecast-Spam-Score:
-	 X-Mimecast-MFC-PROC-ID:X-Mimecast-Originator:
-	 Content-Transfer-Encoding:content-type;
-	bh=pBploOhn4g6yNVDbs6FG1RfhgMGJUyZbXI+qPBgpBqE=;
-	b=dYgLmX5pAJFxSAAkwssFTix8D/dvH8eZ746VAbfh6djeHDrZbAfsb9onJyxG2I03k23b
-	 lqqTfWx5DTr2H4i/Di7uuVWmjWdIyqoj7aK3ib7oo6qhZ2BYZO3N/98WzlKS+QbpA1RRx
-	 TbzyXcz+/UgBGzAXQiuuoHyPNvEVfcnuPQdr39AY0Rh2ab9uVrVg3vFFNk4LBGRZkxUJR
-	 PR6GI5d140GGVJ02sv8+jOkTkb7sRdgzNkjC6Tx2BjAfHJk+cShBetO64SZF+su3IoSCo
-	 hyF0bZDrIq5JqhcW47tdmAf+Fz7MSEeLF04KohIfyjuLksC1IeMkIW8z6sXgPaJurug==
+	a=rsa-sha256; c=relaxed/relaxed; t=1795060921;
+	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
+	 X-Forwarded-Encrypted:X-Gm-Message-State:X-Gm-Gg:X-Received:Received:
+	 From:To:Cc:Subject:Date:Message-ID:X-Mailer:In-Reply-To:References:
+	 MIME-Version:Content-Transfer-Encoding;
+	bh=fJtfrhmQx1vX1xY6U2FJkZOWiHHtkvB17JwO8I1Z3tA=;
+	b=3s9XBzJDEmERRt29MJVK4DbpowrvaTEcH5oxXm+YJGbaqrnO/cXI8LEpDCGEfpfcy+NX
+	 1s3wWOUEVntGUy59YDpmpF5P2bw0YbJ15ivtUAgFFecEuH8CHQmrmkdR8VZY7QEOmTd3c
+	 9lldGB1cUWdiHOUIOKrx3OI4F+pBsAubflWDjbcVzrBEvaQ+bw+x9gqgRQg83Ph0fG4wC
+	 NWcqOsjiXoUjkVwxM+TcmZ9ugyvZwvM2KSjANXnG4IowVNiMrab8b01DOr0XRz+QGLFUu
+	 zWEZ+UA1nwn7buuvjkeG2iZYkhrUStA9CHw99BYcodO7Kyd2yRdPPtjfeBlJEKDZvlA==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dmarc=pass header.from=redhat.com;
-	spf=pass smtp.mailfrom=redhat.com;
-	dkim=pass header.d=redhat.com header.i=@redhat.com header.a=rsa-sha256 header.s=mimecast20190719 header.b=XjyzRgvu;
-	arc=none smtp.remote-ip=170.10.129.124
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	dmarc=pass header.from=gmail.com;
+	spf=pass smtp.mailfrom=gmail.com;
+	dkim=pass header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=p6ykFh5q;
+	arc=none smtp.remote-ip=209.85.210.172
+Received: from mail-pf1-f172.google.com (mail-pf1-f172.google.com [209.85.210.172])
+	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 214AC606A32F
-	for <dm-devel@lists.linux.dev>; Thu, 19 Nov 2026 01:44:48 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 214AC606A32F
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 5F7AD606A32A
+	for <dm-devel@lists.linux.dev>; Thu, 19 Nov 2026 04:02:01 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 5F7AD606A32A
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.a=rsa-sha256 header.s=mimecast20190719 header.b=XjyzRgvu
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1795052688;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding;
-	bh=pBploOhn4g6yNVDbs6FG1RfhgMGJUyZbXI+qPBgpBqE=;
-	b=XjyzRgvukTvD6xjKXaImf6lzV8hc2ItvbMKp3/Y37l8vU5A/Of/rn6md0MKn1E0gFJE39v
-	zD2aQl7+y+28fZpSDmLYI+cLt2wJXtfvzVtFW1FvEZEwtRAEhwIUMt2JigB5pcy5ZOStB8
-	ovYjRxX8G3zE9CKPp0Jvml/WCEm9Cok=
-Received: from mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-383-eH8q5MGcPQOV7pj0DbWGAw-1; Wed,
- 18 Nov 2026 20:44:46 -0500
-X-MC-Unique: eH8q5MGcPQOV7pj0DbWGAw-1
-X-Mimecast-MFC-AGG-ID: eH8q5MGcPQOV7pj0DbWGAw_1795052686
-Received: from mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.12])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id EC2B01800260;
-	Thu, 19 Nov 2026 01:44:45 +0000 (UTC)
-Received: from localhost.localdomain (unknown [10.74.64.3])
-	by mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTP id F31B4195608B;
-	Thu, 19 Nov 2026 01:44:43 +0000 (UTC)
-From: Ganesh Andhale <gandhale@redhat.com>
-To: christophe.varoqui@opensvc.com
-Cc: dm-devel@lists.linux.dev,
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=p6ykFh5q
+Received: by mail-pf1-f172.google.com with SMTP id d2e1a72fcca58-8a60f90a924so852366b3a.3
+        for <dm-devel@lists.linux.dev>; Wed, 18 Nov 2026 20:02:01 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20260707; t=1795060921; x=1795665721; darn=lists.linux.dev;
+        h=content-transfer-encoding:mime-version:references:in-reply-to
+         :message-id:date:subject:cc:to:from:from:to:cc:subject:date
+         :message-id:reply-to:content-type;
+        bh=fJtfrhmQx1vX1xY6U2FJkZOWiHHtkvB17JwO8I1Z3tA=;
+        b=p6ykFh5qHEZ3sr0wmsXLZ+gzFr4H321ukFMUU+RdQa6r79NfbNKonXWDo7K2Wghtq6
+         piBscdQwiCdjkzJr0RV287gYCt13MAteZMtylaNcBPLKpzAJDGFhK4h6B7YGIfOblwkE
+         KC8BDsuatFzcfn+MlYL0bWW44eXZj5AdtH1dC9QlZn/XVuKaBqqLoPykW+BQHWG16tkM
+         98+P8ySaSt7rRUM4QI/TaT540ujUL8lVJ9R1baLzgzmSHAYJ0Jf/E6qnePUvOG0IyV9c
+         Sgr07KKzhD499gbnm6PAoYqp6QJm82lDQ2/8Qc7SZGZ+NEdx7CYwny0BCbdXT9kJAMaa
+         j7Aw==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20260707; t=1795060921; x=1795665721;
+        h=content-transfer-encoding:mime-version:references:in-reply-to
+         :message-id:date:subject:cc:to:from:x-gm-gg:x-gm-message-state:from
+         :to:cc:subject:date:message-id:reply-to:content-type;
+        bh=fJtfrhmQx1vX1xY6U2FJkZOWiHHtkvB17JwO8I1Z3tA=;
+        b=bkCZxO6JryjidpaYZwiQ0UUZIaI7ZsfK64O0DpCWkkhhh6y+HkxAiSCqHtPfGHPx41
+         g65u5xcYWKWl5td81CnwEruakGRDjA5hEt2nkj2umu81dqV81bBMNi5Xo25ZXwS3H+G1
+         x8/57KNV2bk889I4oKGtIZCKNLkX/PWk35oqzofP1T53cj61P8JXw1KgPUCGbXtHoVdz
+         qe6UOEjCIJ9MJDfNDVRT7BAXu/U7dw/fbED9zUQvWUDuP2J5tYmjWqowwaHt1b1gs5hm
+         Hs9vHx0F/2mFFGpNZyN7/8exGXCpXj1Pf1ZKLRC16qfw06rgpbm4hjQsdGYQliD+Aq8m
+         B15Q==
+X-Forwarded-Encrypted: i=1; AL+hErFgJds0WeUAg2PXPYdUDKXnGHXKxm2r9gTZlbSZbQs2qc1WTaXu3J7VwrwMecin4gcweXR8dOAa6g==@lists.linux.dev
+X-Gm-Message-State: APuU4Z/dC9z/QbwpA4eQn7d7gmskaGgpOwvLbjbVSi9e+xUdYX06GJ5Z
+	zbxKQISEpUpOU5lVdwI0HGTWI+Cz0S0UP9kvVaXU5Y8jpnz2qJ50lxp2
+X-Gm-Gg: AYBFou3xlv72GTETnZE1B5Lu45AEkLLevoKrwQTY+vSn1fO+ZaEiH3+QuLTbRknH8yT
+	5vTHGElZkPixk2sWSWTIU4C96GO28UhJ8fIq0hfdgP7W+W2/uRmUWhCShwcZurLCdQk2xhXLt6a
+	1LPUKp16eq4TpX0TyvgrXaEfxyB1xO+XeCpwTLG+PXXpha9L/EWPr+2L6o85OKUf0pJI+LNbGUF
+	ESpO3ZU5Ht4f5z9xfoOJzM9u4YMx7eOlvqdM0cE9AZTE4Qsg/CrExluXoDYDxaNR8SqYnKIMoDb
+	ubW1vSWwDtib4Z5UC+U8XFWIQ6zakvLIpHRMPe1gDiOFsvhsdeMW5jzv5DQis1JOLwW7u2yPWpP
+	kDvTLSqzki9GHrhcl6u5eHKHA0zgacxeFSjzoLRQHhLu7153KU59Fcd5Qd1yCVJ7H9JFAn2710x
+	XYw+C2rMp7SArfCPSYnv7Rbma5rXwWI9daL5gJazoctV0iDKKfBWIsSQI20pz5RlclGClI2khC2
+	xOnnY37pvAOwyVjpF8WfjI+gj7xA5YRt58rndkxgs/ptRmAavy+stDn3xIunYZuoMcmQyWSMjlF
+	TsRz/TgpNhL7vJShx2MaSX2Ip/u2jtSKojkCRD4KooobfMsrB42jXyyE1rpz8BxXpSx/jVtoBad
+	zj5IyUvnW
+X-Received: by 2002:a05:6372:a713:b0:3fb:5869:81e9 with SMTP id adf61e73a8af0-3fe97aefad9mr4332724637.27.1795060920424;
+        Wed, 18 Nov 2026 20:02:00 -0800 (PST)
+Received: from bj-kjy-standalone-yangyongpeng.mioffice.cn ([43.224.245.241])
+        by smtp.gmail.com with ESMTPSA id 41be03b00d2f7-cde534aec9bsm920462a12.22.2026.11.18.20.01.57
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Wed, 18 Nov 2026 20:01:59 -0800 (PST)
+From: Yongpeng Yang <yangyongpeng.storage@gmail.com>
+To: mpatocka@redhat.com
+Cc: agk@redhat.com,
+	snitzer@kernel.org,
 	bmarzins@redhat.com,
-	mwilck@suse.com
-Subject: [PATCH] multipathd: cleanup global queues after threads exit
-Date: Thu, 12 Nov 2026 21:03:10 +0530
-Message-ID: <20261112153310.19652-1-gandhale@redhat.com>
+	zkabelac@redhat.com,
+	dm-devel@lists.linux.dev
+Subject: Re: [PATCH 2/4] dm-bufio: allow exposing a client in sysfs under a caller-chosen kobject
+Date: Thu, 19 Nov 2026 12:01:55 +0800
+Message-ID: <20261119040155.1076781-1-yangyongpeng.storage@gmail.com>
+X-Mailer: git-send-email 2.43.0
+In-Reply-To: <d4fc9150-4768-f747-ca97-688bc9bebc46@redhat.com>
+References: <d4fc9150-4768-f747-ca97-688bc9bebc46@redhat.com>
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Post: <mailto:dm-devel@lists.linux.dev>
@@ -77,166 +101,47 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 List-Owner: <mailto:dm-devel+owner@lists.linux.dev>
 Precedence: list
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.0 on 10.30.177.12
-X-Mimecast-Spam-Score: 0
-X-Mimecast-MFC-PROC-ID: Q9OhK-GWWknKyEu9k5Rojc605a186N9Y_PcQnXwKjQ8_1795052686
-X-Mimecast-Originator: redhat.com
 Content-Transfer-Encoding: 8bit
-content-type: text/plain; charset="US-ASCII"; x-default=true
 
-cleanup_global_uevq() and cleanup_global_purge_queue() were registered
-as pthread cleanup handlers in worker threads. During shutdown, these
-handlers could run as soon as their owning thread was cancelled, while
-another thread that also accessed the same global queue had not been
-joined yet.
+On Wed, Nov 18, 2026 at 05:41:42PM +0100, Mikulas Patocka wrote:
+> There may be multiple targets in a table - if you use the name of the md
+> device as the base directory, they will clash.
 
-This allowed the global uevent or purge queue to be cleaned while a
-producer or consumer thread could still touch it.
+That would be a real problem, but none of the existing dm-bufio users
+can reach it for now: dm-verity, dm-thin and dm-integrity are all
+DM_TARGET_SINGLETON, so a table can hold at most one of them and the
+directory under a device holds at most one "hash"/"fec"/"fec-data"
+client per role.  If a custom targe_type which allows multi target and
+each of them have a dm-bufio client, that will be hard to handle. I just
+want to show the client info through sysfs, how about show such info via
+message?
 
-Move the global queue cleanup to cleanup_queues(), which is called
-after cleanup_threads(), once all related threads have been joined.
-Keep the pthread cleanup handlers only for thread-local temporary lists
-and other resources owned by the cancelling thread.
+> There may be at most two tables for a given "md" device (the active table
+> and the inactive table). Each will have its own dm-bufio instance and they
+> will clash.
 
-Export cleanup_global_uevq() from libmultipath so multipathd can call
-it during daemon shutdown.
+That did collide in v1; in v2 the directories are detached in
+->presuspend (names freed, kobjects kept until the table is
+destroyed), so the new table's directories are created synchronously
+at resume, with no warning.
 
-Signed-off-by: Ganesh Andhale <gandhale@redhat.com>
----
- libmultipath/libmultipath.version |  1 +
- libmultipath/uevent.c             |  4 +---
- libmultipath/uevent.h             |  2 ++
- multipathd/main.c                 | 12 ++++++++++++
- multipathd/purge.c                |  4 +---
- multipathd/purge.h                |  2 ++
- 6 files changed, 19 insertions(+), 6 deletions(-)
+> Another problem is that if you reload a dm table, you lose all dm-bufio
+> settings that were set by the user in sysfs.
 
-diff --git a/libmultipath/libmultipath.version b/libmultipath/libmultipath.version
-index f631f453..93f213b6 100644
---- a/libmultipath/libmultipath.version
-+++ b/libmultipath/libmultipath.version
-@@ -203,6 +203,7 @@ global:
- 	trigger_path_udev_change;
- 	trigger_paths_udev_change;
- 	udev;
-+	cleanup_global_uevq;
- 	uevent_dispatch;
- 	uevent_get_dm_str;
- 	uevent_get_env_positive_int;
-diff --git a/libmultipath/uevent.c b/libmultipath/uevent.c
-index b0c43340..e1c8aa72 100644
---- a/libmultipath/uevent.c
-+++ b/libmultipath/uevent.c
-@@ -503,7 +503,7 @@ static void cleanup_uevq(void *arg)
- 	uevq_cleanup(arg);
- }
- 
--static void cleanup_global_uevq(void *arg __attribute__((unused)))
-+void cleanup_global_uevq(void)
- {
- 	pthread_mutex_lock(uevq_lockp);
- 	uevq_cleanup(&uevq);
-@@ -726,7 +726,6 @@ int uevent_listen(struct udev *udev)
- 		goto out;
- 	}
- 
--	pthread_cleanup_push(cleanup_global_uevq, NULL);
- 	pthread_cleanup_push(cleanup_uevq, &uevlisten_tmp);
- 	while (1) {
- 		int fdcount, events;
-@@ -755,7 +754,6 @@ int uevent_listen(struct udev *udev)
- 		pthread_mutex_unlock(uevq_lockp);
- 	}
- 	pthread_cleanup_pop(1);
--	pthread_cleanup_pop(1);
- out:
- 	pthread_cleanup_pop(1);
- out_udev:
-diff --git a/libmultipath/uevent.h b/libmultipath/uevent.h
-index 69296789..f21419ea 100644
---- a/libmultipath/uevent.h
-+++ b/libmultipath/uevent.h
-@@ -28,6 +28,8 @@ struct uevent {
- struct uevent *alloc_uevent(void);
- int is_uevent_busy(void);
- 
-+void cleanup_global_uevq(void);
-+
- int uevent_listen(struct udev *udev);
- int uevent_dispatch(int (*store_uev)(struct uevent *, void * trigger_data),
- 		    void * trigger_data);
-diff --git a/multipathd/main.c b/multipathd/main.c
-index 9bce4d6b..11bd1d01 100644
---- a/multipathd/main.c
-+++ b/multipathd/main.c
-@@ -3812,6 +3812,17 @@ static void cleanup_vecs(void)
- 	gvecs = NULL;
- }
- 
-+static void cleanup_queues(void)
-+{
-+	/*
-+	 * Shared queues must be cleaned only after every producer and
-+	 * consumer has been joined. Worker cleanup handlers must not
-+	 * free these globals while another thread may still access them.
-+	 */
-+	cleanup_global_purge_queue();
-+	cleanup_global_uevq();
-+}
-+
- static void cleanup_threads(void)
- {
- 	stop_io_err_stat_thread();
-@@ -3915,6 +3926,7 @@ static void cleanup_rcu(void)
- static void cleanup_child(void)
- {
- 	cleanup_threads();
-+	cleanup_queues();
- 	cleanup_vecs();
- 	cleanup_bindings();
- 	if (poll_dmevents)
-diff --git a/multipathd/purge.c b/multipathd/purge.c
-index 68db8ced..078b4079 100644
---- a/multipathd/purge.c
-+++ b/multipathd/purge.c
-@@ -235,7 +235,7 @@ void cleanup_purge_list(void *arg)
-  * Cleanup handler for the global purge queue.
-  * Used during shutdown to free any remaining queued items.
-  */
--static void cleanup_global_purge_queue(void *arg __attribute__((unused)))
-+void cleanup_global_purge_queue(void)
- {
- 	pthread_mutex_lock(&purge_mutex);
- 	cleanup_purge_list(&purge_queue);
-@@ -268,7 +268,6 @@ void *purgeloop(void *ap __attribute__((unused)))
- 	 * Cleanup handler for global purge_queue.
- 	 * This handles items that were queued but not yet moved to purge_list.
- 	 */
--	pthread_cleanup_push(cleanup_global_purge_queue, NULL);
- 
- 	while (1) {
- 		LIST_HEAD(purge_list);
-@@ -320,7 +319,6 @@ void *purgeloop(void *ap __attribute__((unused)))
- 		pthread_cleanup_pop(0);
- 	}
- 
--	pthread_cleanup_pop(1);
- 	pthread_cleanup_pop(1);
- 	return NULL;
- }
-diff --git a/multipathd/purge.h b/multipathd/purge.h
-index 1fe755f3..81ed952b 100644
---- a/multipathd/purge.h
-+++ b/multipathd/purge.h
-@@ -33,6 +33,8 @@ void build_purge_list(struct vectors *vecs, struct list_head *tmpq);
-  */
- void cleanup_purge_list(void *arg);
- 
-+void cleanup_global_purge_queue(void);
-+
- /*
-  * Main purge thread loop
-  */
--- 
-2.56.0
+That applies equally to messages. The default is recomputed from
+hash_retain_percent at every ctr, only an explicit runtime tweak is
+lost. Most of the sysfs content is state anyway (current_bytes/buffers),
+not settings.
 
+> What do you think? Which of these two possibilities is better?
+
+I prefer messages, please review [PATCH 4/4]:
+1. The constructor line would have to be taught to veritysetup,
+   dmctl in android and lvm2; a message is one command, no userspace
+   change.
+2. This knob wants runtime adjustment (raise at boot, drop later);
+   persisting it in the table line makes every tweak a suspend/resume
+   reload, while a message adjusts the live device directly.
+
+Thanks for the review,
+Yongpeng
