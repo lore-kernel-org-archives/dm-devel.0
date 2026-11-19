@@ -1,64 +1,66 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=220.197.31.3
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=91.218.175.227
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1795068500;
-	b=tj+U4SHYrl9hLviREzMIn1f3Yf1rcGPG4KUJI32M7nrqOjhJIyMSNcDKC+XPutmLz0kQ
-	 sN0hemRvIa95ZqgJptDBXouaF/qXZk5XI/qgcdIJNOXvgK+BAvHuNGGNFELkYG9gEWoTw
-	 YCWE6bVvQRJ/Zc+dFLu8u9wEa1uz+IKZ917h+s2U/V877JcfQ5KbULMrKQuVSDtP6TM2I
-	 bOVD9xnCeV7U9LmtVDjcb5a/iAUxHHALveBn9XSCLkuBTUQ15GP2SOSq5GVqX7Lw4GtpO
-	 BTOgjQhySbTZWU3ScqSIZTVwq53nJXUMzZ+uSTauPGLtt/0CnW7tQ7+98+6o2nXCb1Q==
+	t=1795068876;
+	b=h7uJaVWGIW2CaPQhY2Cd83jvn/4m3uR6eJgOeWVO6xY+qhvvLoU9LBBBjcgcmlQJX/Ys
+	 Vbn885xksDIytuEcS+OGArqeBhDBJkD3r02+lzbUglWNLVBfRk3LTBnBYWpUCHOrYZMhy
+	 Z3C2UVyqP3SOw/hPtVbKKuNwNDFMa1PFNv1N8B7ONDJZcEZaRklEozI9+r+sBrlonAqLL
+	 UvyqhxJQJjviFkIt0vtZ1GTqZ0XzX41omMusJ7er3oBhDiDG4BZxWJWuBbpa44Htpz1K0
+	 wC4o00vvGJ9wf75FHPwicjlBwrRP//PcaCwQDbPxHlgD1gNWgBOrgGDck9exKenXOTw==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1795068500;
-	h=DMARC-Filter:DKIM-Signature:Date:From:To:Cc:Subject:X-Priority:
-	 X-Mailer:In-Reply-To:References:X-NTES-SC:Content-Transfer-Encoding:
-	 Content-Type:MIME-Version:Message-ID:X-Coremail-Locale:X-CM-TRANSID:
-	 X-CM-SenderInfo:X-Coremail-Antispam;
-	bh=V7SUYsmuNsMVcT0DsDg2UAzZ3vjHnuoSv5f9GMfd370=;
-	b=ctwbZ3qqTavT/QafCbupKiBCThzF3Lju5XC2oAMWXSCoG41yAM51K4cO5zh//DQXrAsh
-	 HsgiqZOmHZFS9IWyVcO5qskx1S2CLBsmtwYIWg7YOeFHRwIQL/i6uL1ZD2Z9KS3y38plw
-	 UsoEMXmLuhiM4w1pqezqHqWUEzCke8wojI32E39lhiG1xGvojKtwdpK5aQWHhu1BT/WOA
-	 EvUGrtP7FFfj2+macg8JhdpmRCW/O5MgBrW411Vx+l9atR+og5HA3AHLeJCRIYQrNAM08
-	 HSsh3IFAbScnQIa5F1kPI5tl6iOnyqmOCe2FIKOwqOwO6+/ty42h2C7qt0ZI6V0JTyg==
+	a=rsa-sha256; c=relaxed/relaxed; t=1795068876;
+	h=DMARC-Filter:X-Envelope-To:DKIM-Signature:X-Envelope-To:Received:
+	 X-Mizu-Trace-ID:X-Migadu-Flow:From:To:Cc:Subject:Date:Message-ID:
+	 X-Mailer:In-Reply-To:References:MIME-Version:
+	 Content-Transfer-Encoding;
+	bh=uyNcIWU98Z5sXldk3rimj6Mr8PsEsaCViQ4vLgBGmJw=;
+	b=HV4GaT3rvomRbG8WAMx/2lx0WwUwFb+DIMT5/u8V1Z9hgtwqT89xiVDgTQiQSlnA2pqB
+	 Vbt1ATNRe1O+6CBFmaUJFP1skK2f80AOGuvPO8nJCQj7eu9C0ylD1cKxAwa2Uq7rO6j/+
+	 BebYXQbg5QGyz1lKzHVAf/1iSmt7oqfngzWy0sQkWqF1iRmYMB7uDWGSPp0JNUu5hO+Rk
+	 MVNCPA1LiDPZaERoEVvDJmZ2bmC3UYywEFBwrtf6XtFL80tRBPUcdIp4bq2q5mfVvlzlS
+	 CpN61rV6rg3ZOEG5LineHUcOi/YhFvxg8LOgahJgVc73JYfcc6eiulcMHgonP+ug+jw==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dmarc=pass header.from=163.com;
-	spf=pass smtp.mailfrom=163.com;
-	dkim=pass header.d=163.com header.i=@163.com header.a=rsa-sha256 header.s=s110527 header.b=jqWynYDR;
-	arc=none smtp.remote-ip=220.197.31.3
-Received: from m16.mail.163.com (m16.mail.163.com [220.197.31.3])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	dmarc=pass header.from=linux.dev;
+	spf=pass smtp.mailfrom=linux.dev;
+	dkim=pass header.d=linux.dev header.i=@linux.dev header.a=rsa-sha256 header.s=key1 header.b="hPwN/lA7";
+	arc=none smtp.remote-ip=91.218.175.227
+Received: from mta0.migadu.com (out-227.mta0.migadu.com [91.218.175.227])
+	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id B5BC4606A325
-	for <dm-devel@lists.linux.dev>; Thu, 19 Nov 2026 06:08:16 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org B5BC4606A325
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=163.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=163.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id EFE3B606A320
+	for <dm-devel@lists.linux.dev>; Thu, 19 Nov 2026 06:14:35 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org EFE3B606A320
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.dev
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.dev
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key, unprotected) header.d=163.com header.i=@163.com header.a=rsa-sha256 header.s=s110527 header.b=jqWynYDR
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=163.com;
-	s=s110527; h=Date:From:To:Subject:Content-Type:MIME-Version:
-	Message-ID; bh=V7SUYsmuNsMVcT0DsDg2UAzZ3vjHnuoSv5f9GMfd370=; b=j
-	qWynYDR87IlsJ3B/ioAghTt4Ssr41ZMUOXkOGnFZRV5J+QFt+kMg7Nlzx6LNqWBU
-	DRg6hqMEWVRBJo2Cr5u/7CtYB2YnTQxSkWFutNBJsQhcBLV8+5/EpKrfd3OKgBeL
-	YEgK8bWCUyovzg+9nnDtWJIUJ31dKJ2Uu6BZQIDOUA=
-Date: Thu, 19 Nov 2026 14:07:27 +0800 (CST)
-From: =?GBK?B?wO7T07roIA==?= <dayou5941@163.com>
-To: syzbot <syzbot+a53c2918175b36cfd601@syzkaller.appspotmail.com>
-Cc: agk@redhat.com, bmarzins@redhat.com, dm-devel@lists.linux.dev,
-	linux-kernel@vger.kernel.org, linux-raid@vger.kernel.org,
-	liyouhong@kylinos.cn, magiclinan@didiglobal.com, mpatocka@redhat.com,
-	sashiko-bot@kernel.org, snitzer@kernel.org, song@kernel.org,
-	stable@vger.kernel.org, syzkaller-bugs@googlegroups.com,
-	xiao@kernel.org, yukuai@fygo.io
-Subject: Re:Re: [syzbot] [raid?] BUG: unable to handle kernel paging request
- in remove_spares
-X-Priority: 3
-X-Mailer: Coremail Webmail Server Version 2023.4-cmXT build
- 20260511(2e539873) Copyright (c) 2002-2026 www.mailtech.cn 163com
-In-Reply-To: <6afdad2f.15a38f0c.5f8d.0009.GAE@google.com>
-References: <6afdad2f.15a38f0c.5f8d.0009.GAE@google.com>
-X-NTES-SC: AL_Qu2SB/ydt0wv4SCYYekckk4Wjug8Wcexufwj34NTc+YEmAXC2w8GZ1NtN2vK8OCWGw6FnxuRfzZf5el7d5VHUp+cYpb4HWPHb9xVc3dyxA==
-Content-Transfer-Encoding: base64
-Content-Type: text/plain; charset=GBK
+	dkim=pass (1024-bit key, unprotected) header.d=linux.dev header.i=@linux.dev header.a=rsa-sha256 header.s=key1 header.b=hPwN/lA7
+X-Envelope-To: dm-devel@lists.linux.dev
+DKIM-Signature: a=rsa-sha256; bh=GA8YRDDsX8w23iFpR9GtsbDqe3i45tsbQcbqUbsfOKM=;
+ c=simple/simple; d=linux.dev;
+ h=from:to:subject:date:message-id:mime-version:content-type; s=key1;
+ t=1795068873; v=1; x=1795673673;
+ b=hPwN/lA7cwV/TyubzqX4Kt0ZBTSjwvSvAMdr/GKewP6kQ2VP56fIeS7GFCzkL3B58v2NlPhL
+ pp+m/0OBFrUCjuZl3Tbl+iNbn+Boz4Uam95Q0gYKmIY0z4HXXtrbo+9dItZpk7q7nxNWLcJrijm
+ WsfEKIvenbwOhfLova7bXg8A=
+X-Envelope-To: dm-devel@lists.linux.dev
+Received: by smtp.migadu.com with ESMTPS id baff99afe0cb7e01;
+	Thu, 19 Nov 2026 06:14:33 +0000
+X-Mizu-Trace-ID: baff99afe0cb7e01
+X-Migadu-Flow: FLOW_OUT
+From: Qiliang Yuan <qiliang.yuan@linux.dev>
+To: Benjamin Marzinski <bmarzins@redhat.com>
+Cc: Qiliang Yuan <qiliang.yuan@linux.dev>,
+	Alasdair Kergon <agk@redhat.com>,
+	Mike Snitzer <snitzer@kernel.org>,
+	Mikulas Patocka <mpatocka@redhat.com>,
+	dm-devel@lists.linux.dev,
+	linux-kernel@vger.kernel.org
+Subject: Re: [PATCH v2] dm thin: free thins with kfree_rcu() instead of waiting in thin_dtr()
+Date: Thu, 19 Nov 2026 01:14:27 -0500
+Message-ID: <20261119061427.1452945-1-qiliang.yuan@linux.dev>
+X-Mailer: git-send-email 2.43.0
+In-Reply-To: <20261119051620.507189-1-bmarzins@redhat.com>
+References: <20261116-bug-dm-thin-rcu-gp-v1-2-14ed3567da3e@linux.dev> <20261119051620.507189-1-bmarzins@redhat.com>
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Post: <mailto:dm-devel@lists.linux.dev>
@@ -68,110 +70,34 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 List-Owner: <mailto:dm-devel+owner@lists.linux.dev>
 Precedence: list
 MIME-Version: 1.0
-Message-ID: <4ac2cebb.48be.1a1f26ac925.Coremail.dayou5941@163.com>
-X-Coremail-Locale: zh_CN
-X-CM-TRANSID:bigvCgD331sgkv5q2GJxAA--.369W
-X-CM-SenderInfo: 5gd103ivzuiqqrwthudrp/xtbC3QAHtWr+kiAJPwAA3-
-X-Coremail-Antispam: 1U5529EdanIXcx71UUUUU7vcSsGvfC2KfnxnUU==
+Content-Transfer-Encoding: 8bit
 
-CgoKCgoKCgoKCgoKCgoKCgpBdCAyMDI2LTExLTE4IDIxOjUwOjM5LCAic3l6Ym90IiA8c3l6Ym90
-K2E1M2MyOTE4MTc1YjM2Y2ZkNjAxQHN5emthbGxlci5hcHBzcG90bWFpbC5jb20+IHdyb3RlOgo+
-c3l6Ym90IGhhcyBmb3VuZCBhIHJlcHJvZHVjZXIgZm9yIHRoZSBmb2xsb3dpbmcgaXNzdWUgb246
-Cj4KPkhFQUQgY29tbWl0OiAgICAyMGVlZjI5YjdjODQgTWVyZ2UgdGFnICdhcmMtZml4ZXMtNy40
-JyBvZiBnaXQ6Ly9naXQua2VybmVsLi4KPmdpdCB0cmVlOiAgICAgICB1cHN0cmVhbQo+Y29uc29s
-ZSBvdXRwdXQ6IGh0dHBzOi8vc3l6a2FsbGVyLmFwcHNwb3QuY29tL3gvbG9nLnR4dD94PTExODZm
-ZjNkNTgwMDAwCj5rZXJuZWwgY29uZmlnOiAgaHR0cHM6Ly9zeXprYWxsZXIuYXBwc3BvdC5jb20v
-eC8uY29uZmlnP3g9MWNmMTg5Mzk0YTg1NmYxMQo+ZGFzaGJvYXJkIGxpbms6IGh0dHBzOi8vc3l6
-a2FsbGVyLmFwcHNwb3QuY29tL2J1Zz9leHRpZD1hNTNjMjkxODE3NWIzNmNmZDYwMQo+Y29tcGls
-ZXI6ICAgICAgIGdjYyAoRGViaWFuIDE0LjIuMC0xOSkgMTQuMi4wLCBHTlUgbGQgKEdOVSBCaW51
-dGlscyBmb3IgRGViaWFuKSAyLjQ0Cj5zeXogcmVwcm86ICAgICAgaHR0cHM6Ly9zeXprYWxsZXIu
-YXBwc3BvdC5jb20veC9yZXByby5zeXo/eD0xN2Y4Zjk0ZDU4MDAwMAo+QyByZXByb2R1Y2VyOiAg
-IGh0dHBzOi8vc3l6a2FsbGVyLmFwcHNwb3QuY29tL3gvcmVwcm8uYz94PTE3M2Y5NDExNTgwMDAw
-Cj4KPkRvd25sb2FkYWJsZSBhc3NldHM6Cj5kaXNrIGltYWdlIChub24tYm9vdGFibGUpOiBodHRw
-czovL3N0b3JhZ2UuZ29vZ2xlYXBpcy5jb20vc3l6Ym90LWFzc2V0cy9kOTAwZjA4M2FkYTMvbm9u
-X2Jvb3RhYmxlX2Rpc2stMjBlZWYyOWIucmF3Lnh6Cj52bWxpbnV4OiBodHRwczovL3N0b3JhZ2Uu
-Z29vZ2xlYXBpcy5jb20vc3l6Ym90LWFzc2V0cy9iYjg1MmExZGRiNzYvdm1saW51eC0yMGVlZjI5
-Yi54ego+a2VybmVsIGltYWdlOiBodHRwczovL3N0b3JhZ2UuZ29vZ2xlYXBpcy5jb20vc3l6Ym90
-LWFzc2V0cy80YzYzNmMzZjQyNDIvYnpJbWFnZS0yMGVlZjI5Yi54ego+Cj5BSS1nZW5lcmF0ZWQg
-cm9vdCBjYXVzZSBzdW1tYXJ5Ogo+SW4gdGhlIE1EIChNdWx0aXBsZSBEZXZpY2VzIC8gUkFJRCkg
-c3Vic3lzdGVtLCBtZF9zdGFydF9zeW5jIGlzIHNjaGVkdWxlZCBhcyBhCj53b3JrIGl0ZW0gb24g
-dGhlIG1kX21pc2Mgd29ya3F1ZXVlIHRvIGluaXRpYXRlIHJlc3luY2hyb25pemF0aW9uIG9yIG1h
-bmFnZSBzcGFyZQo+ZGV2aWNlcy4gRm9yIHJlYWQtb25seSBhcnJheXMgKCFtZF9pc19yZHdyKG1k
-ZGV2KSksIG1kX3N0YXJ0X3N5bmMgZXhlY3V0ZXMKPnJlbW92ZV9hbmRfYWRkX3NwYXJlcygpLCB3
-aGljaCBpbnZva2VzIHJlbW92ZV9zcGFyZXMoKS4gSG93ZXZlciwgbWRfc3RhcnRfc3luYwo+ZmFp
-bHMgdG8gdmVyaWZ5IHdoZXRoZXIgdGhlIGFycmF5J3MgcGVyc29uYWxpdHkgKG1kZGV2LT5wZXJz
-KSBpcyBzdGlsbCB2YWxpZAo+YmVmb3JlIGNhbGxpbmcgaW50byBwZXJzb25hbGl0eSBvcGVyYXRp
-b25zLCBhbmQgYXJyYXkgc3RvcC9kZXRhY2ggc2VxdWVuY2VzIGRvCj5ub3QgZW5zdXJlIHRoYXQg
-bWRkZXYtPnN5bmNfd29yayBpcyBjb21wbGV0ZWx5IGhhbHRlZCBvciBwcmV2ZW50ZWQgZnJvbSBy
-dW5uaW5nCj5hZnRlciBtZGRldi0+cGVycyBpcyBjbGVhcmVkLiBXaGVuIHJlbW92ZV9zcGFyZXMo
-KSBleGVjdXRlcyB3aXRoIG1kZGV2LT5wZXJzID09Cj5OVUxMLCBpdCBhdHRlbXB0cyB0byBpbnZv
-a2UgbWRkZXYtPnBlcnMtPmhvdF9yZW1vdmVfZGlzayAobG9jYXRlZCBhdCBvZmZzZXQKPjB4NTAp
-LCB0cmlnZ2VyaW5nIGEgTlVMTCBwb2ludGVyIGRlcmVmZXJlbmNlIGNyYXNoLgo+Cj5mdWxsIGFu
-YWx5c2lzOiAgaHR0cHM6Ly9zeXprYWxsZXIuYXBwc3BvdC5jb20veC9haV9yb290X2NhdXNlP3g9
-YTUzYzI5MTgxNzViMzZjZmQ2MDEKPgo+SU1QT1JUQU5UOiBpZiB5b3UgZml4IHRoZSBpc3N1ZSwg
-cGxlYXNlIGFkZCB0aGUgZm9sbG93aW5nIHRhZyB0byB0aGUgY29tbWl0Ogo+UmVwb3J0ZWQtYnk6
-IHN5emJvdCthNTNjMjkxODE3NWIzNmNmZDYwMUBzeXprYWxsZXIuYXBwc3BvdG1haWwuY29tCj4K
-Pk9vcHM6IGdlbmVyYWwgcHJvdGVjdGlvbiBmYXVsdCwgcHJvYmFibHkgZm9yIG5vbi1jYW5vbmlj
-YWwgYWRkcmVzcyAweGRmZmZmYzAwMDAwMDAwMGE6IDAwMDAgWyMxXSBTTVAgS0FTQU4gTk9QVEkK
-PktBU0FOOiBudWxsLXB0ci1kZXJlZiBpbiByYW5nZSBbMHgwMDAwMDAwMDAwMDAwMDUwLTB4MDAw
-MDAwMDAwMDAwMDA1N10KPkNQVTogMiBVSUQ6IDAgUElEOiA2NiBDb21tOiBrd29ya2VyLzI6MiBO
-b3QgdGFpbnRlZCBzeXprYWxsZXIgIzAgUFJFRU1QVChmdWxsKSAKPkhhcmR3YXJlIG5hbWU6IFFF
-TVUgU3RhbmRhcmQgUEMgKFEzNSArIElDSDksIDIwMDkpLCBCSU9TIDEuMTYuMy1kZWJpYW4tMS4x
-Ni4zLTIgMDQvMDEvMjAxNAo+V29ya3F1ZXVlOiBtZF9taXNjIG1kX3N0YXJ0X3N5bmMKPlJJUDog
-MDAxMDpyZW1vdmVfc3BhcmVzKzB4MTQ3LzB4NTQwIGRyaXZlcnMvbWQvbWQuYzoxMDE4Mgo+Q29k
-ZTogNjcgNjAgZjkgNDUgODQgZmYgNzQgNTUgZTggZTYgNmMgNjAgZjkgNDggOGIgNDQgMjQgMTAg
-ODAgMzggMDAgMGYgODUgODMgMDMgMDAgMDAgNDkgOGIgNDUgMDggNDggOGQgNzggNTAgNDggODkg
-ZmEgNDggYzEgZWEgMDMgPDQyPiA4MCAzYyAyMiAwMCAwZiA4NSA3OCAwMyAwMCAwMCA0OCA4OSBk
-ZSA0YyA4OSBlZiA0OCA4YiA0MCA1MCAyZQo+UlNQOiAwMDE4OmZmZmZjOTAwMDBkNDdhMTAgRUZM
-QUdTOiAwMDAxMDIwNgo+UkFYOiAwMDAwMDAwMDAwMDAwMDAwIFJCWDogZmZmZjg4ODA1OTY0OTEw
-OCBSQ1g6IDAwMDAwMDAwMDAwMDAwMDAKPlJEWDogMDAwMDAwMDAwMDAwMDAwYSBSU0k6IGZmZmZm
-ZmZmODhhZTFiZmEgUkRJOiAwMDAwMDAwMDAwMDAwMDUwCj5SQlA6IDAwMDAwMDAwMDAwMDAwMDAg
-UjA4OiAwMDAwMDAwMDAwMDAwMDAwIFIwOTogMDAwMDAwMDAwMDAwMDAwMQo+UjEwOiBmZmZmODg4
-MDU5NjQ5MWNmIFIxMTogMDAwMDAwMDAwMDAwMDAwMCBSMTI6IGRmZmZmYzAwMDAwMDAwMDAKPlIx
-MzogZmZmZjg4ODA1OTY0ODA1OCBSMTQ6IGZmZmY4ODgwNTk2NDgwNzAgUjE1OiAwMDAwMDAwMDAw
-MDAwMDAxCj5GUzogIDAwMDAwMDAwMDAwMDAwMDAoMDAwMCkgR1M6ZmZmZjg4ODBkNDY2OTAwMCgw
-MDAwKSBrbmxHUzowMDAwMDAwMDAwMDAwMDAwCj5DUzogIDAwMTAgRFM6IDAwMDAgRVM6IDAwMDAg
-Q1IwOiAwMDAwMDAwMDgwMDUwMDMzCj5DUjI6IDAwMDAwMDFiMzA5MjQwMDggQ1IzOiAwMDAwMDAw
-MDUxY2EzMDAwIENSNDogMDAwMDAwMDAwMDM1MmVmMAo+Q2FsbCBUcmFjZToKPiA8VEFTSz4KPiBy
-ZW1vdmVfYW5kX2FkZF9zcGFyZXMrMHg2YzcvMHg3ZjAgZHJpdmVycy9tZC9tZC5jOjEwMjA3Cj4g
-bWRfc3RhcnRfc3luYysweDczNi8weGVhMCBkcml2ZXJzL21kL21kLmM6MTAzMjMKPiBwcm9jZXNz
-X29uZV93b3JrKzB4YWM3LzB4MWIxMCBrZXJuZWwvd29ya3F1ZXVlLmM6MzQ5NQo+IHByb2Nlc3Nf
-c2NoZWR1bGVkX3dvcmtzIGtlcm5lbC93b3JrcXVldWUuYzozNTc4IFtpbmxpbmVdCj4gd29ya2Vy
-X3RocmVhZCsweDVlZi8weGU1MCBrZXJuZWwvd29ya3F1ZXVlLmM6MzY1OQo+IGt0aHJlYWQrMHgz
-NzMvMHg0NTAga2VybmVsL2t0aHJlYWQuYzo0MzYKPiByZXRfZnJvbV9mb3JrKzB4NzMwLzB4ZDYw
-IGFyY2gveDg2L2tlcm5lbC9wcm9jZXNzLmM6MTU4Cj4gcmV0X2Zyb21fZm9ya19hc20rMHgxYS8w
-eDMwIGFyY2gveDg2L2VudHJ5L2VudHJ5XzY0LlM6MjQ1Cj4gPC9UQVNLPgo+TW9kdWxlcyBsaW5r
-ZWQgaW46Cj4tLS1bIGVuZCB0cmFjZSAwMDAwMDAwMDAwMDAwMDAwIF0tLS0KPlJJUDogMDAxMDpy
-ZW1vdmVfc3BhcmVzKzB4MTQ3LzB4NTQwIGRyaXZlcnMvbWQvbWQuYzoxMDE4Mgo+Q29kZTogNjcg
-NjAgZjkgNDUgODQgZmYgNzQgNTUgZTggZTYgNmMgNjAgZjkgNDggOGIgNDQgMjQgMTAgODAgMzgg
-MDAgMGYgODUgODMgMDMgMDAgMDAgNDkgOGIgNDUgMDggNDggOGQgNzggNTAgNDggODkgZmEgNDgg
-YzEgZWEgMDMgPDQyPiA4MCAzYyAyMiAwMCAwZiA4NSA3OCAwMyAwMCAwMCA0OCA4OSBkZSA0YyA4
-OSBlZiA0OCA4YiA0MCA1MCAyZQo+UlNQOiAwMDE4OmZmZmZjOTAwMDBkNDdhMTAgRUZMQUdTOiAw
-MDAxMDIwNgo+UkFYOiAwMDAwMDAwMDAwMDAwMDAwIFJCWDogZmZmZjg4ODA1OTY0OTEwOCBSQ1g6
-IDAwMDAwMDAwMDAwMDAwMDAKPlJEWDogMDAwMDAwMDAwMDAwMDAwYSBSU0k6IGZmZmZmZmZmODhh
-ZTFiZmEgUkRJOiAwMDAwMDAwMDAwMDAwMDUwCj5SQlA6IDAwMDAwMDAwMDAwMDAwMDAgUjA4OiAw
-MDAwMDAwMDAwMDAwMDAwIFIwOTogMDAwMDAwMDAwMDAwMDAwMQo+UjEwOiBmZmZmODg4MDU5NjQ5
-MWNmIFIxMTogMDAwMDAwMDAwMDAwMDAwMCBSMTI6IGRmZmZmYzAwMDAwMDAwMDAKPlIxMzogZmZm
-Zjg4ODA1OTY0ODA1OCBSMTQ6IGZmZmY4ODgwNTk2NDgwNzAgUjE1OiAwMDAwMDAwMDAwMDAwMDAx
-Cj5GUzogIDAwMDAwMDAwMDAwMDAwMDAoMDAwMCkgR1M6ZmZmZjg4ODBkNDY2OTAwMCgwMDAwKSBr
-bmxHUzowMDAwMDAwMDAwMDAwMDAwCj5DUzogIDAwMTAgRFM6IDAwMDAgRVM6IDAwMDAgQ1IwOiAw
-MDAwMDAwMDgwMDUwMDMzCj5DUjI6IDAwMDAwMDFiMzA5MjQwMDggQ1IzOiAwMDAwMDAwMDUxY2Ez
-MDAwIENSNDogMDAwMDAwMDAwMDM1MmVmMAo+LS0tLS0tLS0tLS0tLS0tLQo+Q29kZSBkaXNhc3Nl
-bWJseSAoYmVzdCBndWVzcyk6Cj4gICAwOgk2NyA2MCAgICAgICAgICAgICAgICAJYWRkcjMyIChi
-YWQpCj4gICAyOglmOSAgICAgICAgICAgICAgICAgICAJc3RjCj4gICAzOgk0NSA4NCBmZiAgICAg
-ICAgICAgICAJdGVzdCAgICVyMTViLCVyMTViCj4gICA2Ogk3NCA1NSAgICAgICAgICAgICAgICAJ
-amUgICAgIDB4NWQKPiAgIDg6CWU4IGU2IDZjIDYwIGY5ICAgICAgIAljYWxsICAgMHhmOTYwNmNm
-Mwo+ICAgZDoJNDggOGIgNDQgMjQgMTAgICAgICAgCW1vdiAgICAweDEwKCVyc3ApLCVyYXgKPiAg
-MTI6CTgwIDM4IDAwICAgICAgICAgICAgIAljbXBiICAgJDB4MCwoJXJheCkKPiAgMTU6CTBmIDg1
-IDgzIDAzIDAwIDAwICAgIAlqbmUgICAgMHgzOWUKPiAgMWI6CTQ5IDhiIDQ1IDA4ICAgICAgICAg
-IAltb3YgICAgMHg4KCVyMTMpLCVyYXgKPiAgMWY6CTQ4IDhkIDc4IDUwICAgICAgICAgIAlsZWEg
-ICAgMHg1MCglcmF4KSwlcmRpCj4gIDIzOgk0OCA4OSBmYSAgICAgICAgICAgICAJbW92ICAgICVy
-ZGksJXJkeAo+ICAyNjoJNDggYzEgZWEgMDMgICAgICAgICAgCXNociAgICAkMHgzLCVyZHgKPiog
-MmE6CTQyIDgwIDNjIDIyIDAwICAgICAgIAljbXBiICAgJDB4MCwoJXJkeCwlcjEyLDEpIDwtLSB0
-cmFwcGluZyBpbnN0cnVjdGlvbgo+ICAyZjoJMGYgODUgNzggMDMgMDAgMDAgICAgCWpuZSAgICAw
-eDNhZAo+ICAzNToJNDggODkgZGUgICAgICAgICAgICAgCW1vdiAgICAlcmJ4LCVyc2kKPiAgMzg6
-CTRjIDg5IGVmICAgICAgICAgICAgIAltb3YgICAgJXIxMywlcmRpCj4gIDNiOgk0OCA4YiA0MCA1
-MCAgICAgICAgICAJbW92ICAgIDB4NTAoJXJheCksJXJheAoKPiAgM2Y6CTJlICAgICAgICAgICAg
-ICAgICAgIAljcwoKCnY1IGZpeCBpcyBoZXJlOgpodHRwczovL2xvcmUua2VybmVsLm9yZy9saW51
-eC1yYWlkLzIwMjYxMTEyMDEzNTIzLjEyMDQyOC0xLWRheW91NTk0MUAxNjMuY29tLwoKVGhhbmtz
-LApMaSBZb3Vob25n
+On Thu, Nov 19, 2026 at 12:16:20AM -0500, Benjamin Marzinski wrote:
+> Qiliang, does this version work for you? Could you rerun the timing?
+
+It works. I applied it on top of mainline 63fdb511c27af plus v2 1/3, the
+thin_ctr() patch, with a test-only 3 s msleep() added to the pool worker
+after each thin it walks. Thins 1 and 2 of a three-thin pool are
+suspended and then removed while the worker holds thin 1:
+
+- With your patch, KASAN reports nothing in 5 of 5 trials.
+- With v2 1/3 alone, the guest crashes on the first trial; earlier
+  runs of the same test reported a slab-use-after-free in
+  get_next_thin() in 3 of 3.
+
+A 300 s run of thins being created and removed while the worker walks
+the list, on the same KASAN and lockdep kernel, logged no kernel errors.
+
+Removing 100 thin devices of an idle pool with dmsetup remove takes per
+device (same boot, mean of five rounds, min-max of the rounds in
+parentheses). All kernels are mainline 63fdb511c27af with the patches
+listed; the change is against "v2 1/3", the thin_ctr() patch alone:
+
+  patches on top of mainline           remove (ms)        change
+  none                                 17.0 (16.6-17.6)
+  v2 1/3                               16.8 (16.5-17.1)
+  v2 1/3 + your [PATCH v2]             13.9 (13.1-14.6)     -17%
+  v2 1/3, 2/3 and 3/3                  14.1 (13.7-14.4)     -16%
+
+Thanks,
+Qiliang
