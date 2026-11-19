@@ -1,98 +1,96 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.161.52
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.210.169
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1795105706;
-	b=nPD2hqzG8nDPX/As9whNmobKX645m7fDZd2tjzeIxX/7OgwEr38RI8i8CmEJcjTara9w
-	 3C9HKHQsyR0svENZ6kGN2RN+1UTwWg+RS8YNgxcL0v6IjK0PtntnsS9/Hujtfnji6kbve
-	 QsfVWpnAT4pLcIO4dYfzPYXW9D+8UJRzMo6mG+lHGc8ZKHh7IfhiLWS7BYDbDPKiUthNI
-	 LOhScYjuuDzttTVJeqxXO48Szqbtjhr01LdXTlInKnN2H9Rgg4PXnMD7sIjCn0t0rLpfd
-	 VzfXzU3pN1CczUBd4Z2cv8LVsaVCxbd7FQFS+6WnQ/u9XpvaK1Wd6lVa5Xngz6YVG1Q==
+	t=1795105894;
+	b=5SNuGO6OzrI9lwZchykXtt2D459DhUKSjexqMdy8qc6PXRnURP70VVo+nUuD/mPgvkD5
+	 4iFfYfpoMfuml30/JaqtCcponxwTiA1iyGtAWMfAN7Pc1g6nngS/pR/IjYvwsIH9AK7hI
+	 SRVPnHXJXQN62qkm8vYXT27zIF+aambKV0lV1aA7vrzDcElDxcgR7AQYZU21wwfd4vOHU
+	 ILoU5Fin3YAXCjGAWQRbmXOdgQDLnh6zjLdLKaKjk/ExJRR3f9NUYVzUcXmA8+k39VLj2
+	 0Apk+nI/9dqFuB/GdzUYe8FMTwq9CbtGjxTvqc2P6cn9EB/p1nYXsuu6pAyrkQbRGgw==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1795105706;
+	a=rsa-sha256; c=relaxed/relaxed; t=1795105894;
 	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
 	 X-Forwarded-Encrypted:X-Gm-Message-State:X-Gm-Gg:X-Received:Received:
-	 From:To:Cc:Subject:Date:Message-ID:X-Mailer:In-Reply-To:References:
-	 MIME-Version:Content-Transfer-Encoding;
-	bh=siXpRsCnfzzbOgk7JozyRsSVm24gKBPMzEvF84sMpiU=;
-	b=hhEO+bAi7E2P1TNzZhWKK2PqGi0ucpvs9IPazhZVQSIfb9JQivyH4cOkIGqGR06qvzuJ
-	 jj9hmfbilZNiroFJXKKh0GWhrUi/U/+4Ev7Of6BOSQY4k7ahpCd6Xcx0/rup3LvijCviu
-	 9hq22hGGPKbI/QquJNYCerh7PUEDzWQzKOuipsjzavhmePuPsbyYYHz0rn/Nr83suYZYR
-	 RTiukXrITOqWWTvvdpF9HhUgu8LrgncVMEuzryW8JI0xTqK5RiDeolai+kpP5nko8vAli
-	 vReLDyuUYgpfzVybQUzeeDFgY1iH0Dj+6e5apBTeleR1H23+9yrehlwUjEdAwZD6/Pw==
+	 From:To:Cc:Subject:Date:Message-ID:X-Mailer:MIME-Version:
+	 Content-Transfer-Encoding;
+	bh=CbPsJwKb7mRbmmu0Es2XaMqnRJj+SVptDS1fjBCH3sI=;
+	b=usdCIEXcAoyGOgTLrm0+nbrABvpc5Yz9O4XiWqbpxKx5G4jfD4G0XplHB7TV4egYfFqO
+	 a9Hqy0ZwBwyis1z6GrlecfwiuVgQlSDmC0eBtGPttI/FWRzhfXwpZ8V7wz/EeYZh6VIja
+	 s/X8gzi4EikPpy4ywFVywPUI/9PR4KFAvWXcOTD61cjShGf3hzrhrEVWc/29DwuRJJsBN
+	 2fWYy3xGXcTpPdEd55hPOSV/JPZXd8jW4Cailq4iQd93IeVpoOl8K/d8DfnBx3kXFUAB2
+	 p+1pKL+SKROkSbCyXty2wRhnxeStoq202E1vzlkgeVWHIJrqdGUpA+uhYwGAJvq4nKQ==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
 	dmarc=pass header.from=gmail.com;
 	spf=pass smtp.mailfrom=gmail.com;
-	dkim=pass header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=hl6cU8cS;
-	arc=none smtp.remote-ip=209.85.161.52
-Received: from mail-oo1-f52.google.com (mail-oo1-f52.google.com [209.85.161.52])
+	dkim=pass header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b="udKnqS/U";
+	arc=none smtp.remote-ip=209.85.210.169
+Received: from mail-pf1-f169.google.com (mail-pf1-f169.google.com [209.85.210.169])
 	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id F40C6606A324
-	for <dm-devel@lists.linux.dev>; Thu, 19 Nov 2026 16:28:25 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org F40C6606A324
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9BEC0606A320
+	for <dm-devel@lists.linux.dev>; Thu, 19 Nov 2026 16:31:33 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 9BEC0606A320
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=hl6cU8cS
-Received: by mail-oo1-f52.google.com with SMTP id 006d021491bc7-6df5e315bd1so2031330eaf.2
-        for <dm-devel@lists.linux.dev>; Thu, 19 Nov 2026 08:28:25 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=udKnqS/U
+Received: by mail-pf1-f169.google.com with SMTP id d2e1a72fcca58-8b66d1a08ccso15265b3a.1
+        for <dm-devel@lists.linux.dev>; Thu, 19 Nov 2026 08:31:33 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20260707; t=1795105705; x=1795710505; darn=lists.linux.dev;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:from:to:cc:subject:date
-         :message-id:reply-to:content-type;
-        bh=siXpRsCnfzzbOgk7JozyRsSVm24gKBPMzEvF84sMpiU=;
-        b=hl6cU8cSMYJSX3vRQLG0DsiBRgesiNwtlixSpYI+HQRzzIzKUdTESyiRhKyVtsAlzI
-         hVAXEAHLQxMN48nAsVrotkIMmrG+h6gnm9Sl/0dI+ZRKK2N3M+/Qcs3iLctY0BvNP5WF
-         PfOuGhjrmxh6ScJiY1rMgHpD/2KNgNDVU7OPb9SscmMPKnMyd4dBIpC5M+1KxAL38Ln2
-         TBDHAAwccvWNb/ao4kucvln8N+U++hWniSv8qv8kj8H/QWPx9R2jzGU+yD9VRmDaY4S7
-         QwxjKFfjNUwXhQ35GEi26lFTRVer1zotbsWUuAlN2vuobTRPM4UEZElewpF3y8gezRPy
-         optw==
+        d=gmail.com; s=20260707; t=1795105893; x=1795710693; darn=lists.linux.dev;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:from:to:cc:subject:date:message-id:reply-to:content-type;
+        bh=CbPsJwKb7mRbmmu0Es2XaMqnRJj+SVptDS1fjBCH3sI=;
+        b=udKnqS/UFBRzKsrTIedvx3yJtdf0+Ec0+CkQfMxcpfgEey9oGGR0TeuIvubj8fqJtv
+         chhNZzAZgOZQTbNAbP2ZD/P23A+C2S/icu4uyTa4lMoqNqeF/I4CGjttC+kFD8sZJY3P
+         1xOV/6YcGBpcDrWQXoILg9axAh+EGcS3KPIMrEEedWyTZ2DRo7Lgt2E3wds0K4vlR/IK
+         O8eGX2MRF8OEl11saEXdTkBaCIBHxxKTU5bIihI3bnwP91mtFpE4ZzdjSINKZCiqQew/
+         q8oxqHNXGVEtcSbEbiBTep8SryHmTgrM0QtI68ZbN8nULOCuV9qgNXYnadPoy1g2bTO6
+         5pFA==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1795105705; x=1795710505;
-        h=content-transfer-encoding:mime-version:references:in-reply-to
-         :message-id:date:subject:cc:to:from:x-gm-gg:x-gm-message-state:from
-         :to:cc:subject:date:message-id:reply-to:content-type;
-        bh=siXpRsCnfzzbOgk7JozyRsSVm24gKBPMzEvF84sMpiU=;
-        b=OgZEc1O+0peIUyy4oTqg4WVEmNHvCvqmUf6IBTYrXKufqCIByXWVjCLmsZ0ZMXMugj
-         59uJUVPWidFbc+lvDXmZyZsfGs0du1axQfF82UiYKPb1q0pYCGR2ka/k0pylzwq2Ay/w
-         o6C7AmyLytF+Sd96HSBqZVl6BWaoEOewGYhZLcfUjdy3T3LooUXD0+jjebzz5/0i3BZZ
-         hMW23d7wwXV597CM64jWotTIvL/sxJ0yrRq1wvDaNLFJj0b64RBAgYIKW05JgqwjCYqu
-         Lv/+MESxr7ztoldLYXNYC2iTm09yXgfHJu2IZfKEbRsc6aVb23EHTr/Md6ueubo7gtsv
-         wgyw==
-X-Forwarded-Encrypted: i=1; AL+hErGZ2XNJtQsVV1QvKR78reNHla9L3D/Hlas4gQqIn/2iS+niOhtGZKIZUm01jTSFXW2oRTirh1teAA==@lists.linux.dev
-X-Gm-Message-State: APuU4Z93frS0ot+x6+ynBpEBLSRizxzsCisU9rQwV6SEGfFbhEIx2Omb
-	EEGa+8lpbGAhwooFJLwcyf1NjdFy46x4L0D3ApcvoKqNhqUHJPdmOVR3
-X-Gm-Gg: AYBFou1g4st19yyRNKA6wU6odKZ47zkjxLJjON+QJEDLSFXmCi8FZBR7MAgLvAnOXS4
-	EdagE0N21IwI3xFZFbMiWgy2F6b4Yf6dzzTtgqG3lRLU15R9jtAc9eOk0GsEbxjReDtnd7VUg2F
-	48rkuDBO5vEXZ2GSu1mxwF2aUvxj5yM4is5lSvMXmsATpuRxtEpxaBNrDH9vP5HDLJtcdWeZ7aT
-	a/mAe+ZQJnqyj4GnPjlGlp5PN/XLwlKWysnwJSt7p3xTUa+VhemIE5uyagdAvAleiKlZvFutzIM
-	dHqkGBQXFuO1OEOiBALA60nzTUy9dEEAW8MIHejzAer6vnHGpKAXPkIZ2h9tcxIYMdAc28US0t7
-	oRh+Jf/91zQmebdRLrRn5c5adswTGj9A+A1zL2uzh7A1ElyK4qIUB4pqfevUJXk49rhu0mfbfsr
-	dYDlJOtexAqbDUiFQSJ0fLTTKe71ek8aIxlStWmGExrDWyi9BD/5UsXTwwzpEXYeQp13QRFOe9l
-	wdyVt7uN0QhITmjPwt8fR6VfptM7u+2IT3ywaqkb9WQIGosuKHuaxOLbwMmJvjy/ADtN3SvuX2G
-	eEDlEEu3EQkIxA5jEQje+UuOEPH5tHUXSGdtGsds2sbsr48NptJj1PO5hGAj8tUHPdp8ldU/x2i
-	I+hUAoH9z
-X-Received: by 2002:a05:6808:3505:b0:572:6179:36b2 with SMTP id 5614622812f47-57a0a4056f9mr472016b6e.10.1795105704869;
-        Thu, 19 Nov 2026 08:28:24 -0800 (PST)
+        d=1e100.net; s=20260707; t=1795105893; x=1795710693;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
+         :message-id:reply-to:content-type;
+        bh=CbPsJwKb7mRbmmu0Es2XaMqnRJj+SVptDS1fjBCH3sI=;
+        b=LM1DVctmDVhmSCs6BMl95RA0O2fZ+6NhxY9PgX1kAf3TtLAwd0yeMDDWx3rsruBzHR
+         l4ylSmZGhZ02pbEP1TVtdU+k8ALUaiPgikibZDcKM+fB52gCKpS7ukC1fpElu6i33C24
+         PdQATPXG0TxiSc1k05XE+SI7FDFnwMVELtewdS9DGv51V6n5ga1GJCNrcF0f5+GXCKs5
+         jmHz406ORxBsDTmPg43fX54kH8427EckZ8riVVRtHrY74q4j9JVM+aY5ZGVhUZkXuKHJ
+         Rb2ED874zbHq3Eh/jsGrpfEsX7G0xZRwiJfSxeZfBELW8lbUxuFSec+mBSdo9D/jQc6b
+         w8Hw==
+X-Forwarded-Encrypted: i=1; AL+hErHJeDiTJQ2clj8G5xPfpVK0L37lIPxsTB878HAteOAa7+U/2C+KG4ZSe6VjQapkn5pW2cCDVImjwg==@lists.linux.dev
+X-Gm-Message-State: APuU4Z89q6gE5683PsT0kfLcUWCTasQDVuhwTnSPAioofVnf+YxXvrnn
+	fJkde9tIyFGp4iyGn6MsSNTRvXzU0NOj29e6EbL5qmgHgKvxPqu6Tux0
+X-Gm-Gg: AYBFou0kUoPawxEpljcU6HjVUb5zmAebKTj+h3JiDAiCfWVoAdkXSesje0ZH2vMPPTb
+	kAIQ/QClwUCap+TDtilaCBoPNrNdqcc3Zrg23M80Gjsfx0cB+fWdAAnuNPhczfcBT5LRlm6l2TS
+	hmbWKtnI0B/zQ3T4F8RIi/RTyEBpgJxljc1HI7Sm0QuOsCrZgweY641C3+ULY98utm4csc2Insi
+	KYso0yf/rF6ibofDyxjVEJhRAl8KmvkeYl7Jcg+RmPi4Nqm3iX9oveIO1Jf8yaSwaogeM3Nz0Sz
+	J2WxnUD4bb5Sy79IxCyDTJbcRuu+D97wVb90CdZFiuAs2YRajaAgkZxcn5mU8FSwm1mhkE7qVgK
+	auqyy49cnMxynU0yIa1u1Ep5jSx8aD9WNe3OqTUkscaRaMNpQ5NUN6n5IGqW5e+cevQLKJaHVb7
+	0kdSlPmQtF+cl5QMB3oyoTXx5YKxMfXUFnOLlHyXVcngq7F+p+r1ochVdGlOf5C7WlPFJBxswQ6
+	O2oGHkde8LdecuClun19yflLG7qGmLoEi2eJPznVdy0Ahrjs51/V3wTaWSOQ5rp3yBdHcp+rY1J
+	bW/BqP1AqrrC9NMjwsN7w/dtN5LlAfRhFwUjsyny4yE37E+g0cj0CZ8DNq9hiiH+O2vmJSWTiA8
+	eE2o9vV9g
+X-Received: by 2002:a05:6a00:a04:b0:8a0:7ba9:939c with SMTP id d2e1a72fcca58-8c87b4efb7dmr168874b3a.11.1795105892714;
+        Thu, 19 Nov 2026 08:31:32 -0800 (PST)
 Received: from bj-kjy-standalone-yangyongpeng.mioffice.cn ([43.224.245.241])
-        by smtp.gmail.com with ESMTPSA id 5614622812f47-57775461e70sm4530581b6e.0.2026.11.19.08.28.22
+        by smtp.gmail.com with ESMTPSA id d2e1a72fcca58-8c87420be40sm132589b3a.57.2026.11.19.08.31.29
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Thu, 19 Nov 2026 08:28:24 -0800 (PST)
+        Thu, 19 Nov 2026 08:31:31 -0800 (PST)
 From: Yongpeng Yang <yangyongpeng.storage@gmail.com>
-To: mpatocka@redhat.com
-Cc: agk@redhat.com,
-	snitzer@kernel.org,
+To: agk@redhat.com,
 	bmarzins@redhat.com,
-	zkabelac@redhat.com,
+	mpatocka@redhat.com,
+	snitzer@kernel.org,
 	okozina@redhat.com,
+	zkabelac@redhat.com,
 	dm-devel@lists.linux.dev
-Subject: Re: [PATCH 2/4] dm-bufio: allow exposing a client in sysfs under a caller-chosen kobject
-Date: Fri, 20 Nov 2026 00:28:19 +0800
-Message-ID: <20261119162819.1627180-1-yangyongpeng.storage@gmail.com>
+Cc: yangyongpeng@xiaomi.com
+Subject: [PATCH v3 0/4] dm-bufio per-client retain and dm-verity cache control
+Date: Fri, 20 Nov 2026 00:31:07 +0800
+Message-ID: <20261119163110.1630269-2-yangyongpeng.storage@gmail.com>
 X-Mailer: git-send-email 2.43.0
-In-Reply-To: <2033a6a7-b8c4-99cc-f351-e83579a238ec@redhat.com>
-References: <2033a6a7-b8c4-99cc-f351-e83579a238ec@redhat.com>
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Post: <mailto:dm-devel@lists.linux.dev>
@@ -104,30 +102,78 @@ Precedence: list
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-On Thu, Nov 19, 2026, Mikulas Patocka wrote:
-> Is the kernel dropping dm-bufio buffers too aggressively? Or is it not
-> dropping them so that they consume too much memory?
+From: Yongpeng Yang <yangyongpeng@xiaomi.com>
 
-Both, and the tension is why one global value cannot work. Our hash
-areas run from 0.x MB to 40+ MB: the 256 KiB default makes large devices
-re-read evicted hash blocks, while a uniformly large value makes every
-cold, idle device hold memory forever -- and most verity devices are
-cold most of the time, which is what small-memory systems complain about.
+Device-mapper's verity targets read their hash trees, and FEC parity
+when FEC is enabled, through dm-bufio.  dm-bufio has a single
+module-wide retain_bytes value shared by every client, no way to see
+or change one client's memory use, and no way to warm the cache ahead
+of the reads that need it.
 
-> Could it be fixed through other means that are more general? (for
-> example, having a global dm-bufio shrinker and dropping buffers from
-> the client that has the longest unused buffer)
+That fits poorly systems with many verified devices of very different
+sizes, such as Android, which mounts a dozen verity partitions plus
+per-app verified images.  The hash areas we see range from a few MB to
+tens of MB: with the 256 KiB default, a large partition's hash blocks
+are evicted under memory pressure and re-read later, while a uniform
+large value makes every cold, idle device hold memory it does not
+need -- and most verity devices are cold most of the time.  What is
+wanted is a lifecycle: prefetch when the device is about to be used,
+drop when it goes cold again.
 
-A global LRU shrinker would tell hot from cold given time, but:
+This series adds per-client granularity to dm-bufio and gives
+dm-verity message-based control over its caches:
 
-- Our userspace already knows which device will be used and when, so
-  it does not need the heuristic, it can drop exactly that device's
-  hash blocks, precisely and immediately.
-- On low-memory devices we need the memory back quickly, not when
-  pressure finally ages the buffers out.
-- Verity, thin and cache clients share one pool with very different
-  access patterns; a single LRU lets them fight for it, while
-  per-client floors keep the shares apart.
+ 1. Move the retain target into struct dm_bufio_client, initialized
+    from the module parameter at creation, and export set/get plus a
+    cached-buffer count.  The parameter keeps its meaning as the
+    default for new clients.
 
-Thanks for the review,
-Yongpeng
+ 2. dm-verity: size the hash client's retain target as
+    hash_retain_percent (default 10) of the hash area, so a small
+    device keeps little and a large one keeps enough.
+
+ 3. dm-verity: add the retain_bytes message to report or set a
+    client's retain target; the reply also reports current_bytes and
+    buffers, so memory use can be watched through the message.
+
+ 4. dm-verity: add prefetch_hash and drop_hash messages to warm the
+    cache ahead of use and release it afterwards.
+
+Nothing changes for existing users: every client starts with the
+value the module parameter holds.
+
+Changes since v2:
+ - The sysfs interface (per-client directories, ABI documentation and
+   the suspend/reload handling around them) is dropped entirely.
+ - The retain_bytes reply now carries current_bytes and buffers instead.
+
+Tested on a VM running v7.4-rc1: message write paths and the memory
+reporting in the reply, the shrinker retain floor under memory
+pressure, prefetch/drop lifecycles, suspend/resume cycles, and
+error-path injection.  No kernel warnings.
+
+[1] v1: https://lore.kernel.org/all/20261117131918.2745193-1-yangyongpeng.storage@gmail.com/
+[2] v2: https://lore.kernel.org/all/20261118172133.689163-1-yangyongpeng.storage@gmail.com/
+
+Comments welcome.
+
+Signed-off-by: Yongpeng Yang <yangyongpeng@xiaomi.com>
+Assisted-by: LLM
+
+Yongpeng Yang (4):
+  dm-bufio: make the retain target per client
+  dm-verity: size the hash retain target from the hash area
+  dm-verity: add retain_bytes message to inspect and tune the cache
+    floor
+  dm-verity: add messages to prefetch and drop the hash cache
+
+ .../admin-guide/device-mapper/verity.rst      |  41 ++++
+ .../admin-guide/kernel-parameters.txt         |   6 +
+ drivers/md/dm-bufio.c                         |  41 +++-
+ drivers/md/dm-verity-target.c                 | 200 +++++++++++++++++-
+ include/linux/dm-bufio.h                      |   8 +
+ 5 files changed, 293 insertions(+), 3 deletions(-)
+
+-- 
+2.43.0
+
