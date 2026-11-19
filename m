@@ -1,93 +1,57 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.128.47
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=95.215.58.123
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1795077586;
-	b=h5igTxql4ufp5VUOFdlDGMmPu/tFMr/YQBooO0FsfAsAZgTeBEUWMs6PwYvw8AWHWeRR
-	 oYX6vWSAkBWkZNrzrCe+lWkrcNrgWhOvNnd1xvmsAt+GHbnhF7zZSJsS/qV/TN2B6OIs0
-	 NLn0yVsq0MTBH7BvYyqpnUobVZN1d5cQypnNQWT7yqvFEpXVEIi3iO/Dqxcyg8E0fIono
-	 4y97/cOZNHOBrjstuo3qiMrSA8Ehfe1JuSyVvJfQ7fvYQSIQXrO2irMD62OutiVTw9pnk
-	 SeT+gDNnk6umkjSu+EuogSwl0CJ+aAyLZr8Z1yE3U4boZnGxDM2AMEcYWGnnZ1lwFQQ==
+	t=1795086319;
+	b=zreYJOjerQz8TjocTz3AeQeqEU6dcIxk6JlMf9EQjhyUdTWMX8T6QaPugyA0tt1zK+qN
+	 CXHpsivHc72dKw/cnRZg1VAztB1JWriYbm6FT2rUWNdIblAYsaTmvJqcw8PWQGp0vYhSj
+	 QS7ZrX0tvHwxPWVeBPDspoDhH07esetgJ9qCoZwYY0ytZNI71SaHbffd9STiCoa0YfQSk
+	 6CfORoQM7IzuT5J7bNjbzCXRNPlbmJQG38Vqs1Aymy36UNK1MLCquSjz6zouIN95M+Rzf
+	 QA0IC6bZU90GYGXwYaBWfqTxumQUa7EUe01bnFrxGh+tVSZuAQE8upMHYcIPpKo4JLQ==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1795077586;
-	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
-	 X-Forwarded-Encrypted:X-Gm-Message-State:X-Gm-Gg:X-Received:Received:
-	 From:To:Cc:Subject:Date:Message-ID:X-Mailer:MIME-Version:
-	 X-Patchwork-Bot:Content-Transfer-Encoding;
-	bh=4z80GR7E/oj8Jzk4s+La8dms3HBSpmGy1dOcebi8EJ0=;
-	b=QArtLLf0bMHZ3tnJ5k+FDf85DkXg4FaSyT05/RTTAJ/fR9oob3k241G77H7Zz2N7Vj8B
-	 FPKL4Bk5Dur4wN7pVMR4CVuqIS3Mvbd2aSvBjDaNwu1nnUETvFyL+Kwupmzq8sMKbQ/l7
-	 PSOHROQH4uBTKHnAobTJ3UQJt0vIxmQbMK7fICTOGeOIgYu1bzZfeQTWOEaWsFM3qbXb2
-	 OU1DAaXOo0bQwg72Y4kI5FSCz7on05xJHjh2yxWYz7cGSUbqPO4A2j12jh/fnGNPTGkD9
-	 E0qFN3Q5czDFgCc5xBbLWyeU5QuHee46BZreidHLS5PNDu49JZ3B7Wp0/JtriQaY1kA==
+	a=rsa-sha256; c=relaxed/relaxed; t=1795086319;
+	h=DMARC-Filter:X-Envelope-To:DKIM-Signature:X-Envelope-To:Received:
+	 X-Mizu-Trace-ID:X-Migadu-Flow:From:Subject:Date:Message-Id:
+	 MIME-Version:Content-Type:Content-Transfer-Encoding:X-B4-Tracking:To:
+	 Cc:X-Mailer;
+	bh=9yy2efd8MRgR21pP9OhK3i1+O8syULk2PKytS7vzEMI=;
+	b=ooWGMxO2/PSvo1WqWFiZyXQ3sa58MvFVChpEjXdvfWadtHZgO/CPojNd7E8h/vVH4iNV
+	 q/2znWGDflgpLn/Y5OxG0qFPBim1HZw89BJXe/yzsTjvcmEub63ihzY9Mxx9GOYA6Uyl9
+	 HYwuWqcaAhXY8jNB0qBkH9NGJsyyiHKVi0G9vYXam7UOhIPbprMdgeBH3YXrlGZ3KDPRw
+	 JH6v2yJJrqNpE3HrP6Wm7hbtd3heQpEWQjKQQAAAUdNsEJHImotQqosOni/wTlFzOsvRy
+	 rCXBtp7FGg3OiwVkLPdfoaAm4zo9YM8m6u8ZMLo1yM7VrIOWE6Fwb1wV7sj8dDX4HcA==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dmarc=pass header.from=gmail.com;
-	spf=pass smtp.mailfrom=gmail.com;
-	dkim=pass header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=dpMsy7B0;
-	arc=none smtp.remote-ip=209.85.128.47
-Received: from mail-wm1-f47.google.com (mail-wm1-f47.google.com [209.85.128.47])
+	dmarc=pass header.from=linux.dev;
+	spf=pass smtp.mailfrom=linux.dev;
+	dkim=pass header.d=linux.dev header.i=@linux.dev header.a=rsa-sha256 header.s=key1 header.b=SLsi0h2W;
+	arc=none smtp.remote-ip=95.215.58.123
+Received: from mta1.migadu.com (out-123.mta1.migadu.com [95.215.58.123])
 	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 168B860A260D
-	for <dm-devel@lists.linux.dev>; Thu, 19 Nov 2026 08:39:45 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 168B860A260D
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id E61E5606A324
+	for <dm-devel@lists.linux.dev>; Thu, 19 Nov 2026 11:05:18 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org E61E5606A324
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=linux.dev
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=linux.dev
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key, unprotected) header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=dpMsy7B0
-Received: by mail-wm1-f47.google.com with SMTP id 5b1f17b1804b1-4a56e05568aso3660585e9.1
-        for <dm-devel@lists.linux.dev>; Thu, 19 Nov 2026 00:39:45 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20260707; t=1795077584; x=1795682384; darn=lists.linux.dev;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:from:to:cc:subject:date:message-id:reply-to:content-type;
-        bh=4z80GR7E/oj8Jzk4s+La8dms3HBSpmGy1dOcebi8EJ0=;
-        b=dpMsy7B0H6FI8rmCZ0tMZjT6pJibKALI+XowP7eKpaPrnEKy1hSzVHsSJEnvlp+JHS
-         OfstUEx5Waiqxu6PNZouItIYkY9SzF2gqgrmIYWhJR8bLqbL0eLHt9Z+eyaBYiOO+i7k
-         MMRTWnVyjTrzE3VTvV6bn+St+fvydDU6BvzooiFJ3qXZ2laXSEwoBnM7Jc0gjQYci8Qx
-         nW6xATM26c3BDsUYOY8wo08qKnDp5YrCHzsE1TKvLOG4QZTuQizlzTA0/zYjDkzefuiN
-         yjsIZt6zOtKywKmNuUKqUR5L4U79+N0lASyAua0tJkmH/+NepKXEbtuBoVG9HF6hIBHP
-         iyWQ==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1795077584; x=1795682384;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
-         :message-id:reply-to:content-type;
-        bh=4z80GR7E/oj8Jzk4s+La8dms3HBSpmGy1dOcebi8EJ0=;
-        b=BZcDIUufScIpuI0BKvgR2L407p0yZ5u5krcgpm8tKsH/1fmlqst7ptMRKRlih0nqJn
-         FPVKhNn/wj8uu764IJw6UU5bEs0oLFdv/yPxn3U7a4QsanPm6JmxeBKtgiG/hOg6+/kJ
-         8BXoAoa/eCDRvmm2zf+owqPwvtUMxtr00+gLT2keeLnhekVGZPxoEtVFRMvyBhETNIgM
-         rWtMuYNP5BltviV2wbhUD2rlB49P+AIkmZl+H7qu+n9MKuMetUa9APzKD1NK/yv2F7dv
-         Y4GqICOg78JaDo3u+2EWUG1eI8oSecXpI9yOp+RFkOnD6k0CsrO1s/r9WQiC+7lM8MRB
-         mXOw==
-X-Forwarded-Encrypted: i=1; AL+hErFwV/E4mhBA63Q4H5+sLm0KmEHimhEcHwwaNVM7uAbTYjbn0CoPSjf5dn/LNDXcsc4xfm1UIup5dQ==@lists.linux.dev
-X-Gm-Message-State: APuU4Z+GgHZxRfz2lOj/T/eiDXSe8V5qn3pRZdk6s6XlZ/wul+xl442l
-	HjkC+XW2bpO6SZZXfCMZZTXPQHkS4piPgclS2bzaqrC2ATysLjSZld5BnTiisCI=
-X-Gm-Gg: AYBFou3bAS9gm9w1vMaE3XTwePaWbJmzFuHAgM/lGGwL68jNkX2Hv92Dcjewzn7SU7i
-	RV1KfA+wr+D90U0ZxGSB3kICwaoxmO36fMHc+HZltv6aS10xnjOlQibmanUa3HogwVOaLBrAHEm
-	Dw2I6E5kQLLO+3E7vKtgxIk0vs58i2Pb916xdnHR89CmT/xC6prHibQM+oms9GiZ1DquBsrg8LO
-	0D+oQY/OW3Tr4jFqjp82XB5xIqMAibNObRuhos3qrqtHxzdPgfMDnSKr3D4yHpO/a9Ds0mT7MQ5
-	ne5mip9ZyPVmLpc2a4I3fEZSKk3HTC2n/Dwj9mG0WgJXqqxtCicsaSaQSFG/1m+EUOW4DXM6FnC
-	Oomo72bO5ibTst6h75PB9xGhWvN27jCfAcP5E8HtKnbWNXuJWTnYrfbLgSTSVSGbg27bByorfvV
-	wkquzFOeAtRFsa2cFJlng/lm7RnqqgApQ0ZcxFBoJubGzW6MagIzHfYePGHONCefiMUfXd5OvMl
-	JmCtK1y7ImDph1NMZSZCTwGdZ3xkXKdwjmeCF6FkMp/0QJN0awRw+JcrqYc7E7ZcCf2nH/a06tV
-	0QTp3sVwMrVweNbMwo2QNj0ekimFNfInfikvQNBwgx4qsuuh/TyectivrFIr8AXRWw==
-X-Received: by 2002:a05:600d:8642:20b0:4bb:732a:2837 with SMTP id 5b1f17b1804b1-4bb7d712f44mr76757495e9.1.1795077584250;
-        Thu, 19 Nov 2026 00:39:44 -0800 (PST)
-Received: from localhost (69.red-80-39-28.staticip.rima-tde.net. [80.39.28.69])
-        by smtp.gmail.com with ESMTPSA id 5b1f17b1804b1-4bb853ca452sm20551145e9.15.2026.11.19.00.39.43
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Thu, 19 Nov 2026 00:39:43 -0800 (PST)
-From: Xose Vazquez Perez <xose.vazquez@gmail.com>
-To: 
-Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>,
-	Martin Wilck <mwilck@suse.com>,
-	Benjamin Marzinski <bmarzins@redhat.com>,
-	Christophe Varoqui <christophe.varoqui@opensvc.com>,
-	DM_DEVEL-ML <dm-devel@lists.linux.dev>
-Subject: [PATCH v2 08/13] multipath-tools: hwtable: add EMC/Celerra
-Date: Thu, 19 Nov 2026 09:39:42 +0100
-Message-ID: <20261119083942.194958-1-xose.vazquez@gmail.com>
-X-Mailer: git-send-email 2.56.1
+	dkim=pass (1024-bit key, unprotected) header.d=linux.dev header.i=@linux.dev header.a=rsa-sha256 header.s=key1 header.b=SLsi0h2W
+X-Envelope-To: dm-devel@lists.linux.dev
+DKIM-Signature: a=rsa-sha256; bh=P4Y+SlRQH2A9M5O3Hr/bduLBhcl/3bc2nLtBCL3hMXc=;
+ c=simple/simple; d=linux.dev;
+ h=from:to:subject:date:message-id:mime-version:content-type; s=key1;
+ t=1795086317; v=1; x=1795691117;
+ b=SLsi0h2WBl0AKHvhBnb8xAdF6wnMT0oxhwyH+JCKzgzFS8PAiwcARk5WMEPKlVWOYUfmO2Lj
+ QGFCyr7dvkJV/moNCmCArSsOiNlsN80s+4FVQYmQo3yhoRioKPhQWennHl7dyxl8v3PU4AYBFhD
+ +clgkRAL3ngrNHj7nqMpIZ3I=
+X-Envelope-To: dm-devel@lists.linux.dev
+Received: by smtp.migadu.com with ESMTPS id b32b83f3dee707fb;
+	Thu, 19 Nov 2026 11:05:16 +0000
+X-Mizu-Trace-ID: b32b83f3dee707fb
+X-Migadu-Flow: FLOW_OUT
+From: Qiliang Yuan <qiliang.yuan@linux.dev>
+Subject: [PATCH v3 0/3] dm thin: stop waiting for grace periods when
+ activating and removing thins
+Date: Thu, 19 Nov 2026 06:05:05 -0500
+Message-Id: <20261119-bug-dm-thin-rcu-gp-v3-0-c80ecc475e1e@linux.dev>
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Post: <mailto:dm-devel@lists.linux.dev>
@@ -97,45 +61,69 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 List-Owner: <mailto:dm-devel+owner@lists.linux.dev>
 Precedence: list
 MIME-Version: 1.0
-X-Patchwork-Bot: notify
-Content-Transfer-Encoding: 8bit
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+X-B4-Tracking: v=1; b=H4sIAOLX/moC/23NTQqDMBCG4atI1p2SH03arnqP0oU6Uw20URINF
+ vHujULBhcv3g3lmZoG8pcBu2cw8RRts51KoU8bqtnQNgcXUTHKphRA5VGMD+IGhtQ58PULTA8o
+ r5pXJS15dWDrsPb3stKGPZ+rWhqHz3+1HFOv65/QRFwVwEDmhKrTBUtH9bd04nZEiW7ko98T1k
+ JCJ4EWBWhqjVa32xLIsP5qInM33AAAA
+To: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>, 
+ Mikulas Patocka <mpatocka@redhat.com>, 
+ Benjamin Marzinski <bmarzins@redhat.com>
+Cc: dm-devel@lists.linux.dev, linux-kernel@vger.kernel.org, 
+ Qiliang Yuan <qiliang.yuan@linux.dev>, stable@vger.kernel.org
+X-Mailer: b4 0.13.0
 
-From "Dell Technologies Host Connectivity Guide for Linux" (May 2024, #102):
-vendor "EMC"
-product "Celerra"
-path_grouping_policy "multibus"
-path_checker "tur"
-no_path_retry "30"
+Activating a thin device waits for an RCU grace period in thin_ctr(),
+and removing one waits for another in thin_dtr(). Tools that create and
+remove thin snapshots for every container, such as the containerd
+devmapper snapshotter, pay for both each time.
 
-Cc: Martin Wilck <mwilck@suse.com>
-Cc: Benjamin Marzinski <bmarzins@redhat.com>
-Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: DM_DEVEL-ML <dm-devel@lists.linux.dev>
-Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Patch 1 drops the grace period from thin_ctr(), which isn't needed.
+Patch 2 fixes the pool worker continuing its walk of active_thins from a
+thin that thin_dtr() already took off the list, whose successor may have
+been freed: thin_dtr() now marks the thin as dying and takes it off the
+list only after its last reference is dropped. Patch 3 then lets
+thin_dtr() free the thin with kfree_rcu() instead of waiting. Activating
+a thin device gets 50% faster and removing one 20%.
+
+Signed-off-by: Qiliang Yuan <qiliang.yuan@linux.dev>
 ---
-v2: Move product description inside the braces and drop the vendor name
----
- libmultipath/hwtable.c | 7 +++++++
- 1 file changed, 7 insertions(+)
+V2 -> V3:
+- Patch 2: mark the thin as dying in thin_dtr(), take it off
+  active_thins after wait_for_completion() instead of in the last
+  thin_put(), and skip dying thins in requeue_bios() and
+  error_retry_list_with_code() (Benjamin Marzinski)
+- Patch 2: correct the Fixes tag to 17181fb7a0c3 (Benjamin Marzinski)
+- Patch 3: keep kfree_rcu() out of patch 2, so that the fix can go to
+  stable on its own
+- Rebase onto current mainline and remeasure
 
-diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
-index aab7bbd2..859a33b9 100644
---- a/libmultipath/hwtable.c
-+++ b/libmultipath/hwtable.c
-@@ -412,6 +412,13 @@ static struct hwentry default_hw[] = {
- 		.pgpolicy      = MULTIBUS,
- 		.no_path_retry = 30,
- 	},
-+	{
-+		// Celerra
-+		.vendor        = "EMC",
-+		.product       = "Celerra",
-+		.pgpolicy      = MULTIBUS,
-+		.no_path_retry = 30,
-+	},
- 	/*
- 	 * Fujitsu
- 	 */
+V1 -> V2:
+- Add patch 2: keep a thin on active_thins until its last reference is
+  dropped, so that the worker never continues from a thin whose
+  successor was freed (Benjamin Marzinski)
+- Patch 3: rebase onto patch 2, which already skips dying thins, so it
+  only replaces the grace period with kfree_rcu()
+- Patch 1: add Benjamin's Reviewed-by
+- Rebase onto current mainline and remeasure
+
+v2: https://lore.kernel.org/r/20261119-bug-dm-thin-rcu-gp-v2-0-055d627763c3@linux.dev
+v1: https://lore.kernel.org/r/20261116-bug-dm-thin-rcu-gp-v1-0-14ed3567da3e@linux.dev
+
+---
+Qiliang Yuan (3):
+      dm thin: drop the grace period from thin_ctr()
+      dm thin: keep a thin on active_thins until its last reference is dropped
+      dm thin: free thins with kfree_rcu() instead of waiting in thin_dtr()
+
+ drivers/md/dm-thin.c | 61 +++++++++++++++++++++++++++++++---------------------
+ 1 file changed, 36 insertions(+), 25 deletions(-)
+---
+base-commit: 4405c18c95d2d0f99f6c581ef0ee8591a1aa6ccd
+change-id: 20261114-bug-dm-thin-rcu-gp-d29d4b74a0b8
+
+Best regards,
 -- 
-2.56.1
+Qiliang Yuan <qiliang.yuan@linux.dev>
 
