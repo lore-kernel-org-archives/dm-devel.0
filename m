@@ -1,56 +1,103 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=100.103.45.18
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.221.52
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1795171778;
-	b=HJ17zBKt/rUGZoK2yUaINUKhYPX/4HUZMgLBoXw9ZHI4sIijQi0AkOiCXcKG71A4jcP5
-	 yJCgkd1Px86+YTVDCr+4yGjEDhZNiAJuwF+DwYTaYRqTKSYMQ41sJWNWNnD6jNARgqsz+
-	 h0DY6BJG/3xG/yGzZXd0R5fdu0pJ/fAM49rLkwPCRVs5pvZiyGTuSEA59xMnxpJFsAcn/
-	 CI4vGsyYEHrzxvPhII9cx+DYF58O+ofNNrSNOdDke7p5KmtGRNc2XuaOCI6GFOPHyGDVx
-	 eX1mOU624gnC8UDKDcsOzpMJ0T0RYfuLDttocMGV35AoxCA3jVPR/XkCxyeSWlvBcMA==
+	t=1795173514;
+	b=OqtzA212jC3HEAwwNvqSwmsBfQHcrLMlfaiOy/IRM8KFMTawkgiJQPg7iY1CaWUkzc7e
+	 bX+lAgH8FbzRX/487W0u9257adYy8kdPZAixpd+HHrIErqVvI/1W1mMLCjnpQ7ZMo7pdN
+	 QsBBcZgrZ1wyKbVfLMAt47s2hzYYFpr93wwXv/xjqb3o7XO6fRR3q2/GGZE24EHXQRi+X
+	 MVBLRgziK3mDvoYFK+m3K4r8VFU0Y1rg4yqv8qsmQ8ivQYJKUZRfENAqFWMWMFdpSOwbh
+	 QFECQlx5wf/U2TJYeVeBmxZ+K+A0uDU62+80xO83eRg8XtjuhR9SA8maD+HLwY2jcIA==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1795171778;
-	h=Received:DKIM-Signature:Message-ID:From:Subject:Reply-To:To:Cc:
-	 In-Reply-To:References:Content-Type:Content-Transfer-Encoding:Date;
-	bh=dbwCl3jdKQTR4CCJxLTpV3IWqT2LUPkJ9ys2ydt/poM=;
-	b=wSx9Ek63XXiPAn5oE75BBEuQRdHHAvvbKUy2tsn9Bhg9yx74hXwacGP+6p6yPkZQ6vhJ
-	 IYb+3XX1XilKoykmYFQZXBJ+GVxxs9ngDUaUmSTNN9IGdDq5PLG9+neaX+SQiQj9Mj9Nd
-	 G7L0Q3Wni0Lw8fq7uATgrcvW4IMaUQxKECSh0Ha/Z/paWuQoIZVs32tzn5qIqDlh6OahF
-	 h9UyOeQfuMjF4O+E3UENz2s0Kjpuq2fPwFMiSry3HnjKaFDBq1S8r2BiLPSS5IalgpNXJ
-	 euTV34pant7vq+88OR2GUIIQal85JA3rQTAGQFY4tWg1LYsPyAqzClInoFRzY2k4Vcg==
+	a=rsa-sha256; c=relaxed/relaxed; t=1795173514;
+	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
+	 X-Gm-Message-State:X-Gm-Gg:X-Received:Received:From:To:Cc:Subject:
+	 Date:Message-ID:X-Mailer:In-Reply-To:References:MIME-Version:
+	 Content-Transfer-Encoding;
+	bh=zpsVdJ3WbR6kE2v38VJhuAhS7jEKmVk9lGuvUfsu2RM=;
+	b=WQ9bUGD+jjJ6f8BWHGnrq99XuZnUbJ/ND0gYFKIJpEkCCcVMzRqIf3jXSEX94UtsEbPA
+	 Sx02XFTUXDRArIaMwkR/KYOzfSq2wp1eGuEYXwLVIdY64J2Q5dZ1zOG/Mgi/FmUqOQFh1
+	 Qxb3u9XxLoWbfBWl4mgtTIyMUhAMKzzlzc25orJvlZ83lEgy01lclRuGmUt/BkaGfZbYo
+	 IDPxcuMEnIX16HGOErYXoaVrdQ1GgkOl90ulsGf3Ara92NNyJ1kwyNfQ5zwc94ItDWbEZ
+	 GMYPhfvGgn+qlQirMMQsXGdfPKAR6x/ezwXkl6T0+ayCWwLcsbGDBBEk2416GrQtB1A==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b="c7g2a/Ni";
-	arc=none smtp.remote-ip=100.103.45.18
-Received: from smtp.kernel.org (quasi.space.kernel.org [100.103.45.18])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature ECDSA (prime256v1))
+	dmarc=pass header.from=gmail.com;
+	spf=pass smtp.mailfrom=gmail.com;
+	dkim=pass header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=cx4wiKvF;
+	arc=none smtp.remote-ip=209.85.221.52
+Received: from mail-wr1-f52.google.com (mail-wr1-f52.google.com [209.85.221.52])
+	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
+	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 8F0F0606A325
-	for <dm-devel@lists.linux.dev>; Fri, 20 Nov 2026 10:49:38 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id DA556606A320
+	for <dm-devel@lists.linux.dev>; Fri, 20 Nov 2026 11:18:33 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org DA556606A320
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=c7g2a/Ni
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 3F4CA1F000C0;
-	Fri, 20 Nov 2026 10:49:37 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
-	s=k20260515; t=1795171777;
-	bh=dbwCl3jdKQTR4CCJxLTpV3IWqT2LUPkJ9ys2ydt/poM=;
-	h=From:Subject:Reply-To:To:Cc:In-Reply-To:References:Date;
-	b=c7g2a/NiYHOKavOaF1N/XDO2+jdpKoeGh6uVNTdSmy69xWJPgZxl3mpc3vzKSHDFA
-	 cN2FyGexvL3dRSpzFRUA1vF8QzIodhuubiGs9ryh3Juj1hpeJgIUsy2p3hh+hToaVm
-	 yFGESoF45z0Xru5bt2gwQz0Qp3LUoqpBchQqudLQob8AU2YhvE97jUThRYE/YtJt9l
-	 7TqL3tcVn7hzEgLnE8Yil0eNcKbBc9dzSkzqtOG178zuDmzSOrQTIgnY1R9cfaA4an
-	 qFTqRMq0n7TJd+IGdsKKg4b3IXbfDokhu7j0+aGhb8mnoSO/QFco6cC9HxsU8ba6FM
-	 GgBBbKt4SmOpg==
-Message-ID: <sashiko-outbox-224959@kernel.org>
-From: sashiko-bot@kernel.org
-Subject: Re: [PATCH] block: fix divide by zero in
- queue_limit_discard_alignment()
-Reply-To: sashiko-reviews@lists.linux.dev
-To: tongzhiwei <tongzhiwei@cmss.chinamobile.com>, "Jens Axboe" <axboe@kernel.dk>
-Cc: dm-devel@lists.linux.dev, syzkaller-bugs@googlegroups.com, syzbot+1288484b13bf6af3620d@syzkaller.appspotmail.com
-In-Reply-To: <20261120103040.610-1-tongzhiwei@cmss.chinamobile.com>
-References: <20261120103040.610-1-tongzhiwei@cmss.chinamobile.com>
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: quoted-printable
-Date: Fri, 20 Nov 2026 10:49:36 +0000
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=cx4wiKvF
+Received: by mail-wr1-f52.google.com with SMTP id ffacd0b85a97d-48e20ed3b9dso645203f8f.2
+        for <dm-devel@lists.linux.dev>; Fri, 20 Nov 2026 03:18:33 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20260707; t=1795173512; x=1795778312; darn=lists.linux.dev;
+        h=content-transfer-encoding:mime-version:references:in-reply-to
+         :message-id:date:subject:cc:to:from:from:to:cc:subject:date
+         :message-id:reply-to:content-type;
+        bh=zpsVdJ3WbR6kE2v38VJhuAhS7jEKmVk9lGuvUfsu2RM=;
+        b=cx4wiKvFH97aiNs+uX8FNs4RPzhUCa3nk6G2WPPryj2IS+UMeokV5zTxMX1lG3v9pq
+         ao4TvgN25L9DA5CP1v08bN0+9R5nmSKpIYK/hibAWJNGt1s9NZgJHop5H1xP2pyzRm6O
+         Mxo/Rjf+MGxGk8JEIJRNA8qrjVQXMvpLSjiQ4XVcI7Aw6CO7Xqj19+gYx71HUThVH3tt
+         ZLPcOPFFN8bG1IaOI9r9y6feIzQpsFZso+x2iqDfYgOtSSdurRpZNBZdeA/8DWLIkaAw
+         5WJl3APeECj6e6siiM9erzqSG+XOjzFaX7XkdlcyAOeRMzQeBFdx35Vcpr+fQ/4QmJVo
+         1ONg==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20260707; t=1795173512; x=1795778312;
+        h=content-transfer-encoding:mime-version:references:in-reply-to
+         :message-id:date:subject:cc:to:from:x-gm-gg:x-gm-message-state:from
+         :to:cc:subject:date:message-id:reply-to:content-type;
+        bh=zpsVdJ3WbR6kE2v38VJhuAhS7jEKmVk9lGuvUfsu2RM=;
+        b=kn5bOftdV7fWHnNE4wNHWzUfx46j/S6bp0lkgxKu30mVQvFQDOEMDUQhqsznM2pG5R
+         KC+xE3GfCRuMgWgJWQUdtPiUxNhgZWcM0mCSlc6V4Zbmv1ne637C7JoCgNwmbVkks9Y/
+         9JsVZTdk+EoNYSCPhoofAxBGt95KHuMEeJp7+qdLyYWFU9AjCV3HwUIfheaQ/nC04GSC
+         AAdLmD1Yso5cH4E08TgqPwxawvqm3WKw2c/f3OFEWctCsx8FwCA355o/NPqBYfUUudDu
+         CVSdrBgkAYMMQBE6IGBtPfKHztNRB05MaGdVKB2s3zVbGDoL2ztsuXGBqQsaVDLIkUXj
+         pYCA==
+X-Gm-Message-State: APuU4Z+irz33EXCwB2QU8meEUvh4KiyRGSEU8b+W3oR4Fi68tRC6Ng2l
+	WSayL7NomnV33xQP484WahkbKVVA5ebUpbasvUVamt69n9jowCbKgD7N
+X-Gm-Gg: AZFdTZeqbCAQynDM1xCLjefQ0rBu5i2md+HU+KnmkOnpKk00jTi2wk6vt5YzpYnQEm2
+	PEeoInFrKxnyk2AabGvYn56Au/pQxv86hLHwp+IbTaMKdVqZaGRoBUzC0qE94SepJVie+CtJHrn
+	p2+V90rP3vM93WdombmYQg/tizfYJouAPDg5WkI0VvjMpLbQth5Dga/7DX2C6ccmyLYLwt+RA91
+	Ohgy67tmN371AH1novXEIJSeHRMosqTCHA8Lz2dCABWEpPSDhjsH13qw3UdvP8QK23gkjTH9heo
+	qeHre14a07Tq+TUqMdPUPV7M8DXk92E0Ii6Dzmb4+2dDa2Ok2sTgvHfj38qEJuhD2UoxTTQPdMM
+	ANFbTl589x3U28oYH9t6J7UFHz8eS2IGAJCVijFw7W73v7bq5TJwU5hFeYwhuA+rvAReOtbWxxj
+	y48nETZ5EGKD2oC0XAzls74lnGOEjcKzXlJeDgZf56Kuzk3h2rXFEQiwXOVL95EfZNE7AXEZjck
+	d4YMJmdxPTb2UJbC+L55f1ILwyxG7kdikFCqAXCUDnYJ1pin57XCQa9COMI3cpQaPLh2UXCx4JG
+	3uiko2A9UTf89Lz9xGRek+1k8nDiLq0BMKQtUrH4NgcjpP113qUu
+X-Received: by 2002:a05:6000:4705:b0:48f:c4fb:6bb6 with SMTP id ffacd0b85a97d-4abb400bb83mr5164503f8f.12.1795173512177;
+        Fri, 20 Nov 2026 03:18:32 -0800 (PST)
+Received: from DESKTOP-OL07BOP.localdomain ([87.116.183.240])
+        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-4ab658e2d60sm4985562f8f.3.2026.11.20.03.18.31
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Fri, 20 Nov 2026 03:18:31 -0800 (PST)
+From: nenkov2004@gmail.com
+To: linux-raid@vger.kernel.org,
+	yukuai@fygo.io,
+	song@kernel.org
+Cc: dm-devel@lists.linux.dev,
+	linux-kernel@vger.kernel.org,
+	magiclinan@didiglobal.com,
+	xiao@kernel.org,
+	neil@brown.name,
+	agk@redhat.com,
+	snitzer@kernel.org,
+	mpatocka@redhat.com,
+	bmarzins@redhat.com,
+	syzbot+8b22a0459202f76b4096@syzkaller.appspotmail.com,
+	Hristos Nenkov <nenkov2004@gmail.com>
+Subject: [PATCH v2 0/2] Fix recovery flags on failed RAID10 reshape
+Date: Fri, 20 Nov 2026 12:17:55 +0100
+Message-ID: <20261120111757.4705-1-nenkov2004@gmail.com>
+X-Mailer: git-send-email 2.43.0
+In-Reply-To: <4d13edef-f454-437b-8910-3a905697303e@fygo.io>
+References: <4d13edef-f454-437b-8910-3a905697303e@fygo.io>
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Post: <mailto:dm-devel@lists.linux.dev>
@@ -59,63 +106,37 @@ List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 List-Owner: <mailto:dm-devel+owner@lists.linux.dev>
 Precedence: list
+MIME-Version: 1.0
+Content-Transfer-Encoding: 8bit
 
-Thank you for your contribution! Sashiko AI review found 1 potential
-issue to consider:
-- [Medium] block: misdiagnosed sub-sector check in
-  queue_limit_discard_alignment()
---
+From: Hristos Nenkov <nenkov2004@gmail.com>
 
-commit 863891ebff09d5d7c6b856e9fe20f0c7b376f993
-Author: tongzhiwei <tongzhiwei@cmss.chinamobile.com>
+Hi Kuai,
 
-block: fix divide by zero in queue_limit_discard_alignment()
+Thanks for the review. This revision implements the ordering you
+suggested. Patch 1 clears MD_RECOVERY_WAIT in dm-raid on all three
+reshape setup errors. Patch 2 removes the recovery-word reset from
+the RAID10 abort path.
 
-This commit restores the zero check for the sector-shifted discard
-granularity in queue_limit_discard_alignment() to avoid a divide by zero
-when discard_granularity is smaller than a sector.
+Checks: checkpatch reported no errors or warnings for either diff.
+Both affected kernel objects built in WSL. Five focused userspace
+checks passed for the dm-raid flag handling. I did not run a
+live-kernel reshape regression test.
 
-> diff --git a/block/blk-settings.c b/block/blk-settings.c
-> index 1f5ee2453269f..a0487226f48b5 100644
-> --- a/block/blk-settings.c
-> +++ b/block/blk-settings.c
-> @@ -643,6 +643,10 @@ static unsigned int queue_limit_discard_alignment(
->  	alignment =3D lim->discard_alignment >> SECTOR_SHIFT;
->  	granularity =3D lim->discard_granularity >> SECTOR_SHIFT;
-> =20
-> +	/* sub-sector granularity: no meaningful alignment, avoid div by 0 */
-> +	if (!granularity)
-> +		return 0;
+I used OpenAI Codex to apply the review feedback, prepare the v2
+changelog and run the checks above.
 
-[Severity: Medium]
-Can a validated queue ever have a non-zero discard_granularity smaller
-than SECTOR_SIZE, or does this check only paper over callers passing
-unvalidated sector units instead of bytes?
+Changes in v2:
+- Add the dm-raid error-path fix first, as suggested by Yu Kuai.
+- Keep the original RAID10 change as the second patch.
 
-blk_validate_limits() enforces physical_block_size >=3D logical_block_size
->=3D SECTOR_SIZE and clamps discard_granularity to at least
-physical_block_size whenever max_discard_sectors is non-zero:
+Hristos Nenkov (2):
+  dm raid: Clear MD_RECOVERY_WAIT on reshape setup failure
+  md/raid10: Preserve recovery flags on reshape abort
 
-block/blk-settings.c:blk_validate_limits() {
-	...
-	if (lim->max_discard_sectors)
-		lim->discard_granularity =3D
-			max(lim->discard_granularity, lim->physical_block_size);
-	else
-		lim->discard_granularity =3D 0;
-	...
-}
+ drivers/md/dm-raid.c | 10 +++++++---
+ drivers/md/raid10.c  |  1 -
+ 2 files changed, 7 insertions(+), 4 deletions(-)
 
-The syzbot crash cited in the commit message happened because
-dm_calculate_queue_limits() passed unvalidated target limits from
-snapshot_io_hints() to blk_stack_limits(), and snapshot_io_hints()
-stored chunk_size in sectors rather than bytes.  That root cause was
-already fixed by d7216d7be2bb ("dm snapshot: fix discard_granularity
-unit in snapshot_io_hints"), so returning 0 here is redundant and would
-silently mask future callers that pass sector counts in
-discard_granularity while leaving the bogus sub-sector value in the
-stacked limits.
 
---=20
-Sashiko AI review =C2=B7 https://sashiko.dev/#/patchset/20261120103040.610-=
-1-tongzhiwei@cmss.chinamobile.com?part=3D1
+base-commit: b3dfbde62cf1981c4638939c159dfd087b7a72e9
