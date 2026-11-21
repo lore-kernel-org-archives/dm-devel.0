@@ -1,97 +1,99 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=74.125.227.138
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.214.182
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1795267553;
-	b=YycvyK/dIuwE5pj3JR05+ZT1ZM1zUiN8IFAwUlVTZQqr0G/nUZfJkdeAKQfHPioTBwVV
-	 qOzcNpQ/tfFOd/+/CXtS/SAZZyeHKEjbzy3qy1DqAcKotN5AL9aJrgSGMD1mndzXTsing
-	 Me2VHk+ZiL0ltOnZZvvkREr5cspumZTuoUB5RRlSEpURj0+BZuArukVEx6rYZqJJHAZAx
-	 ZmwtKqn4Mv9Cs5+GSqXfx+b2anlkFW/FFMFe3MIGfZEjGNj0d35LsSspjVDbPbBz/WGzQ
-	 vgTVoL9l3PCX7vSM+rDVZQKIi/O6Icnk5b7V2umbZAg/2SQDO+NAIelcUYTrYOt9T6Q==
+	t=1795281446;
+	b=lVTuQ1BX36qeSQo+JuIkA+cnr3sRACh0kbBYbaS0Za7FCTxf9Q2JlLqV9zRXrByoQqMM
+	 lzOZMOenOIKNLAg8cPPfV4YMjFrUNL2MdpXBU0lU3FwkTSUZGvh/m46ioBxRmYvh1SNKW
+	 63zonXt1/PX0Y1dzFhFU3ZnFt9Ql+p1qQ+iwODZqaolufBEbZNFRO7YlKMSFTZYQa9SWw
+	 055LyBKRnnG4jaSm/bx9eb9OhAq5UDIJyxJi098185/dy9E1tbZ5At7yqcsEd0q8f6zQP
+	 0LX9smDl83KwxKyFcRZAvM1rw8KMigx+2H4xr8L+/HmB44QBOYs//Np8eXzw3MLvqGA==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1795267553;
+	a=rsa-sha256; c=relaxed/relaxed; t=1795281446;
 	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
 	 X-Forwarded-Encrypted:X-Gm-Message-State:X-Gm-Gg:X-Received:Received:
-	 From:To:Cc:Subject:Date:Message-ID:X-Mailer:MIME-Version:
-	 Content-Transfer-Encoding;
-	bh=RzZc1ZvHcmljMIW8GIop80TWAkL0ySLaO8QbZptWPdw=;
-	b=hY0V3hcIfJdRNrekodJhLavzVH+48WGTHIg2GvsoNQa6uypGsycvRvefkF0qcQErsfHf
-	 7CYrHTHetnmYmTelJhNphj8o2wnbr0zNLuQU42UrSLbFZjQ5V7AZx9G8Ypzg3i5+6ZCwz
-	 /VxD1QvxNQByUQLmyT50l2C5bfSoVKhXOrx1TNLP6tGeHU5uHA5EVgjh+N9krd9bHcpqC
-	 abFrXY+cMYTi6HkLf0orJvcxjoIiXwBMb/Umjp9NPKtP+HRCo2gw3w5dkYcKKBXhpw5Kv
-	 3YJgrMws3iMuE+AizlH9dGf1Aa/KqxLqrYwQOax3MD6nF9hW2CVnNQ3Mhe8RqYZMFFQ==
+	 From:To:Cc:Subject:Date:Message-ID:X-Mailer:In-Reply-To:References:
+	 MIME-Version:Content-Transfer-Encoding;
+	bh=9tYHepOAyrgNGgS+8J1BXj/ck8yyAEwKko+ute+7xHw=;
+	b=Jmevdfd/XX/juwoSYR7w68zJWQTvJlOS4s81p9V+ewsuMcpjw17CaNMnmwK+IrX4bog7
+	 FIdBpMFKKfSm7PlrrcqvlsBxJZSxUwf58NjxjFYbRccTCwsfLH7DXxM1lJVjpOJlLMCuX
+	 /cddsXcQSbeeGkzMuxVBRhvTfs/tBfofWl+yI7t3eU68apIAxvx3METu509sYHh9nmA/A
+	 m0uCSwoxoDIz0myEhuRhNylqtqdA5+gpZ0/ax46RdjSnT1ZTcwAgyGZxUGQxS+EmtZvdE
+	 iejR4QAwXLtdNk2mW4j1XNM+esb/j+LBYSiWOnbz7TSKVBNh8Un5uO24JPWSwVumvcw==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
 	dmarc=pass header.from=gmail.com;
 	spf=pass smtp.mailfrom=gmail.com;
-	dkim=pass header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=z1frUJU5;
-	arc=none smtp.remote-ip=74.125.227.138
-Received: from mail-pj2-f10.google.com (mail-pj2-f10.google.com [74.125.227.138])
+	dkim=pass header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=Ii58gLQM;
+	arc=none smtp.remote-ip=209.85.214.182
+Received: from mail-pl1-f182.google.com (mail-pl1-f182.google.com [209.85.214.182])
 	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 823DF606A32C
-	for <dm-devel@lists.linux.dev>; Sat, 21 Nov 2026 13:25:52 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 823DF606A32C
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D426B606A320
+	for <dm-devel@lists.linux.dev>; Sat, 21 Nov 2026 17:17:25 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org D426B606A320
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=z1frUJU5
-Received: by mail-pj2-f10.google.com with SMTP id d9443c01a7336-2effa00323fso6950465ad.1
-        for <dm-devel@lists.linux.dev>; Sat, 21 Nov 2026 05:25:52 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=Ii58gLQM
+Received: by mail-pl1-f182.google.com with SMTP id d9443c01a7336-2f07a960666so887085ad.1
+        for <dm-devel@lists.linux.dev>; Sat, 21 Nov 2026 09:17:25 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20260707; t=1795267552; x=1795872352; darn=lists.linux.dev;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:from:to:cc:subject:date:message-id:reply-to:content-type;
-        bh=RzZc1ZvHcmljMIW8GIop80TWAkL0ySLaO8QbZptWPdw=;
-        b=z1frUJU5mP6U81McjHGpAIpHMiOu2NBh5KKRuQ11uSX2a9Av2y8dEFlaQE5VsOof8E
-         3HIyK23dTcNtlA7slTUTfADkiWrGqMQUvTwiVrNuz9Snf63zoXxxHeOngjZWHNu3cpDO
-         pT1nC+UObByyh3mweFdbipPyZN8imvwzG0dqPv+NHqg5Ncd+e2ccjZvuwDa11PN2dssm
-         C2pyokdDufyOnnhdKVI0bnn+QAuyS9FKFiZ4p2o0WMw3tDyp0W0iXx5T/VK2ojyN78m0
-         3YSWbCXd1eeTJQZLPbVLOTgv7m8OItJom+8MEtngsECQNTMTmVgTzQsBuItlPQbMqGri
-         6dkg==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1795267552; x=1795872352;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
+        d=gmail.com; s=20260707; t=1795281445; x=1795886245; darn=lists.linux.dev;
+        h=content-transfer-encoding:mime-version:references:in-reply-to
+         :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to:content-type;
-        bh=RzZc1ZvHcmljMIW8GIop80TWAkL0ySLaO8QbZptWPdw=;
-        b=p1f6zIGaUkJrEy7+wETc1QDXlhdieaEjRrRtTqUAlJAEPfCl2xrhIQuyOMWsn7ctTu
-         ZM5CTNVoFAtt5J8xgoSzJVcxzRGyx3GKEN6it7XcCyiYWOpZKc7akGSpBUVMYZGkkmNA
-         DfswwhxyU8u4PQ355f8cXgzyGn1v/OK3N3TXG4Si4Xdb6sNHRy17aILVPTtvsREF9eND
-         +VY1uyRKSkkuA37m2NtmYUjy7AUBijO8JvQnB20AF6LYw3D4xiW3/s+phEBFr83yN8GO
-         4icRhNApGsV6sLWlnPKvrF23GPxaBexL6BVv1gyO7nlkC0tstYGAvDYQdyNu3Z8UI68y
-         bAsA==
-X-Forwarded-Encrypted: i=1; AL+hErEzfboSCRGcOPapmNAesOEmoM4DWjZN3SODV87s9X51mcyDC2Sr3C3GSdvfMqfJ/Ibbx0SGCB39iA==@lists.linux.dev
-X-Gm-Message-State: APuU4Z9EyKU9evy9CQPd0WVYWO8itRwJXpTWXpHkY6X3+vd0D8LU0ZQv
-	F+ano1jGlKfbZxZoG6hHoB1wh1T6F0abYZPnlzu08J5Ka24aV3oHQoA=
-X-Gm-Gg: AZFdTZfLSxUAtMKL/0NsH4UHRsbAW7OpXEvVJ84ZlWXP13qSW6ZOYv9iXB2HnwYyLHq
-	rlsH+9jqUf7Hh1oewj4xqr8RT0bUD+xfT3btzmSQJ6Yg9CC2IUpv0vVjP2mrlyeg1fDkzec3vCB
-	3AGjScnsslS32IqMUQKyyyVm+rbMtVXXqr3BQt2hWTLjlTKCcxEM1wQXo4e7lX8TKXdT4IT21fd
-	LxcEzTKvmWrHNn/9QCmOfMhijGLlUjzoLM4WtnlhTOpx+3njoAVLqqeyGPLt4WBqnC10D3rGk2Q
-	5VltulpQKl3d02u5b/avhmwTgsS0kkZX3hPnwSRnAtO1LchsnTncQN9KnvWcbqGtErJFXdof8Vv
-	IH97GKsAeKCGvpX2ZCUhhKAZDbtRJx2S/K/0dktimGGqYqYeB1EtAu4GOvgCb4N7xThQU2nNwFX
-	jAuhXYsrpEaQi2lbtov0RF+TNnq+iq5OCSBYjAiQoniDE2Hw1PKChvS1/48xR+CC1EZgMZ5b0Gw
-	ez+Z+FsEKud4FXbf+HiqAeb6njw7AbyGCCPYeDgjZSiMc2piR0EVLQdjUqrySErxF/0EDB4YOw8
-	TYKZ5LXx2TDP7nQ3aocEHkoE7JwJCc4kOIRuEKE=
-X-Received: by 2002:a17:902:c409:b0:2e8:1c7b:3b6e with SMTP id d9443c01a7336-2f03f1fe182mr61390525ad.26.1795267551719;
-        Sat, 21 Nov 2026 05:25:51 -0800 (PST)
-Received: from archlinux ([2405:201:ac01:5300:572c:c4c3:6927:1f87])
-        by smtp.gmail.com with ESMTPSA id d9443c01a7336-2f03f105bb2sm26620525ad.45.2026.11.21.05.25.45
+        bh=9tYHepOAyrgNGgS+8J1BXj/ck8yyAEwKko+ute+7xHw=;
+        b=Ii58gLQMacxPydOGFqEFp3TUKOXDicbfd1Jnt1J5szgfOauAI0cCk9tOSG3fAfqX3A
+         gECqVM6usUjP8bX2OsP+uhxKv0ndjl4k7ib/lce2kWciuXtFHglPZaJ7eXT+giNf7/v1
+         fJ33t0W5i7mWYJslgFx2xoB7aQ+dOgT7P0aDaY5NXmFJVdyOtEpJd+tfQhvyvOimryJh
+         +/jQP/PePCxLBhhN8Elyr1w6BsoqAOHj5lTJ8FDC51eJVlH8cO94hnODlalUBKXuV6AQ
+         mgXmYvL/rtd1LkP3GzYnc+oLb03vcVVSz3Uq0iR7f/Y5PsyW+74MkAk7rqP1DtaFxfWz
+         YHFg==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20260707; t=1795281445; x=1795886245;
+        h=content-transfer-encoding:mime-version:references:in-reply-to
+         :message-id:date:subject:cc:to:from:x-gm-gg:x-gm-message-state:from
+         :to:cc:subject:date:message-id:reply-to:content-type;
+        bh=9tYHepOAyrgNGgS+8J1BXj/ck8yyAEwKko+ute+7xHw=;
+        b=NHiRQ3zNXg5RSjRCVBdssVn8fRmOlOSF0fLECvg/8YK7vVq7+g7h5a8G8+cX5Z4Ml2
+         WHuVw2p/BrLmSTO6dg7fHslOEf2OfIlcy3TMWYUYGGpCx0IQ/L4rNm4gfWxj8CpA1eYb
+         zUJhyVpHE3WEmsprscdCurZf1rz1bARPTlmSVZ+tZYJ4YNL05oCRXrJgl3LEpyCPa6Jb
+         3xam4CpasxJAcp3JRMEK6ppanJp8OdgpBOU5Bi3avcuI3EPwf1rRW7zFVK/7g4Zx646O
+         LP9vJhvrh5jNXJLEItkshFn+Q5s5lh700i/3QwFr/dg85+E+9awBd4EVSUE+gc7qb5D7
+         1yDw==
+X-Forwarded-Encrypted: i=1; AL+hErFC1XEcSX5moUPUtwHGw3OrD6Ovw/BLudNa+UQ4DkbBB13Dr/WJAJtHlT9OPWY5irZZVzh/YCQ28Q==@lists.linux.dev
+X-Gm-Message-State: APuU4Z+sbpYvb1/aswCCR/TUMLDZOgIthL7Awrzj/V2WE6R7NJUQLVvH
+	OPIJvvruKjr80w9b4X8Nb7KMJpHS6n7EAcEhtLEW9/R3MfbDyzoQXq6t
+X-Gm-Gg: AZFdTZeAlz5dOsxAOVU445FrGI5I/topLYWUHzVO5SKprsAFM73T4CaBy9D8C5Y5s9+
+	RVVdn4RLPH7Pg60mX1TmMwqxHy2P5D6UycRunh2PRFMIdXd87T4wrx1IBITrYStYCz5VJS+mxBn
+	kA1aGOmswgjFDNIdd4aaZElBAxrHpo9KKyF0XAfJDR7ZvKHnXAQ7Lfxnk+EUPCP37UMQYCUSYm6
+	DfamX7HZsLBfLPz8MD78nKLkKt/971ywH7x5EQUQwNV8sP96G0xk6Z8TNGA0N29/qIAwXpp5wHP
+	dRVGj0IzdeW6xhIOUrFKe7pkNGEARWSmUjRXiV0/K1ZPr2Xx9g9RlJwsbLRsCsLzP874BfuP114
+	ddijpzKoezoaTXwqU1p3XMXx/9OlCXnHbRfei/OIno2xSoTaWkwTNdTNJM+EMuCahMWMFi6doOy
+	nSPkSGPYllTlraR7yj5HzqUnMmejnP+X3KosR5BAzyravJEC0dmMpeFf8Jg63BFEF4WSuWikeaT
+	GhZkM4zqNkoV1m/yiGl5cHzvIgmvgqbGt0qvR+pggeHS85p/4b90V8kh5E3qiSUgv8gBdnSoVir
+	X1/6XvNIsY6M9EQs2kYBr0LpZV7UFrBZPTKBYIe781ekehk+RDlftcxre43f2La2LvgaXwKHqF2
+	ns/gUfTpVY/WGi6dDXSb14x8LV5NXiQ==
+X-Received: by 2002:a17:90b:384d:b0:3ae:a4fe:7ad4 with SMTP id 98e67ed59e1d1-3b41c8528b4mr7065619a91.2.1795281445043;
+        Sat, 21 Nov 2026 09:17:25 -0800 (PST)
+Received: from bj-kjy-standalone-yangyongpeng.mioffice.cn ([43.224.245.241])
+        by smtp.gmail.com with ESMTPSA id 98e67ed59e1d1-3b41ad48786sm9375923a91.9.2026.11.21.09.17.19
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Sat, 21 Nov 2026 05:25:50 -0800 (PST)
-From: Anvik Loitongbam <permissiontogallop@gmail.com>
-To: Alasdair Kergon <agk@redhat.com>,
-	Mike Snitzer <snitzer@kernel.org>,
-	Mikulas Patocka <mpatocka@redhat.com>,
-	Benjamin Marzinski <bmarzins@redhat.com>,
+        Sat, 21 Nov 2026 09:17:23 -0800 (PST)
+From: Yongpeng Yang <yangyongpeng.storage@gmail.com>
+To: sashiko-bot@kernel.org
+Cc: mpatocka@redhat.com,
+	agk@redhat.com,
+	snitzer@kernel.org,
+	bmarzins@redhat.com,
+	zkabelac@redhat.com,
+	okozina@redhat.com,
 	dm-devel@lists.linux.dev
-Cc: Jonathan Corbet <corbet@lwn.net>,
-	Shuah Khan <skhan@linuxfoundation.org>,
-	Randy Dunlap <rdunlap@infradead.org>,
-	linux-doc@vger.kernel.org,
-	linux-kernel@vger.kernel.org
-Subject: [PATCH v2] dm-inlinecrypt: emit key type as an optional table argument
-Date: Sat, 21 Nov 2026 18:45:39 +0530
-Message-ID: <20261121131539.7519-1-permissiontogallop@gmail.com>
-X-Mailer: git-send-email 2.56.1
+Subject: Re: [PATCH v4 4/4] dm-verity: add messages to prefetch and drop the hash cache
+Date: Sun, 22 Nov 2026 01:17:17 +0800
+Message-ID: <20261121171717.3844287-1-yangyongpeng.storage@gmail.com>
+X-Mailer: git-send-email 2.43.0
+In-Reply-To: <sashiko-outbox-226847@kernel.org>
+References: <sashiko-outbox-226847@kernel.org>
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Post: <mailto:dm-devel@lists.linux.dev>
@@ -103,80 +105,41 @@ Precedence: list
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-inlinecrypt_status() emits ctx->key_type as a positional argument between
-the key and iv_offset:
+On Sat, Nov 22, 2026, sashiko-bot@kernel.org wrote:
+> Can verity_prefetch_hash() still race with verity_postsuspend() when an
+> active, unsuspended device is removed?
+>
+> Unlike __dm_suspend(), __dm_destroy() sets DMF_SUSPENDED and immediately
+> calls dm_table_postsuspend_targets() without an intervening
+> synchronize_srcu(&md->io_barrier) and before waiting for md->holders to
+> drain.
 
-  <cipher> <key> <key_type> <iv_offset> <dev_path> <start>
+Confirmed, and this time it reproduces.  A debug sleep holding the
+prefetch buffer (widening the hold_count == 1 window to 10ms per
+block) while dmsetup remove runs on the active device gives the
+WARN_ONs in warn_leak() and drop_buffers() and the "leaked buffer"
+message -- the destroy path really has no drain between passing
+dm_suspended() and the reset.
 
-but inlinecrypt_ctr() parses the base table as:
+v5 adds a new patch 1 that mirrors the suspend path in __dm_destroy():
+set DMF_SUSPENDED, drop the SRCU read lock, synchronize_srcu(), then
+run postsuspend.  With it, the remove blocks until the message
+finishes and the same test is clean.  It is a core asymmetry rather
+than a verity bug -- every target with messages currently masks it
+with a private lock (multipath's work_mutex) -- so the fix belongs in
+dm core; verity keeps only the -EBUSY check.
 
-  <cipher> <key> <iv_offset> <dev_path> <start>
+> Because target_message() only takes a holder reference (via find_device())
+> and does not increment md->open_count, removing an unmounted device via
+> dev_remove() while prefetch_hash is running allows verity_postsuspend()
+> to run concurrently with dm_bufio_prefetch().
 
-and keytype, is an optional feature argument parsed by
-inlinecrypt_ctr_optional(). Resulting in STATUSTYPE_TABLE output for every
-dm-inlinecrypt device to be not reloadable, the constructor reads
-key_type as iv_offset and shifts the remaining fields.
+Yes, that is the reachable path.  For completeness I also checked the
+other __dm_destroy() callers: dev_remove and remove_all call
+dm_sync_table() and dm_table_destroy() for the inactive table before
+dm_destroy(), but the live table is still bound there, so the
+postsuspend in __dm_destroy() runs for it; the error paths cannot have
+concurrent messages.  The fix covers all of them.
 
-Keep the base table in constructor order and emit a non-default key type
-as keytype:hw-wrapped in the optional feature list. Raw keys remain the
-default and are not emitted, preserving the existing table text for
-raw-key devices.
-
-The two dmsetup examples in the documentation acquired
-the same extra positional key-type field, so removed it there as well.
-
-Reported-by: Sashiko <sashiko-bot@kernel.org>
-Closes: https://sashiko.dev/#/patchset/20260525121348.1321282-2-linlin.zhang%40oss.qualcomm.com
-Fixes: f9f57971da38 ("dm-inlinecrypt: add support for hardware-wrapped keys")
-Cc: stable@vger.kernel.org
-Signed-off-by: Anvik Loitongbam <permissiontogallop@gmail.com>
----
-Changes in v2:
-- Add Reported-by/Closes tags for the Sashiko review.
-- Emit the literal keytype:hw-wrapped after the non-raw check, dropping the
-  unreachable raw fallback.
-
-diff --git a/Documentation/admin-guide/device-mapper/dm-inlinecrypt.rst b/Documentation/admin-guide/device-mapper/dm-inlinecrypt.rst
-index 8258a72f00a8..84dd2e6a1b26 100644
---- a/Documentation/admin-guide/device-mapper/dm-inlinecrypt.rst
-+++ b/Documentation/admin-guide/device-mapper/dm-inlinecrypt.rst
-@@ -119,11 +119,11 @@ using dmsetup
- 
- 	#!/bin/sh
- 	# Create a inlinecrypt device using dmsetup
--	dmsetup create inlinecrypt1 --table "0 `blockdev --getsz $1` inlinecrypt aes-xts-plain64 babebabebabebabebabebabebabebabebabebabebabebabebabebabebabebabe 0 0 $1 0 1 keytype:raw"
-+	dmsetup create inlinecrypt1 --table "0 `blockdev --getsz $1` inlinecrypt aes-xts-plain64 babebabebabebabebabebabebabebabebabebabebabebabebabebabebabebabe 0 $1 0 1 keytype:raw"
- 
- ::
- 
- 	#!/bin/sh
- 	# Create a inlinecrypt device using dmsetup when encryption key is stored in keyring service
--	dmsetup create inlinecrypt2 --table "0 `blockdev --getsz $1` inlinecrypt aes-xts-plain64 :64:logon:fde:dminlinecrypt_test_key 0 0 $1 0 1 keytype:raw"
-+	dmsetup create inlinecrypt2 --table "0 `blockdev --getsz $1` inlinecrypt aes-xts-plain64 :64:logon:fde:dminlinecrypt_test_key 0 $1 0 1 keytype:raw"
- 
-diff --git a/drivers/md/dm-inlinecrypt.c b/drivers/md/dm-inlinecrypt.c
-index 3479dfe5f708..c4a0501e7b9a 100644
---- a/drivers/md/dm-inlinecrypt.c
-+++ b/drivers/md/dm-inlinecrypt.c
-@@ -522,15 +522,18 @@ static void inlinecrypt_status(struct dm_target *ti, status_type_t type,
- 		 * the returned table.  Userspace is responsible for redacting
- 		 * the key when needed.
- 		 */
--		DMEMIT("%s %*phN %u %llu %s %llu", ctx->cipher_string,
--		       ctx->key.size, ctx->key.bytes,
--		       ctx->key_type, ctx->iv_offset,
-+		DMEMIT("%s %*phN %llu %s %llu", ctx->cipher_string,
-+		       ctx->key.size, ctx->key.bytes, ctx->iv_offset,
- 		       ctx->dev->name, ctx->start);
- 		num_feature_args += !!ti->num_discard_bios;
-+		if (ctx->key_type != BLK_CRYPTO_KEY_TYPE_RAW)
-+			num_feature_args++;
- 		if (ctx->sector_size != SECTOR_SIZE)
- 			num_feature_args += 2;
- 		if (num_feature_args != 0) {
- 			DMEMIT(" %d", num_feature_args);
-+			if (ctx->key_type != BLK_CRYPTO_KEY_TYPE_RAW)
-+				DMEMIT(" keytype:hw-wrapped");
- 			if (ti->num_discard_bios)
- 				DMEMIT(" allow_discards");
- 			if (ctx->sector_size != SECTOR_SIZE) {
+Thanks for the review,
+Yongpeng
