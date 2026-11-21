@@ -1,84 +1,84 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.215.170
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.210.174
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1795281602;
-	b=C7CPkzyxbeJHRtufVyzA9Ya6mbMU1MtiojrnBYF5YZM6ZN7ZKaIaZR4Q0psTEogTA9KC
-	 a80ZyVmmmWThi4dAgUkAWfg+2DHF7zN9aD/pB2TcogIKBjBOrxm+/xlZkx+//5eN+dFPz
-	 5FwWX94sFiYuOlSEi4+OpNMp2moR5dsnwbh1v4apqQIJS6NdvHbqRLKbr2NtvPjd90j+A
-	 kFH6obES2rSM13nH1MQXCvD410eKyqcyFF7YjMrkUANxNKk+7XRfhyCGKCcTgGJers6Da
-	 uYKXwNdslnDJmGrEbAQpnVExKWW4Z2kRZPOG2gjcY/4fDbDIlnflAv61pspyTjd0UvA==
+	t=1795281607;
+	b=XpEN302zxLg42Lt5fjDqE0y3aAkf62sf71zMmi2TR/ciYTHZcCsAe+dPThwtjLVX0Xkc
+	 1jwTdnZnNUeXYsvEpjaXjXVoiBdNoGgDsOX0SkQ4wbY/EhU0BR162wh7HOV3zB8VmeQJ3
+	 bXoUPDkI21HSQ2uU4CrCji+ZO77rX3frCBv5VNpW5uXvoE79xESvhSAhqFxXBTsLA+Khf
+	 kPZTj5inArzDE4GWXy3Wtp9fwuzvA13QM6p+XlHqBvSsIjO7C3NAdwfXJEKGj5mW/+W5x
+	 OE21K/XUfRH3F9p9H/9I9lAr0kKfcDvOUjnGTIpMQMf6DqJ/dWb/Zn/8suGzwelonRA==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1795281602;
+	a=rsa-sha256; c=relaxed/relaxed; t=1795281607;
 	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
 	 X-Forwarded-Encrypted:X-Gm-Message-State:X-Gm-Gg:X-Received:Received:
 	 From:To:Cc:Subject:Date:Message-ID:X-Mailer:In-Reply-To:References:
 	 MIME-Version:Content-Transfer-Encoding;
-	bh=GQ/fZ00gtlf3ekDUWIes4m6B3nQfLfxFUKrDphRqdp4=;
-	b=Mov2NB7OiuWf3m1cUDSZZSmxiVhxpYcYApdqeox0UpK5gd54jYY8Zdq6c1Oiv2tNHvuR
-	 oaKCo8BFXmJV8DUEqBed28Um8GDuGFLBvi3zXrrgq3t9CmRfDdFgvqmwGpEKCg8eIz2Ix
-	 s7O8yW8wBeqrfr0bn1Ovl4C7ZP/Dmex31h7JBKkXXLMqpXEUynPsCBuWbtDMWIqFWAHlj
-	 NqMF9uVrXFomGdDh3yYD7FjvcQdWUfYz03Hp15zGHr3mNhY5yTc7EGhFLHfUCIX+vK9qV
-	 wfI5Yym/9T0cWzNf4gZSMpSmzk4J5DF33JRwqr5yml1+NAPm0et4lRK7jzvTuFjNKOw==
+	bh=o3fmF6+qVamNcSp+6Xy7RoJYcMMDNIJkRq6K+y3sVwY=;
+	b=vDfNLsl1+i59FLDp+bfR9DwkfaBYTN1WhLG0/Td3dhAjINjOeQkyzFKjAART33wu3fri
+	 GOkmBaBlAEx1v0KcoJc+NO+auMUi+kniBf5VqurAYKa0iGRiyOcl3dTulNdcfdIxQzRfE
+	 8blQUcwU9B2dzJNOCQn0sfOJp70dd3t6a0hDe3egQWHZXXP3itcV7ePKWfMKufZJzoAdC
+	 Nb4CVC1N2P8xmRxY2fwyxAyec5eRBjL7iJNFTAe5n69N/6AEqQfYfFkbnHV9Vlc+ArRBB
+	 m+cfv8vQaP0aQg7tv74pkDxP6xzlKMT1fVC7rcm9P9HfEQXIOGz++3W+w9ykh721JDA==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
 	dmarc=pass header.from=gmail.com;
 	spf=pass smtp.mailfrom=gmail.com;
-	dkim=pass header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=01IWQG17;
-	arc=none smtp.remote-ip=209.85.215.170
-Received: from mail-pg1-f170.google.com (mail-pg1-f170.google.com [209.85.215.170])
+	dkim=pass header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=K76F8uDH;
+	arc=none smtp.remote-ip=209.85.210.174
+Received: from mail-pf1-f174.google.com (mail-pf1-f174.google.com [209.85.210.174])
 	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id AFAB6606A320
-	for <dm-devel@lists.linux.dev>; Sat, 21 Nov 2026 17:20:01 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org AFAB6606A320
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6F1B2606A320
+	for <dm-devel@lists.linux.dev>; Sat, 21 Nov 2026 17:20:07 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 6F1B2606A320
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=01IWQG17
-Received: by mail-pg1-f170.google.com with SMTP id 41be03b00d2f7-cde827b7b95so73915a12.0
-        for <dm-devel@lists.linux.dev>; Sat, 21 Nov 2026 09:20:01 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=K76F8uDH
+Received: by mail-pf1-f174.google.com with SMTP id d2e1a72fcca58-8c6c06b3321so1670931b3a.3
+        for <dm-devel@lists.linux.dev>; Sat, 21 Nov 2026 09:20:07 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20260707; t=1795281601; x=1795886401; darn=lists.linux.dev;
+        d=gmail.com; s=20260707; t=1795281607; x=1795886407; darn=lists.linux.dev;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to:content-type;
-        bh=GQ/fZ00gtlf3ekDUWIes4m6B3nQfLfxFUKrDphRqdp4=;
-        b=01IWQG17KWqSQyegluiu+rdCGN6maeTLIeyOCOfiAtyHqW3SEjRv7uoxMYfkuMPsoo
-         tW6abuDD4wZf8RY1qKgeE3xk5dApD53KTRUW4kkprgpcoXKpfRWLqfq8Rd4TJhn8/uwW
-         1uDg5BCi4d3C9ixMpb5uiBUPx8nZ1gI32MGl87sGTLKCTgsQRnaGCRiu798TjVAlEoeQ
-         4WrXzlD1hkE4WOCFJ9TKWTdpK0ZlKLO01G/eJFzcxbZrF2bv/W6eiCiUnEOCk34xML1G
-         lJYlAn5J4pSJJRTQYn0JYElHIxT5XLUv7EKp6fVUu1kR/YpMzTH6BTLHRPI5rI5pGA5v
-         Jw7w==
+        bh=o3fmF6+qVamNcSp+6Xy7RoJYcMMDNIJkRq6K+y3sVwY=;
+        b=K76F8uDHGUFp0dnWva7awf/UWf7tW6jKBJTljTu8DKJtQ7g2j992Z+L9BLgjIyxZPK
+         +gJ4NXcG8IkiYjg2wlkp1JIZtFjBdQzvNiv8iuSRx0GfJ+5m976Q5h3OnR75jckT8LL6
+         lhv+6ssE3gQGvhoHIYQsDiovj19XV/CHA5aekrUD0JmNlXnq00j7Hh/xH+aBnUjA2XNH
+         xU2BxaP4eM6sS58ax4PAB7IM4cCkku+im/jlI52QUgRxO0NaZPKV25gQYJ6+4L0DPEku
+         Q6hmsDR1CX2kfl6e8D0pMTIL8wvXUzt5jtMoAih5pfKIMgHm1nZLbjwLWeL4ohXHXYqd
+         US4w==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1795281601; x=1795886401;
+        d=1e100.net; s=20260707; t=1795281607; x=1795886407;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:x-gm-gg:x-gm-message-state:from
          :to:cc:subject:date:message-id:reply-to:content-type;
-        bh=GQ/fZ00gtlf3ekDUWIes4m6B3nQfLfxFUKrDphRqdp4=;
-        b=ZVeD94n8TawI+mASe8jxCTx24wCVh5QceKudigHlZBfau8weP4+F750jvC1czvvFPV
-         ExmdeZfcLoB1ccjUOtzJHL/2EtzxYThs9CpiuF1A37pucV+loenih6aETLdtmyKsSqja
-         +n/9LhPDdLO2/vhWmOkBOXHlJLOyREN5IVcRwIHO8/8MGXQYvkOCf6fJmp1GcqMT6t7s
-         Vmec8kaKCf5jdwrP8iEH7qFodJesO6gZvWA2Mjd+5tPUFTJdMGI7wJAywB3Wu/vKBpkQ
-         jXTmzR0R3v8HkvVU55N6P5raXNXu6Dsuh8mn76hSiKWSuKuSDbzIwuKm0QRDgl1QPatm
-         ySAg==
-X-Forwarded-Encrypted: i=1; AL+hErEDAyfFmlURUgawUCqmiuvZAqM5uG91nhIebqpNf9yMc8kz+8gtJYhHp2ls11E9uT/HLarPZpeujA==@lists.linux.dev
-X-Gm-Message-State: APuU4Z/p9oQxGE0eunO2LDUNvMFC6AS+u8mcnXGoyLp3LCE2JbKfjAdX
-	ScZynm9dkBXBvaSMR4nXRR475iJv4/+GOqofE23MZZ035zbzwLeMSZYC
-X-Gm-Gg: AZFdTZeIpopk7HGs+RRUMPERgbLp/hL1VI+YPuHb24TlmqTWbDFlYz5nUf4hbzquIAL
-	MKmMHXjK5fakq/6R6kW8G1gkvLylx47NPgu3eBjXWqzLZP6ginWD0hQYMFDFhOcuXYe2qsmJNtx
-	2ulopAUXhHuZfUkPbeKArFEGeRltgCuLF+YUDNBiozeIbvBcdE01gBlnrdEgGfkM+Ka/v8LvixE
-	kJ2sF6Ip/12GM6c4a8CZ+h8+VSubTVT1/vssLGMFq1PEau01FQcQYhem+gNonQk31VOJPIhl6Xr
-	S5gQzJqENG54fsfMR+oL01ZoeHg3CZHQQiufKZkPxq3sSBqhWVaFON9pk9cTu4wjwBPjCJEIH2k
-	ufUFBuRgM8fHQq0tKAITf5hAg2aJEpbGDvv+hF7KX50W8yjJ1hmk6VhEB6RedPWn/VpyMCyP6EC
-	sMFf5cVozd4UBvzTl9mjN3HIEhl2+q0vORQQHotcGiZQdb8xVenYoITQVl0kdevsOJeHTAfV/CO
-	CJ19Rmc4Yz3/ecWIn/wbaZa7cwwkrW8/alS+H7OfCQblW2dtpwgllaWBeQTxhAweOuiUjCq87vw
-	cippybhFNuZLF2QAyzHUCtfhVzoKGq7opQvxhNMVy6ml2lnSlIvBv+rOZGKvIxor+rSWRSbBfUP
-	2CFO+cXmaH87xtXSpLt/J7KXndtc58g==
-X-Received: by 2002:a05:6372:a713:b0:3de:7bd5:fb47 with SMTP id adf61e73a8af0-4014d1590ccmr5761941637.39.1795281600864;
-        Sat, 21 Nov 2026 09:20:00 -0800 (PST)
+        bh=o3fmF6+qVamNcSp+6Xy7RoJYcMMDNIJkRq6K+y3sVwY=;
+        b=oFToSCOW6ZGd23vGuoo8pQ44FroXyz70Xus+9JacK013enXAqLRD7HkFui7d32A33E
+         YXE+S/Y1nkmrgLy+lKRRAGr4wHseje1qlHd3rhevS11GKgP6Kw3bpjPTFcfLta+dY1N8
+         wqUMim+KuJ+EeL6yv6PERVMM8fJGY4coimYZKeGHkFDOcpR7qmeLNoQYoFx3AjaZW5Mu
+         33kwAcHR2o8KLfyfulUaaemUz/4etLgeUAYU2QVYR50/A7RRF8NXxbJ1sxHZKjjgUUud
+         k/Z3fw+sKxGcSBigT0ltA1KC+nSEwEPE2LHXb2p0OCYRi8VuUxGH1aGGcVWBQFIx1FQA
+         rDWg==
+X-Forwarded-Encrypted: i=1; AL+hErEHkv5adJ65YHDBuhyXsjXiIei6oDKoKTyEgk9cAKCRLSQWwlI2yTVF1HdBrXPT3Jss8o8TC4twRA==@lists.linux.dev
+X-Gm-Message-State: APuU4Z+YoQpo1MIgaspc2ixgykXnGdkmMyewbbs5TxZkJWa6v1SxkTar
+	b6BxPsdQMLTkkCu0Py85GoFs6527qo+H8V+WESUR47XNBW2YQHeCjzmr
+X-Gm-Gg: AZFdTZcR0er5ipJPF93xTLzY6dlk//k2WGnuf0zQHwDLUsfHIT8vyR1UWrUYbf5+Rcm
+	zNLvpiv0xBTMvbMMl5at4emre4BNxgosF1IWXm25OBVYZc+p+pHLvK/fLHSMzHMz/AxNQkhNBV/
+	4rVVPSwQjWYkK/lpKoZaMmGOzkcXxrZo5tsEQvo7g/+KrcG/6TFfOM233MJQllBD8io+3k2FO75
+	sxCDz6rFLKlgrmLIFyNG2n/Bq3pagLH710JLRrbomMOh/BpBjSLvqumVkju+Iv7jjFO/aZ6XTq6
+	uruljtaEjz9sdqlKW2yZqPVG3RmzSW0iKhIi1a4lfPkxgH+bu+K7E/iYfMhWsjn2+MqeLZwNm/T
+	lVgRS8v17YIV1L3VJCOw30IsM9iwv6URqkyuDnDGhzgjZEHjIhvRVaVCDfAufk/kap66KSmRWRO
+	PilVXZG4ee+X4yPrDtUFPZ4xLVPr+Ult0lvc1MBpz7S6g/quWRgye5cVn+s9IVuRleLymRFS1VZ
+	24I5VAmAWEhZDzk7P5l/K0egOZIgoipJjjjNtBFnjEGt1y7qEL4LP5o98YdTde31WSFoOGB45z7
+	xW06QK52OhpXkqcFn8JPJrhr3O3mdZN16MoCgzF92aUGKRho8oHT6Mzi72+XEnadf1EaraxEGc3
+	n+LVZAI7c
+X-Received: by 2002:a05:6a20:9f86:b0:3eb:39fd:bacc with SMTP id adf61e73a8af0-4014d360ed8mr6595566637.50.1795281606555;
+        Sat, 21 Nov 2026 09:20:06 -0800 (PST)
 Received: from bj-kjy-standalone-yangyongpeng.mioffice.cn ([43.224.245.241])
-        by smtp.gmail.com with ESMTPSA id 41be03b00d2f7-cde6d028a54sm2585657a12.18.2026.11.21.09.19.58
+        by smtp.gmail.com with ESMTPSA id 41be03b00d2f7-cde6d028a54sm2585657a12.18.2026.11.21.09.20.02
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Sat, 21 Nov 2026 09:20:00 -0800 (PST)
+        Sat, 21 Nov 2026 09:20:05 -0800 (PST)
 From: Yongpeng Yang <yangyongpeng.storage@gmail.com>
 To: agk@redhat.com,
 	bmarzins@redhat.com,
@@ -88,9 +88,9 @@ To: agk@redhat.com,
 	zkabelac@redhat.com,
 	dm-devel@lists.linux.dev
 Cc: yangyongpeng@xiaomi.com
-Subject: [PATCH v5 1/5] dm: wait for in-flight messages before postsuspend on destroy
-Date: Sun, 22 Nov 2026 01:19:31 +0800
-Message-ID: <20261121171934.3847617-3-yangyongpeng.storage@gmail.com>
+Subject: [PATCH v5 2/5] dm-bufio: make the retain target per client
+Date: Sun, 22 Nov 2026 01:19:32 +0800
+Message-ID: <20261121171934.3847617-4-yangyongpeng.storage@gmail.com>
 X-Mailer: git-send-email 2.43.0
 In-Reply-To: <20261121171934.3847617-2-yangyongpeng.storage@gmail.com>
 References: <20261121171934.3847617-2-yangyongpeng.storage@gmail.com>
@@ -107,80 +107,119 @@ Content-Transfer-Encoding: 8bit
 
 From: Yongpeng Yang <yangyongpeng@xiaomi.com>
 
-__dm_suspend() ends with set_bit(DMF_SUSPENDED) followed by
-synchronize_srcu() before its caller runs the ->postsuspend methods,
-so a target message that passed dm_suspended() has finished by then.
-__dm_destroy() lacks that final synchronize_srcu(): a target that
-implements ->message and relies on dm_suspended() for serialization
-has its handler race its own ->postsuspend when an active device is
-removed.  With the verity messages added later in this series:
+dm_bufio_retain_bytes is a module-wide value shared by every dm-bufio
+user, so raising it to keep one device's metadata cached also makes
+every small, idle device hold on to memory it does not need.
 
-CPU0                                  CPU1
-target_message()                      dev_remove()
-  dm_get_live_table()                   __dm_destroy()
-  verity_message()                        dm_table_presuspend_targets()
-    dm_suspended() -> false                set_bit(DMF_SUSPENDED)
-    dm_bufio_prefetch()                   dm_table_postsuspend_targets()
-      __bufio_new()                         verity_postsuspend()
-        /* b->hold_count == 1 */              dm_bufio_client_reset()
-      dm_bufio_unlock(c)                       drop_buffers()
-                                                 /* b is held: WARN_ON */
-      submit_io(b, ...)
-      dm_bufio_release(b)
+Give each client its own target, initialized from the module parameter
+at creation.  The parameter keeps its meaning as the default for new
+clients; clients that already exist are not affected.  Also export a
+way to query the retain target and the cached buffer count, so a
+target can report its memory use.
 
-No in-tree target is exposed today: every one with messages
-serializes them against its own ->postsuspend with a private lock
-(multipath's work_mutex).  But the hole is in the core, and any new
-message-bearing target that trusts dm_suspended() falls into it.
-
-Mirror the suspend path: set the flag, drop the SRCU read lock (the
-table stays pinned by md->map, which cannot change under the suspend
-lock on a device being destroyed), wait for the grace period, then run
-postsuspend.
-
-Fixes: 3f77316de0ec0 ("dm: separate device deletion from dm_put")
 Signed-off-by: Yongpeng Yang <yangyongpeng@xiaomi.com>
 Assisted-by: LLM
 ---
- drivers/md/dm.c | 12 ++++++++++--
- 1 file changed, 10 insertions(+), 2 deletions(-)
+v3:
+- Round a non-zero target up to a block boundary instead of down, so
+  it keeps at least as many bytes as requested (Benjamin Marzinski).
+---
+ drivers/md/dm-bufio.c    | 41 +++++++++++++++++++++++++++++++++++++++-
+ include/linux/dm-bufio.h |  8 ++++++++
+ 2 files changed, 48 insertions(+), 1 deletion(-)
 
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index 38eaae8ac9b4..921b8c85f10d 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -2736,6 +2736,7 @@ static void __dm_destroy(struct mapped_device *md, bool wait)
+diff --git a/drivers/md/dm-bufio.c b/drivers/md/dm-bufio.c
+index 3b66cf1cb931..f3abf90793c9 100644
+--- a/drivers/md/dm-bufio.c
++++ b/drivers/md/dm-bufio.c
+@@ -994,6 +994,8 @@ struct dm_bufio_client {
+ 
+ 	unsigned int minimum_buffers;
+ 
++	unsigned long retain_bytes;	/* READ_ONCE/WRITE_ONCE, no lock needed */
++
+ 	sector_t start;
+ 
+ 	struct shrinker *shrinker;
+@@ -2284,6 +2286,42 @@ void dm_bufio_set_minimum_buffers(struct dm_bufio_client *c, unsigned int n)
+ }
+ EXPORT_SYMBOL_GPL(dm_bufio_set_minimum_buffers);
+ 
++/*
++ * Set the number of bytes this client tries to keep cached; 0 resets it
++ * to the module default.  Non-zero values are rounded up to a block
++ * boundary, so the target keeps at least as many bytes as requested.
++ */
++void dm_bufio_set_retain_bytes(struct dm_bufio_client *c, unsigned long bytes)
++{
++	if (!bytes) {
++		WRITE_ONCE(c->retain_bytes, READ_ONCE(dm_bufio_retain_bytes));
++		return;
++	}
++
++	/* clamp so the round-up below cannot overflow */
++	if (bytes > ULONG_MAX - c->block_size + 1)
++		bytes = ULONG_MAX - c->block_size + 1;
++
++	WRITE_ONCE(c->retain_bytes,
++		   DIV_ROUND_UP(bytes, c->block_size) * c->block_size);
++}
++EXPORT_SYMBOL_GPL(dm_bufio_set_retain_bytes);
++
++unsigned long dm_bufio_get_retain_bytes(struct dm_bufio_client *c)
++{
++	return READ_ONCE(c->retain_bytes);
++}
++EXPORT_SYMBOL_GPL(dm_bufio_get_retain_bytes);
++
++/*
++ * The number of buffers currently cached by this client.
++ */
++unsigned long dm_bufio_get_cached_buffers(struct dm_bufio_client *c)
++{
++	return cache_total(&c->cache);
++}
++EXPORT_SYMBOL_GPL(dm_bufio_get_cached_buffers);
++
+ unsigned int dm_bufio_get_block_size(struct dm_bufio_client *c)
  {
- 	struct dm_table *map;
- 	int srcu_idx;
-+	bool suspend_targets;
+ 	return c->block_size;
+@@ -2389,7 +2427,7 @@ static void drop_buffers(struct dm_bufio_client *c)
  
- 	might_sleep();
+ static unsigned long get_retain_buffers(struct dm_bufio_client *c)
+ {
+-	unsigned long retain_bytes = READ_ONCE(dm_bufio_retain_bytes);
++	unsigned long retain_bytes = READ_ONCE(c->retain_bytes);
  
-@@ -2752,14 +2753,21 @@ static void __dm_destroy(struct mapped_device *md, bool wait)
- 	 */
- 	mutex_lock(&md->suspend_lock);
- 	map = dm_get_live_table(md, &srcu_idx);
--	if (!dm_suspended_md(md)) {
-+	suspend_targets = !dm_suspended_md(md);
-+	if (suspend_targets) {
- 		dm_table_presuspend_targets(map);
- 		set_bit(DMF_SUSPENDED, &md->flags);
- 		set_bit(DMF_POST_SUSPENDING, &md->flags);
--		dm_table_postsuspend_targets(map);
- 	}
- 	/* dm_put_live_table must be before fsleep, otherwise deadlock is possible */
- 	dm_put_live_table(md, srcu_idx);
+ 	if (likely(c->sectors_per_block_bits >= 0))
+ 		retain_bytes >>= c->sectors_per_block_bits + SECTOR_SHIFT;
+@@ -2522,6 +2560,7 @@ struct dm_bufio_client *dm_bufio_client_create(struct block_device *bdev, unsign
+ 
+ 	mutex_init(&c->lock);
+ 	spin_lock_init(&c->spinlock);
++	c->retain_bytes = READ_ONCE(dm_bufio_retain_bytes);
+ 	INIT_LIST_HEAD(&c->reserved_buffers);
+ 	c->need_reserved_buffers = reserved_buffers;
+ 
+diff --git a/include/linux/dm-bufio.h b/include/linux/dm-bufio.h
+index d1503b815a78..f4d86b4b7e0f 100644
+--- a/include/linux/dm-bufio.h
++++ b/include/linux/dm-bufio.h
+@@ -158,6 +158,14 @@ void dm_bufio_forget_buffers(struct dm_bufio_client *c, sector_t block, sector_t
+  */
+ void dm_bufio_set_minimum_buffers(struct dm_bufio_client *c, unsigned int n);
+ 
++/*
++ * Configure and query the per-client retain target; 0 resets the
++ * module default.
++ */
++void dm_bufio_set_retain_bytes(struct dm_bufio_client *c, unsigned long bytes);
++unsigned long dm_bufio_get_retain_bytes(struct dm_bufio_client *c);
++unsigned long dm_bufio_get_cached_buffers(struct dm_bufio_client *c);
 +
-+	/* Wait for in-flight target messages, like __dm_suspend() does. */
-+	if (suspend_targets)
-+		synchronize_srcu(&md->io_barrier);
-+
-+	if (suspend_targets)
-+		dm_table_postsuspend_targets(map);
- 	mutex_unlock(&md->suspend_lock);
- 
- 	/*
+ unsigned int dm_bufio_get_block_size(struct dm_bufio_client *c);
+ sector_t dm_bufio_get_device_size(struct dm_bufio_client *c);
+ struct dm_io_client *dm_bufio_get_dm_io_client(struct dm_bufio_client *c);
 -- 
 2.43.0
 
