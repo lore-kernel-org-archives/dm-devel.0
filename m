@@ -1,55 +1,90 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=100.103.45.18
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=195.135.223.130
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1795472844;
-	b=hqWSNFciHGEV05snFZiGiIQ1/zGn531psSnmGNe8t64MlHmnKUw9nRTttnNOow14P4HF
-	 AOyGHK70ZvVAD1/2nIjoOxyIIy68TGjL0vECwue2Gez8CcWprN3INPAt7MQT6MAwYNGqT
-	 8rNh3I7caGZ7y2Z1EitxRrSP9W6aM2oY69RQpEMhIikZjrgWKP7Li+G6A66g9c/Q+maOF
-	 QDNq5EG6PvxToYeEoN80nKP9593cYxOUe0wvY8wGPLVxYWXufzpvlqikmZGztOQIxKJ2s
-	 XJ4hg9uhXkmGBhjm015EHoeZXAab6AB5KqIjxIuCyT81RH12NqFkrVSva1I3nADPzVQ==
+	t=1795475403;
+	b=RjGugeJfwC9KkXxVZzamI29aBcCnfIKhRdjZ7Lau3qKBD+sY5R2Zg22UjvebaGX+t44V
+	 BI7oQ0qTPbhEB7DuYgN2AVlow31TIjBpD43zWpcytm59b5i2wmWjOz84WhMkCaw2hrQpQ
+	 Y40qyZI9LjnrBr9Sq8iNkhVK5ts6NnoDaRi3lXfmpllaL8dIolS2rmIkDS6YpWh5wFHbg
+	 A93yWyquE4G1Z4wNLCe7egFrdL6Op6E6sUdpf1nt3YqKCtUeiLEQ16IjUsV7NxMwOtOMm
+	 qjENsc2OhfpE2rOFJsWdWWIxt9kBRyof+ntz5aZbb0cGY2sNJhY8idphhhIZU+Gihsw==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1795472844;
-	h=Received:DKIM-Signature:Date:From:To:Cc:Subject:Message-ID:
-	 References:MIME-Version:Content-Type:Content-Disposition:In-Reply-To;
-	bh=1SXtsndVDFo01qaS3zcu/AOAPMuR2YTIaz0A9T5A49k=;
-	b=Ir3NGJNRt5GMeRSJfgvzLBBR7sNrAJ3DeTD71Y21GRamp0EepnGIx58Tjw49lIzqtib7
-	 ggbWTi2Vfdou/Ojzby/mvO+pJePpvciXLbYDqtADogZEX5R3O3veKTo1Ev1oKXLveePsc
-	 aR56sHy6W7ncFb4Jwb3M1U2wL7aGhR+CIzfhPSgqOpTeiB3sp0Rf/AqMigG1cI7cQ8S7A
-	 CX73Oa84nL0dXr2fOdrHnYosjCuOfBOjfsOPVhu1t2ozu12ZwNWi99OQTXuVA07hNLreN
-	 Cjz3Rn8afZbtFchdoYJa1JxT15zT1spgtSgmpkry0LRD9/5Xqck0GnXRF/F6b/kr+aQ==
+	a=rsa-sha256; c=relaxed/relaxed; t=1795475403;
+	h=DMARC-Filter:Received:DKIM-Signature:DKIM-Signature:Received:
+	 Received:Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
+	 Content-Type:Content-Transfer-Encoding:User-Agent:MIME-Version:
+	 X-Spamd-Result:X-Spam-Score:X-Spam-Level:X-Spam-Flag;
+	bh=GEUXgfdQo3MMvt8Pk6y+n5CbzxOayfuRqMaE2uROPsc=;
+	b=2gQjxaShPcbzVcfsSfz7AalCN18L6mIag9Z7c0CWjuIxz7JQltpT3SJCKOUR1DFsT2ut
+	 NJzXYndjbOzvXGtDST8edUWRXOLmNGfLpEdTsjdFrmf8RDqAH7DPRfvJRWf/g0AAoUPzp
+	 JCw6Xda/WCxxyj5BfUDKOyqdRMl6+SwhQRUV3J/eqvDCRmZqSbJUQYyi9UHsg6dISPWas
+	 hw0v9RZooS0pc7DNIvx7hY76pZrAP5ck3B2tWdkY1gQ7uC6tkqM+b+PPLilV+yAzGyAnV
+	 akyHij3PhKpTy9rxPBJ2/IUFYJkxwTEgwXi6rvjFebdkU16ky7mqsOUilGU27FkDvsw==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=FUVLYUy8;
-	arc=none smtp.remote-ip=100.103.45.18
-Received: from smtp.kernel.org (quasi.space.kernel.org [100.103.45.18])
+	dmarc=pass header.from=suse.com;
+	spf=pass smtp.mailfrom=suse.com;
+	dkim=pass header.d=suse.com header.i=@suse.com header.a=rsa-sha256 header.s=susede1 header.b=EiaVYKmG;
+	dkim=pass header.d=suse.com header.i=@suse.com header.a=rsa-sha256 header.s=susede1 header.b=SVeoClS0;
+	arc=none smtp.remote-ip=195.135.223.130
+Received: from smtp-out1.suse.de (smtp-out1.suse.de [195.135.223.130])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature ECDSA (prime256v1))
+	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 69887606A322
-	for <dm-devel@lists.linux.dev>; Mon, 23 Nov 2026 22:27:24 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 93D52606A31E
+	for <dm-devel@lists.linux.dev>; Mon, 23 Nov 2026 23:10:02 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 93D52606A31E
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=FUVLYUy8
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 801A31F000D4;
-	Mon, 23 Nov 2026 22:27:23 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
-	s=k20260515; t=1795472843;
-	bh=1SXtsndVDFo01qaS3zcu/AOAPMuR2YTIaz0A9T5A49k=;
-	h=Date:From:To:Cc:Subject:References:In-Reply-To;
-	b=FUVLYUy8+wLjjz2GmsHCRDZ53XWbwiKrRLQFflzBuNgSxawcoVmRP92maUmjYpDG1
-	 mT+t36nQa9cif6++DofWkU5qyL0r6CAtxchH5EF3o5rqjwqa+zs94XohytYI7lBobR
-	 yecDgpX7XsyvL+FFOQiJsCxEPomlIseE0opOe//ilKn1GHinIl2YtL0SYUUOJuvLs/
-	 m40gvQlm42qoB+m719Ka4zValjWsD6JWWMYgL1FvK1884l2PYVKp0SytEiRmRCdxBE
-	 l4L8KySyhifpd1rHsGoOiV39cOpmmKhJ2EzlfqIw9KfxqjON5TIzTZ4yosvJ1jZTVd
-	 m5Rwbt0IqeUKQ==
-Date: Mon, 23 Nov 2026 22:27:22 +0000
-From: Eric Biggers <ebiggers@kernel.org>
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>,
-	Benjamin Marzinski <bmarzins@redhat.com>,
-	Ming-Hung Tsai <mtsai@redhat.com>,
-	Zdenek Kabelac <zkabelac@redhat.com>, Filip Suba <fsuba@redhat.com>,
-	dm-devel@lists.linux.dev
-Subject: Re: [PATCH] dm-compress: introduce the dm-compress target
-Message-ID: <20261123222722.GB18468@google.com>
-References: <d3fbdf3d-c7d8-0e4f-31f4-b187eb52ec30@redhat.com>
+	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.a=rsa-sha256 header.s=susede1 header.b=EiaVYKmG;
+	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.a=rsa-sha256 header.s=susede1 header.b=SVeoClS0
+Received: from imap1.dmz-prg2.suse.org (unknown [10.150.64.97])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
+	(No client certificate requested)
+	by smtp-out1.suse.de (Postfix) with ESMTPS id 7EBE22200E;
+	Mon, 23 Nov 2026 23:09:59 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
+	t=1795475400; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	 mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=GEUXgfdQo3MMvt8Pk6y+n5CbzxOayfuRqMaE2uROPsc=;
+	b=EiaVYKmGebVDvpgsG+WzIweiUmtYSpB660BPq21jT1hwPk6Jq4eQJ6s9mOGJOM9m2KbGii
+	1OAQB0G2wG/tK/wjas8v9xdo7HlXrJSZpPq9W98pePX9G0EOG/YDTNAFenEHPNfE8tV6cF
+	2jCZohwFs+fv4GTfxbd10I1Q3Gy5cx4=
+Authentication-Results: smtp-out1.suse.de;
+	none
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
+	t=1795475399; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	 mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=GEUXgfdQo3MMvt8Pk6y+n5CbzxOayfuRqMaE2uROPsc=;
+	b=SVeoClS0VttaF4GvZ8ETtNGVkelkdmevaO9osSOlysZ1JQXIfRFx1ccJa3kb4N6AZFre5m
+	zzDBxr5XKbtelWbx3c4wQZJ7OAFLPoW5FlYFEbiRBbKAeQpbHpRkf6EyIzCK+UQoz/bGWm
+	D58CLugbOHArGMFETk1BRnZayWedQpM=
+Received: from imap1.dmz-prg2.suse.org (localhost [127.0.0.1])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
+	(No client certificate requested)
+	by imap1.dmz-prg2.suse.org (Postfix) with ESMTPS id 3F4F513505;
+	Mon, 23 Nov 2026 23:09:59 +0000 (UTC)
+Received: from dovecot-director2.suse.de ([2a07:de40:b281:106:10:150:64:167])
+	by imap1.dmz-prg2.suse.org with ESMTPSA
+	id /ey8BcfHBGt/ZAAAD6G6ig
+	(envelope-from <mwilck@suse.com>); Mon, 23 Nov 2026 23:09:59 +0000
+Message-ID: <a5fd94eaab6ee835b2a387a2ade58aa8fa587782.camel@suse.com>
+Subject: Re: [PATCH 00/13] multipath-tools: hwtable updates and minor
+ cleanups
+From: Martin Wilck <mwilck@suse.com>
+To: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Cc: Benjamin Marzinski <bmarzins@redhat.com>, Christophe Varoqui
+	 <christophe.varoqui@opensvc.com>, DM_DEVEL-ML <dm-devel@lists.linux.dev>
+Date: Tue, 24 Nov 2026 00:09:58 +0100
+In-Reply-To: <20261113125549.504780-1-xose.vazquez@gmail.com>
+References: <20261113125549.504780-1-xose.vazquez@gmail.com>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+User-Agent: Evolution 3.62.1 
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Post: <mailto:dm-devel@lists.linux.dev>
@@ -59,47 +94,86 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 List-Owner: <mailto:dm-devel+owner@lists.linux.dev>
 Precedence: list
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <d3fbdf3d-c7d8-0e4f-31f4-b187eb52ec30@redhat.com>
+X-Spamd-Result: default: False [-11.80 / 50.00];
+	SUSE_INTERNAL_BYPASS(-9.00)[];
+	BAYES_HAM(-3.00)[100.00%];
+	SUSPICIOUS_RECIPS(1.50)[];
+	NEURAL_HAM_LONG(-1.00)[-1.000];
+	NEURAL_HAM_SHORT(-0.20)[-1.000];
+	MIME_GOOD(-0.10)[text/plain];
+	FREEMAIL_ENVRCPT(0.00)[gmail.com];
+	FREEMAIL_TO(0.00)[gmail.com];
+	TAGGED_RCPT(0.00)[];
+	RCVD_VIA_SMTP_AUTH(0.00)[];
+	MIME_TRACE(0.00)[0:+];
+	ARC_NA(0.00)[];
+	MID_RHS_MATCH_FROM(0.00)[];
+	DKIM_SIGNED(0.00)[suse.com:s=susede1];
+	TO_DN_ALL(0.00)[];
+	FROM_EQ_ENVFROM(0.00)[];
+	FROM_HAS_DN(0.00)[];
+	RCPT_COUNT_THREE(0.00)[4];
+	RCVD_TLS_ALL(0.00)[];
+	RCVD_COUNT_TWO(0.00)[2];
+	TO_MATCH_ENVRCPT_ALL(0.00)[];
+	DBL_BLOCKED_OPENRESOLVER(0.00)[imap1.dmz-prg2.suse.org:helo,suse.com:email]
+X-Spam-Score: -11.80
+X-Spam-Level: 
+X-Spam-Flag: NO
 
-On Mon, Nov 23, 2026 at 10:07:01PM +0100, Mikulas Patocka wrote:
-> +static int __init dm_compress_init(void)
-> +{
-> +	int r;
-> +	unsigned i;
-> +
-> +	for (i = 0; i < dm_compress_n_algorithms; i++) {
-> +		unsigned request_size;
-> +		dm_compress_algorithms[i].cc = crypto_alloc_acomp(dm_compress_algorithms[i].name, 0, 0);
-> +		if (IS_ERR(dm_compress_algorithms[i].cc)) {
-> +			r = PTR_ERR(dm_compress_algorithms[i].cc);
-> +			dm_compress_algorithms[i].cc = NULL;
-> +			DMERR("Could not initialize algorithm %s", dm_compress_algorithms[i].name);
-> +			goto bad;
-> +		}
-> +		request_size = ALIGN(sizeof(struct acomp_req) + crypto_acomp_reqsize(dm_compress_algorithms[i].cc), CRYPTO_MINALIGN);
-> +		dm_compress_max_request_size = max(dm_compress_max_request_size, request_size);
-> +	}
+On Fri, 2026-11-13 at 13:55 +0100, Xose Vazquez Perez wrote:
+> Xose Vazquez Perez (13):
+> =C2=A0 multipath-tools: multipathd.8.in: fix mandoc WARNINGs
+> =C2=A0 multipath-tools: hwtable: make no_path_retry independent of
+> =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0 DEFAULT_CHECKINT
+> =C2=A0 multipath-tools: hwtable: add FUJITSU ETERNUS VX710/VX740
+> =C2=A0 multipath-tools: add EMC VNXe info
+> =C2=A0 multipath-tools: hwtable: update Intel Multi-Flex comment
+> =C2=A0 multipath-tools: hwtable: update Pivot3 maintainer email address
+> =C2=A0 multipath-tools: hwtable: update template instructions
+> =C2=A0 multipath-tools: hwtable: add EMC/Celerra
+> =C2=A0 multipath-tools: hwtable: update IBM arrays entries and comments
+> =C2=A0 multipath-tools: hwtable: add Dell PowerFlex NVMe (formerly
+> =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0 iScaleIO/VxFlex OS)
+> =C2=A0 multipath-tools: hwtable: add Western Digital OpenFlex NVMe
+> =C2=A0 multipath-tools: add repology table to README.md
+> =C2=A0 multipath-tools: move SPDX-License-Identifier to the top of
+> =C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=
+=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 create-config.mk and rules.mk
+>=20
+> =C2=A0README.md=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 |=C2=A0 2 +=
++
+> =C2=A0create-config.mk=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0 |=C2=A0 2 +-
+> =C2=A0libmultipath/hwtable.c=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 | =
+58 ++++++++++++++++++++++++++-------
+> --
+> =C2=A0multipath/multipath.conf.5.in |=C2=A0 2 +-
+> =C2=A0multipathd/multipathd.8.in=C2=A0=C2=A0=C2=A0 |=C2=A0 8 ++---
+> =C2=A0rules.mk=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=
+=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0=C2=A0 |=C2=
+=A0 2 +-
+> =C2=A06 files changed, 53 insertions(+), 21 deletions(-)
+>=20
+> Cc: Martin Wilck <mwilck@suse.com>
+> Cc: Benjamin Marzinski <bmarzins@redhat.com>
+> Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
+> Cc: DM_DEVEL-ML <dm-devel@lists.linux.dev>
+> Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
 
-I would strongly suggest avoiding crypto_acomp for now.  Instead, it
-would be better to simplify the set of supported algorithms to ZSTD and
-LZ4 (the ones that are well known to do the best on the space/time
-tradeoff curve) and call those library APIs directly.
+For the series: Reviewed-by: Martin Wilck <mwilck@suse.com>
 
-That avoids all the scatterlist nonsense and other crypto_acomp issues,
-especially when it seems the caller in this module has linear buffers
-already and waits synchronously for each one to complete.  (acomp does
-now support virtual addresses too, but it's still an extra layer that
-provides no benefit for a synchronous software-only user like this.)
+Thanks!
 
-As-is, it looks like it also doesn't work correctly with the scomp-based
-algorithms (lz4, lz4hc, lzo, 842) when chunk_size > PAGE_SIZE.  In that
-case scomp either returns -ENOSYS (making dm-compress silently store
-everything uncompressed) or overflows its internal scratch buffer.
 
-There's plenty of precedent for just using the compression libraries
-directly: zram, dm-vdo, btrfs, f2fs, etc.  If hardware offload is ever
-wanted, it can be added later as an optional path, like erofs does.
-
-- Eric
+--=20
+Dr. Martin Wilck <mwilck@suse.com>
+SUSE Software Solutions Germany GmbH, Frankenstr. 146, 90461 N=C3=BCrnberg,
+Germany
+Gesch=C3=A4ftsf=C3=BChrer: Stefan Gaiser, Jochen Jaser, Abhinav Puri (HRB
+36809,AG N=C3=BCrnberg)
