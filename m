@@ -1,78 +1,92 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=170.10.133.124
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.210.180
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1795411963;
-	b=ETFw3l1cCyJLy4w90gP6eq4LTV1Pq1TeeAKTI8De/fdAWiiF21PMDblr7Hcn5Sn1nt0l
-	 3VoBCerDpJPIMUKuvOnnbO6Cb0rdJh030Mx8ae5tysn6/Y0JTsx/mwlvLj4HXxg/ECKom
-	 i14ydrAaU8zeYPk1wS9pgpEHjNS6p9XpML5udm4iFsxCehJYUvd4t+XdpY3TpH3kF/LvY
-	 WtrI4dqwl9GnK0Yb9C4gxS324qybFaG72s4sOI0eQYqKoiBEOLUTOf/2ZZSJqB7m0CmeI
-	 238uHhYAE38rcCYsEA7r/rQ6hTTxTtitIEUUvOulCAphITJzfd+8G93RVVbzMQRvq5w==
+	t=1795414436;
+	b=uNRuM52IaR6XUV8NQ5zJ1DdnzrYEF2DRRQmX4dwyJPtYRZFaCc19FXxJtGOSo0gyhOwZ
+	 X3w1IF87hjVKrx7oCe5w5eJtjnyQnAZJItn+dNAc6EuAg6+2l2uGZ8StYLbDLMU2yaP16
+	 e5Ze+pGwYdwZiWTq9ckIyCGTTXD1w8lxlwRhbNxgQQIaBSP0ewk1+xOS1tayaS4PqCuK8
+	 BWI5t+XtDSjZCo13tniHNu6/jCC7gV5ThdMOKGJxuiTjticHVdO88ZyP87ORwP/5EgAxb
+	 bNR5CAxEhcHKiBiiyowuLZZDLaUFZjKyQb1ESLxu0nt5vXmGLhy233L1knvZXg2Pnmg==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1795411963;
-	h=DMARC-Filter:DKIM-Signature:Received:X-MC-Unique:
-	 X-Mimecast-MFC-AGG-ID:Received:Received:Received:Received:From:To:Cc:
-	 Subject:Date:Message-ID:MIME-Version:X-Scanned-By:
-	 X-Mimecast-Spam-Score:X-Mimecast-MFC-PROC-ID:X-Mimecast-Originator:
-	 Content-Transfer-Encoding:content-type;
-	bh=gfHJ15M5OUnkR+jtqwUB1FHE1e6eIeq84EO2ZHy7U2s=;
-	b=N+cIzJ2Lw3OFMqr1yG09GZT6omFOjkM56CBqYgjRvuJ0K5E45RQsrNZNZeRbOcywyoJv
-	 Zp0jgDAOjyyB/WGQ6DK0X2xLegcOd0qgUst41b2N0m/YN2e2fN8m1LhMItW+x6t+QmsP+
-	 h7CIxE9MtSUA+68i8ZS4km1iw7a7zSLtKBYMy20QUpUFfUsdWv/mfWxpAy49Ctfte54nN
-	 AQwk9kiSR87Cb7FkUVSrEaM65HsAxI1w3jsW2gH7a25mMQRwN567ClisAQttjSfxJyANZ
-	 upqBATjvnE4XEBjK/24E+F6SJZQGWebnVUeHcJY2qHtfhnEha/vCoDL4mMBrmo75JMg==
+	a=rsa-sha256; c=relaxed/relaxed; t=1795414436;
+	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
+	 X-Gm-Message-State:X-Gm-Gg:X-Received:Received:Subject:From:To:Cc:
+	 Date:Message-Id:Content-Type:Content-Transfer-Encoding:MIME-Version;
+	bh=cC9gVRTaITRF0x2YlnTwc7AlwbCdAsD7C4t5cMZ3xTI=;
+	b=rSQa4OSSdgzFtdZ7vPmEGAcdbxTgZHncP/N4OEW8E7Qd4ey+IRZsW0iVIYvKP3AaZtJ1
+	 nxA9c2meEerEm21OCZ7YH0YwiQa/P1UUPUE5SLKw7PPJ0zD/vmcFnEDeu9GXq7AQstLLv
+	 /7ntVLAr6mo7eoX/y34BixTqNaeu0ZXT36q/y3T49kz4vflBJyyPiQ77QxsW3TnC0EjJJ
+	 dMW97R6suZUFHgsIUwnM1JSrYyPzU2YL7LApXBCS8HDthFWf/yr8ll43WCj0zt+ney+q0
+	 HE182Gwq3Xk74+5qTufs4pKqw8jCEhQ8vsI0YiZXd1mFClkYwJDttNKwlringZEroqg==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dmarc=pass header.from=redhat.com;
-	spf=pass smtp.mailfrom=redhat.com;
-	dkim=pass header.d=redhat.com header.i=@redhat.com header.a=rsa-sha256 header.s=mimecast20190719 header.b="HX/KcYKf";
-	arc=none smtp.remote-ip=170.10.133.124
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	dmarc=pass header.from=gmail.com;
+	spf=pass smtp.mailfrom=gmail.com;
+	dkim=pass header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=SL01D5SL;
+	arc=none smtp.remote-ip=209.85.210.180
+Received: from mail-pf1-f180.google.com (mail-pf1-f180.google.com [209.85.210.180])
+	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 54130606A31A
-	for <dm-devel@lists.linux.dev>; Mon, 23 Nov 2026 05:32:43 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 54130606A31A
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 03121606A31E
+	for <dm-devel@lists.linux.dev>; Mon, 23 Nov 2026 06:13:55 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 03121606A31E
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.a=rsa-sha256 header.s=mimecast20190719 header.b=HX/KcYKf
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1795411962;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding;
-	bh=gfHJ15M5OUnkR+jtqwUB1FHE1e6eIeq84EO2ZHy7U2s=;
-	b=HX/KcYKfGajK6IUhdgwyhvHLSpT5ZFkOQSzzTTvJXPlBHNcGUwhGHSKbEbGIoFkD+9r3/T
-	vQijzpmCLwgcH7nVL3CUorRlSr7yWT6OiyywLHUgCimmQOlzAZZSo6NvJ08frlnWVyMrUF
-	yowqc67Vfi9sSaWk03UF2h3fzznrFXs=
-Received: from mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-208-WZvcPmyCN4S-S1R0W_pXIw-1; Mon,
- 23 Nov 2026 05:32:39 +0000
-X-MC-Unique: WZvcPmyCN4S-S1R0W_pXIw-1
-X-Mimecast-MFC-AGG-ID: WZvcPmyCN4S-S1R0W_pXIw_1795411958
-Received: from mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.111])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 776D11800550;
-	Mon, 23 Nov 2026 05:32:38 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (bmarzins-01.fast.eng.rdu2.dc.redhat.com [10.6.23.12])
-	by mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 271D0180054C;
-	Mon, 23 Nov 2026 05:32:37 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.17.1) with ESMTPS id 6AN5WaUv3060777
-	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
-	Mon, 23 Nov 2026 00:32:36 -0500
-Received: (from bmarzins@localhost)
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.18.1/Submit) id 6AN5WZEG3060762;
-	Mon, 23 Nov 2026 00:32:35 -0500
-From: Benjamin Marzinski <bmarzins@redhat.com>
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=SL01D5SL
+Received: by mail-pf1-f180.google.com with SMTP id d2e1a72fcca58-8c700d6cc0bso2030953b3a.1
+        for <dm-devel@lists.linux.dev>; Sun, 22 Nov 2026 22:13:55 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20260707; t=1795414435; x=1796019235; darn=lists.linux.dev;
+        h=mime-version:content-transfer-encoding:content-type:message-id:date
+         :cc:to:from:subject:from:to:cc:subject:date:message-id:reply-to
+         :content-type;
+        bh=cC9gVRTaITRF0x2YlnTwc7AlwbCdAsD7C4t5cMZ3xTI=;
+        b=SL01D5SLMPTJABDdEn8nDd16oFfxX8LnR0mKVbeCQsbxdDabC4PkzqlGYxsFPGuE3u
+         ggozZLLzGFOxQmh/EqHOn+meYjYtNuGzC4jVcDA/oU200KbMezkVUtZ2SalzScPfkhco
+         xbbxu4QHRVksBQ5ky1BahZE1+BIpgxLWbrL7xJZ72n4bqJDxvhRXHQHWxKrGHBB5KYSp
+         Jn398pw9M+yxCnE50ubdxwrALb1NJTiPy08oEo5yTtEeo6azFl2kmj+Xdev3BrXzoBXm
+         Y/gsYFUB9yizzEvvd5jUUCnLE5jI0yiAwUQKazmU+3KVTPXrc7ltWsVe+KVq138yOQpP
+         q5ow==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20260707; t=1795414435; x=1796019235;
+        h=mime-version:content-transfer-encoding:content-type:message-id:date
+         :cc:to:from:subject:x-gm-gg:x-gm-message-state:from:to:cc:subject
+         :date:message-id:reply-to:content-type;
+        bh=cC9gVRTaITRF0x2YlnTwc7AlwbCdAsD7C4t5cMZ3xTI=;
+        b=onqCSNda68DKZe5pjQteYruo29Q4re00EJYNLc2OS0TvPk5Qh4vk5vgO8DEmfv3U6i
+         88YiFUhNqwkbTr0U9JINB0FPTvqa/qe1SWx7WlGYdrKRHrHfUf16rtWu49mWCvRaJeMA
+         PejrcgWVHl2f7qFzBihJKEV6CvvxKnb5tbpE6dg/QYPPog24rccdBSlwmYSqpi6bMzgP
+         0wJz376QfVDuBB1G8SrA09Bp7CrsAkT5tMUA4o4kF1F9b4pZ+/FfCZZ5IWKE1CLqJ/aN
+         sv3FZAxZ9RKLJnsozfi+sffwG6SP0XzFqmpBhf01o7GlUpfbS2yk2lSuQAP0V2MXDIT7
+         GP7Q==
+X-Gm-Message-State: APuU4Z/sbCNF4+ZJH0YeuqJy62P0oQPi9/nyyEDviFzfxcMmTNHKfTK0
+	bd+be6W+78a1Ks3GSLdG/GKtLmK7TFJhjZMXzA16XvUdbL2Obpo3q8xs
+X-Gm-Gg: AZFdTZdQ1l8Bu6ED4imJycBPGJXyWo4wvhdfEKD6jMWWWo197sF36xUzmMVPFa4nnGZ
+	2OfrvkZoAVc5YqDwgbFI958UVgeiIbVh9rDSrXzo96lwWgTxeMkm5zAiuJ2hG1eDZwsQI3ZFN04
+	js37CfhUPLFoME52U8GyhYmQukjdOOH0Cn+1mlCoBi9/DKkDWmQRzy1OzepY4v2Ejo5Mcl+Cof6
+	YGGFFCE8z0bpL2LWddZbK9og7HuDb783FjLr3LpV5Peaz4PkrMQr8c/1KqYXguoOjoh/NpFL+/J
+	1vFW/kBn56dqV8ldCHQK1Nsl+fKlXVcc+Nf8HTogrTxG6Mj8eGJ+6fClaMggm5BFqAv2DBuxc2s
+	nSBH5c8xsRlWXfOMbfaylqtWoLxg1h3LHYw0ZwhtkxYLLyqTKgDX6yLlLKFpYjait8qVXwFF/e7
+	eYU7EVG9cuFNICzI6TavHlH8kE9NxiEPfRFTMDZauGNcbpWsVBskYmuQq1uxnHXoK94EEVYNCFc
+	LjLsPkaDrpiUwHP59jXSVRNX8qYpq5/4xYR4bSt42SdN+6iU+Kw+AglghIhZdcueG1bivYwzQlO
+	+BBL0ldqLKflFVxVu+xREORKgk1XC7UCRNjdpkCzBEwUsoJ5YEZJslrWNda7Fa4p2muT5vJP2bI
+	uQoByyOzEUMbD/W1ZtnviE1U=
+X-Received: by 2002:a05:6a20:7f8e:b0:3e2:81f5:a864 with SMTP id adf61e73a8af0-400aea11bf9mr8689588637.41.1795414435189;
+        Sun, 22 Nov 2026 22:13:55 -0800 (PST)
+Received: from runnervm0hi8g.cxrikbqfcygehnd5bg50p3ctfh.dx.internal.cloudapp.net ([13.83.233.98])
+        by smtp.gmail.com with ESMTPSA id 41be03b00d2f7-cde6d05c0cfsm4644962a12.26.2026.11.22.22.13.53
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Sun, 22 Nov 2026 22:13:54 -0800 (PST)
+Subject: [PATCH v3] dm-integrity: reject recalculation when recalc_wq was
+ never allocated
+From: Yang Luohan <ylh440104@gmail.com>
 To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: Mike Snitzer <snitzer@kernel.org>, dm-devel@lists.linux.dev
-Subject: [PATCH] dm: set max_hw_discard_sector hints from max_discard_sectors
-Date: Mon, 23 Nov 2026 00:32:35 -0500
-Message-ID: <20261123053235.3060754-1-bmarzins@redhat.com>
+Cc: dm-devel@lists.linux.dev, linux-kernel@vger.kernel.org,
+ Mike Snitzer <snitzer@kernel.org>, Benjamin Marzinski <bmarzins@redhat.com>
+Date: Mon, 23 Nov 2026 06:13:52 +0000
+Message-Id: <179541443270.2416.6401739253063141536@gmail.com>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: quoted-printable
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Post: <mailto:dm-devel@lists.linux.dev>
@@ -82,75 +96,118 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 List-Owner: <mailto:dm-devel+owner@lists.linux.dev>
 Precedence: list
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.111
-X-Mimecast-Spam-Score: 0
-X-Mimecast-MFC-PROC-ID: HhRzjW19PTOX7UHEiEskYU6MSZ8mIJ9iRrOg82fT6ig_1795411958
-X-Mimecast-Originator: redhat.com
-Content-Transfer-Encoding: 8bit
-content-type: text/plain; charset="US-ASCII"; x-default=true
 
-The dm-cache and dm-clone target's io_hints currently set
-max_hw_discard_sector based on the origin/destination device's
-max_hw_discard_sector value. This can allow them to send discard
-requests larger than those underlying device's max_discard_sector value,
-forcing the underlying device to split the discard again.
+dm_integrity_resume() re-reads the superblock from the underlying device
+so that it picks up the flags and the recalculation position.  The
+constructor refuses a superblock that carries SB_FLAG_RECALCULATING when
+no internal hash is configured, because recalculation needs
+ic->recalc_work and ic->recalc_wq is only allocated when
+ic->internal_hash is set:
 
-blk_validate_limits() sets a device's max_discard_sectors from the
-minimum of its max_hw_discard_sectors and max_user_discard_sectors. If a
-user sets the max_user_discard_sector to a smaller value on the
-uderlying device, the current set_discard_limits() code in both dm-cache
-and dm-clone will ignore that lower limit for setting the device's
-max_hw_discard_sectors. Stacked devices to not inherit the
-max_user_discard_sectors of their underlying devices, and DM always sets
-max_user_discard_sectors to UNIT_MAX in dm_set_stacking_limits(), so
-max_discard_sectors starts out equal to max_hw_discard_sectors. The
-disable_passdown_if_not_supported() functions in these targets already
-correctly use the underlying device's max_discard_sectors value for
-checking their discard support.
+	} else {
+		if (ic->sb->flags & cpu_to_le32(SB_FLAG_RECALCULATING)) {
+			ti->error =3D "Recalculate can only be specified with internal_hash";
+			r =3D -EINVAL;
+			goto bad;
+		}
+	}
 
-Fix this by setting max_hw_discard_sector based on the underlying
-device's max_discard_sectors value. This limits to cache and clone
-discard sectors to the actual limits of the underlying devices.
+The superblock that is read back on resume is not subject to that check.
+superblock_changed() only compares magic, log2_interleave_sectors,
+integrity_tag_size, journal_sections, log2_sectors_per_block, the salt
+and the SB_FLAG_HAVE_JOURNAL_MAC, SB_FLAG_FIXED_PADDING,
+SB_FLAG_FIXED_HMAC and SB_FLAG_INLINE flags, so SB_FLAG_RECALCULATING
+can be added to the on-disk superblock while the device is suspended.
+Resume then reaches
 
-Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+	if (ic->sb->flags & cpu_to_le32(SB_FLAG_RECALCULATING)) {
+		__u64 recalc_pos =3D le64_to_cpu(ic->sb->recalc_sector);
+
+		if (recalc_pos < ic->provided_data_sectors) {
+			queue_work(ic->recalc_wq, &ic->recalc_work);
+
+with ic->recalc_wq =3D=3D NULL and dereferences a null pointer.
+
+When the recalculation support was introduced, the call was guarded:
+
+	if (ic->recalc_wq && ic->sb->flags & cpu_to_le32(SB_FLAG_RECALCULATING))
+
+commit 468dfca38b1a ("dm integrity: add a bitmap mode") dropped the
+ic->recalc_wq part of the condition while restructuring the surrounding
+code, so the null dereference has been reachable since that commit.
+
+commit 875a7161fe15 ("dm-integrity: don't recalculate with HMAC because
+of a dirty bitmap") re-applied the constructor's policy inside the
+SB_FLAG_DIRTY_BITMAP branch, which avoids the null dereference for a
+superblock that gets SB_FLAG_RECALCULATING set by resume itself, but the
+standalone SB_FLAG_RECALCULATING branch further down in the same function
+still queues the work unconditionally.
+
+Reject the superblock next to superblock_changed() instead, before the
+journal is replayed and before any superblock write, and restore the copy
+that the constructor validated.  Checking it at the point where the work
+is queued would leave SB_FLAG_RECALCULATING in the in-memory superblock,
+so dm_integrity_status() would report recalculation as enabled on a
+device that has no internal hash, and a later resume would take the
+stale flag from ic->sb and write it back to the device.
+
+No path inside dm_integrity_resume() sets SB_FLAG_RECALCULATING without
+an internal hash: the bitmap mode branch requires internal_hash in the
+constructor, dm_integrity_may_recalc_dirty_bitmap() rejects it, and
+reset_recalculate is rejected by the constructor as well.  The flag can
+therefore only arrive from the device, and rejecting it after the read
+is enough to keep the work queue call safe.
+
+Reproduced on 7.3.0 by loading a dm-integrity target in J mode without
+internal_hash, suspending it, writing SB_FLAG_RECALCULATING with
+recalc_sector =3D 0 into the on-disk superblock of the backing device, and
+resuming:
+
+	Oops: general protection fault, probably for non-canonical address 0xdffffc0=
+000000020
+	KASAN: null-ptr-deref in range [0x0000000000000100-0x0000000000000107]
+	RIP: 0010:__queue_work+0x95/0x1030
+	Call Trace:
+	 queue_work_on
+	 dm_integrity_resume
+	 dm_table_resume_targets
+	 __dm_resume
+	 dm_resume
+	 dev_suspend
+	 ctl_ioctl
+	Kernel panic - not syncing: Fatal exception
+
+Fixes: 468dfca38b1a ("dm integrity: add a bitmap mode")
+Cc: stable@vger.kernel.org
+Reported-by: Yang Luohan <ylh440104@gmail.com>
+Signed-off-by: Yang Luohan <ylh440104@gmail.com>
 ---
+Changes in v3:
+- the v1 patch checked ic->recalc_wq where the work is queued, which is
+  too late: the journal has been replayed and the superblock may have
+  been written already.  Move the rejection right after the superblock
+  is read, next to superblock_changed(), and restore ic->sb from
+  ic->sb_copy.
+- the v2 mail carried the diff twice by mistake, so the same hunk showed
+  up twice.  This version sends it once.
 
-This patch is related to
-https://lore.kernel.org/all/20261122215641.2865290-1-bmarzins@redhat.com/
-which sets max_hw_discard_sectors to the underlying device's
-max_discard_sectors during regular device stacking. But this patch
-is independent of it and can go in without it.
+drivers/md/dm-integrity.c | 8 ++++++++
+ 1 file changed, 8 insertions(+)
 
- drivers/md/dm-cache-target.c | 2 +-
- drivers/md/dm-clone-target.c | 2 +-
- 2 files changed, 2 insertions(+), 2 deletions(-)
-
-diff --git a/drivers/md/dm-cache-target.c b/drivers/md/dm-cache-target.c
-index 850c4b651f09..969d60cf653e 100644
---- a/drivers/md/dm-cache-target.c
-+++ b/drivers/md/dm-cache-target.c
-@@ -3534,7 +3534,7 @@ static void set_discard_limits(struct cache *cache, struct queue_limits *limits)
- 	 * cache_iterate_devices() is stacking both origin and fast device limits
- 	 * but discards aren't passed to fast device, so inherit origin's limits.
- 	 */
--	limits->max_hw_discard_sectors = origin_limits->max_hw_discard_sectors;
-+	limits->max_hw_discard_sectors = origin_limits->max_discard_sectors;
- 	limits->discard_granularity = origin_limits->discard_granularity;
- 	limits->discard_alignment = origin_limits->discard_alignment;
- }
-diff --git a/drivers/md/dm-clone-target.c b/drivers/md/dm-clone-target.c
-index bc4a5ce4c81a..d634d9111580 100644
---- a/drivers/md/dm-clone-target.c
-+++ b/drivers/md/dm-clone-target.c
-@@ -2041,7 +2041,7 @@ static void set_discard_limits(struct clone *clone, struct queue_limits *limits)
- 	 * device limits but discards aren't passed to the source device, so
- 	 * inherit destination's limits.
- 	 */
--	limits->max_hw_discard_sectors = dest_limits->max_hw_discard_sectors;
-+	limits->max_hw_discard_sectors = dest_limits->max_discard_sectors;
- 	limits->discard_granularity = dest_limits->discard_granularity;
- 	limits->discard_alignment = dest_limits->discard_alignment;
- 	limits->max_discard_segments = dest_limits->max_discard_segments;
--- 
-2.56.0
-
+--- a/drivers/md/dm-integrity.c
++++ b/drivers/md/dm-integrity.c
+@@ -3941,6 +3941,14 @@ static void dm_integrity_resume(struct dm_target *ti)
+ 		goto skip_writes;
+ 	}
+=20
++	if (unlikely(!ic->recalc_wq &&
++		     (ic->sb->flags & cpu_to_le32(SB_FLAG_RECALCULATING)))) {
++		memcpy(ic->sb, ic->sb_copy, sizeof(struct superblock));
++		DMERR("Recalculate requested, but internal_hash is not used");
++		dm_integrity_io_error(ic, "inconsistent superblock", -EINVAL);
++		goto skip_writes;
++	}
++
+ 	if (ic->mode =3D=3D 'R')
+ 		goto skip_writes;
+=20
