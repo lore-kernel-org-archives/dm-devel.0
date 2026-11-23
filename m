@@ -1,99 +1,87 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=74.125.82.46
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.221.41
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1795452047;
-	b=Dg4qveCEPMr3ksUmuTD7yeiKAyjR6zzvD/izcRf5YobGtXCadPOhxqToiNgh3PlTICG9
-	 Pv9gmUU4tWV8SEslcpzW7NNs2ZGwh6VeSmJ1Axwk7mpsDUQwDVDPCCB0rBFENH1nRjvKE
-	 DK/hx0ehWNJpbBdaG9aWC83p+SBAe/UBM7zAlcq2bnbIJE8LcIm0vAI9wkq59fTy5MU9F
-	 PcdOMxGmAwA5t/UnFdJdXsMq0XNd/lgwl7sZkElsHmQCStAaICpFdh6tSHrbaSk6XWVl/
-	 PrMXg2/gbwZt2/zuIEfSN7+mi8Om+vnce/shP4SnmPlMZK6txGxO2eV9WajTPiwOfsg==
+	t=1795453795;
+	b=R9teR8IIbeoM8u2bGpvRVdhMdIZ1fc4ZOiP4+3Mjmcxm2eoOE/hZbvg7fUPcLqtwAPSU
+	 By2I5JnH2Uleu8siM7QwCQBTuK1/Z5YQ3n54ANAXU7oZd4qpCyNt52gWw25BaSVRAoW+7
+	 TpG315V7vumGodOgP5O8KgHVLDChdqy8gd4I0qzaTaTiMOFrW4zFBNfzbDcmZQGROO2JQ
+	 r0xcyf6MWdBpjWJLEoS55dgawvl9wg70JFVq2WUTyMA0t+T2CYUXBwOQok1y008Rzl/sj
+	 PJ4ifm43A57I5epJWQqTGsjTNpM0n9zPp2JhgBCIauOPA4/1QhjdYz5OQ3pY2+xt9DA==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1795452047;
+	a=rsa-sha256; c=relaxed/relaxed; t=1795453795;
 	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
 	 X-Forwarded-Encrypted:X-Gm-Message-State:X-Gm-Gg:X-Received:Received:
-	 From:To:Cc:Subject:Date:Message-ID:X-Mailer:MIME-Version:
+	 Message-ID:Date:MIME-Version:Subject:To:Cc:References:
+	 Content-Language:From:In-Reply-To:Content-Type:
 	 Content-Transfer-Encoding;
-	bh=P5/ZiEeoOQolEtqZd6duqT2B+ydqubbd46Mv2EwUK7A=;
-	b=j4mWyNYk5uc6QCRgUBVlyiIU04taqC7i07uEnmalsxpnxBMQKs8AgmrLEnXrbjZRiZvr
-	 v+KE4ePDiPlE2aAu5xJBp+7oIMw6BsUif1lhuwawTS760RPdbIgEJrREpkDWGHzBh5ia2
-	 n5hGvYm9i6OusQp/h2FtrOprmM/RDyonhMfCs2O4FDRgjEMVxPQJWsucccNJL9rXaE/vE
-	 6R0cWSHTFqJHaDMMMwUgBwJgX0tw1LldULuwzt214ZBTDHRWTsCkrzQac1YbPRCnPGy/C
-	 9WP9DyThb1DpePo5LXB91Bw6NYDoehNanlA51QQo5hLns2Zm7owZ5STFkSRPzUgkjdQ==
+	bh=TwwEqr3OnjXukgfvtpJZLmewy9+Abiehlm3ScQM1z60=;
+	b=zdekht8DkvxXKaU9+nREGY/Lr9wMBd3a6wvVTFYdH0jIt48PIlijM2qsN1ektQEQSlds
+	 VmAeUbym2L8ZlxmAwzmIXyuXI9vLCRMCI5lGu23Sqqw42QlnnsJ244QhVQDV7j9qMr5Xi
+	 b/J5Zdgy0U7LjS/FzMBgsZ0ZzPLBTm1sAPwbDQx4YwmC6RLTWncAamS46b11S4M+rCTwQ
+	 pHgGCGezp56ZUY2ImJP6anaj83mOGeLdh2rTzkY+aFLdhEtyEcoQN4CJScg+WW9YuIScR
+	 gtvqLTsCqUTPeY8AxBKEoCVn5wYaJnD0jreMumH+FH8qqSm3bvsJCkwT0ZMQ3xFeU6g==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
 	dmarc=pass header.from=gmail.com;
 	spf=pass smtp.mailfrom=gmail.com;
-	dkim=pass header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=Q2kG7G5z;
-	arc=none smtp.remote-ip=74.125.82.46
-Received: from mail-dl1-f46.google.com (mail-dl1-f46.google.com [74.125.82.46])
+	dkim=pass header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=AKXnUcsq;
+	arc=none smtp.remote-ip=209.85.221.41
+Received: from mail-wr1-f41.google.com (mail-wr1-f41.google.com [209.85.221.41])
 	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C75A4606A31F
-	for <dm-devel@lists.linux.dev>; Mon, 23 Nov 2026 16:40:46 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org C75A4606A31F
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 59FB1606A31F
+	for <dm-devel@lists.linux.dev>; Mon, 23 Nov 2026 17:09:55 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 59FB1606A31F
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=Q2kG7G5z
-Received: by mail-dl1-f46.google.com with SMTP id a92af1059eb24-1a2af4c8d00so5967958c88.0
-        for <dm-devel@lists.linux.dev>; Mon, 23 Nov 2026 08:40:46 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=AKXnUcsq
+Received: by mail-wr1-f41.google.com with SMTP id ffacd0b85a97d-49a357e48a2so260889f8f.3
+        for <dm-devel@lists.linux.dev>; Mon, 23 Nov 2026 09:09:55 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20260707; t=1795452046; x=1796056846; darn=lists.linux.dev;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:from:to:cc:subject:date:message-id:reply-to:content-type;
-        bh=P5/ZiEeoOQolEtqZd6duqT2B+ydqubbd46Mv2EwUK7A=;
-        b=Q2kG7G5zqkKWCthMvkq1yKcVfYacxv8Lf3F5eqzVkTraWCHLYoSbXG3ApKGD/xf746
-         Z9U4lplVAOru8KqMHz0x0UNZ2T/navRV2ZaI2cLAJxmAlZyCZMg6EeBfsAvbqon+tMkX
-         davVqAyUzm0phYWpQUc7u1w/wJMENA5WaB5ByQaYcCxq8e+PUUc+DGFMD/9KTwq8YVLw
-         U6KzZibDBdR/W6ZwRG3K8OXWJwvRcq8StE3/PAjwEkIXQpAOa0gr+PgGLa3s80Dh0VNv
-         Mgo8WijESdHGNxpYqrWYOGd6K1KIduj299T2GxHQ41ycqUWNdzafSkM6+7anEvV8TfJj
-         5HwA==
+        d=gmail.com; s=20260707; t=1795453794; x=1796058594; darn=lists.linux.dev;
+        h=content-transfer-encoding:content-type:in-reply-to:from
+         :content-language:references:cc:to:subject:mime-version:date
+         :message-id:from:to:cc:subject:date:message-id:reply-to:content-type;
+        bh=TwwEqr3OnjXukgfvtpJZLmewy9+Abiehlm3ScQM1z60=;
+        b=AKXnUcsqMxvEcoocbZ+4kJRnjfGD6IW3vi5i6tT68uyM3H28/wR0WdmRH1MpVQKb/J
+         bv10ysz2LDGqpbs5ULk0iFEslq5ZJjfQzeMxpyCm44qVjoF0ziMCBkUe8Wjr8HTAWl4V
+         /m/LESISqf9k3PIzvkCJv9pTOvAZf0r3LJZPx6OOElmDTeUfVGoESAVX321ryKlTMe79
+         vIbfiLtKcnirSpVHTt16mkmQwI+nGRPw/uo7Xpk1/3ROA+Nzr2Yy3ZuMIZsLzLe8JVtR
+         +eTjgtaxHBDZk2ZdOuVRjYhKVbXKZ3mjjTdaJWYwK5FwZzHmye88LvVgr9EbGDSTyn8i
+         iqsw==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1795452046; x=1796056846;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
+        d=1e100.net; s=20260707; t=1795453794; x=1796058594;
+        h=content-transfer-encoding:content-type:in-reply-to:from
+         :content-language:references:cc:to:subject:mime-version:date
+         :message-id:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
          :message-id:reply-to:content-type;
-        bh=P5/ZiEeoOQolEtqZd6duqT2B+ydqubbd46Mv2EwUK7A=;
-        b=KB6nFiq3Ao/5A5uJoVRaRsXn6XmzBvJNxLNTNYka1EHhZ2/JR+POmLJioe9nCv8ARy
-         5UtMVGP2qDiygsst4g2oKOqzuwIpmj8YXI8f6qr3GqaKnJNBwmNt2TUJYT6+vQL9s3AH
-         V75ohSdNN6BkwggCVnQIjQPHFeQ0crzjynPKsUtpjRssk281wPWE0ASLwdXFGQppVNL4
-         O3Z9cRraGzaELtISXM1t0nbXSdIFaDZkFPk/PybTI62SwzM1nzdhThBy6yKtrvSM+6to
-         y9Eagf7TvpdqOR7brvQtmI6qv3Ki595ujz2uBk+7Ap1oQ805EHWVtLRsyoIzv5fYS3SM
-         SCJA==
-X-Forwarded-Encrypted: i=1; AL+hErExUBnmHo3SEugGIgK5VffvTEkN6lnOJCC8r8JZ8uUguQtXYzWAvXyZnNPgEUgVviLysgn5icM3qQ==@lists.linux.dev
-X-Gm-Message-State: APuU4Z/v+i/Rc4Qly/rNYB8sd9ttzvCQ5aPzP5Q9u+SqtzGsNEb8jSJ+
-	FOcwf2KGEPzko3j8dUuXLpUh+M+JeAazpMoe+0NzTQWgRAlICao9FdDj
-X-Gm-Gg: AZFdTZeQ2fZ4ZkaCalcURV2WQaQaw6FM+MLMEqHkqDGLMLRQ4jtSvyoiVPXg/UapaZM
-	k2wIxfDyUgxVhnzovJ5EnZBOVUyfRelRBVmc+qHLdp1URT8Cn7kgScx7KzuPQUqzmsX3DxqKiLI
-	6QUPVGcSYGxFSVKlrtvMNqSXG4BP3W2fNJLhlB/DNXyCVxrOkY70rC9bjbJfC80nEKcgc7DOIj6
-	WfberD4aZXV4bOTX/Y7B5Fal5gsL8XILFz+3+VF016dSzSa2CfZaZQrrik4lvhaxa4ingGCehHu
-	1g6Fn5vxlEk1Ti+jITOVC6DuXzuXZJ+W3CPfhLQkqzg+KG6Rju4Jt/DnppQAyFnwWU7uRP2x3uG
-	TwFFQR/gyKyxCRxflDKZ3/LI/3dOEvuaymkkPb5Zl46vg0mmDlRoMKgEXReQTpS6DioQKS6Lwpw
-	SojS9KuJWb9l/N+c0sg+EqwiBLUtUAZlRyvJF9eltPgiLoImOAToLb/fCCQxTEeCOsuj7MIK7HL
-	scuNoXlqnd2/ICvX2C26UtkeKztbxBH+Z91JiaoQeL5c8d6Sl1DrQTwdkoVWVvzuelRvLPZkHEx
-	L4E+zVryU21u4bJ6ac41Dn/tx9PcxO+o6xPNqvFwOff2w0zR4PgjAEp4zXsyl1Kj6tW/SINvTO0
-	KTgd0PKwY
-X-Received: by 2002:a05:701a:844e:20b0:1b5:6c13:c76c with SMTP id a92af1059eb24-1b56c13c7a8mr6689110c88.15.1795452045824;
-        Mon, 23 Nov 2026 08:40:45 -0800 (PST)
-Received: from lounas.tail428e48.ts.net ([157.131.129.22])
-        by smtp.gmail.com with ESMTPSA id a92af1059eb24-1b556847fdasm33225486c88.13.2026.11.23.08.40.44
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Mon, 23 Nov 2026 08:40:45 -0800 (PST)
-From: Louis Thiery <thiery.louis@gmail.com>
-To: agk@redhat.com,
-	snitzer@kernel.org,
-	mpatocka@redhat.com,
-	bmarzins@redhat.com
-Cc: ming.lei@redhat.com,
-	dm-devel@lists.linux.dev,
-	linux-block@vger.kernel.org,
-	linux-nvme@lists.infradead.org,
-	linux-kernel@vger.kernel.org,
-	Louis Thiery <thiery.louis@gmail.com>,
-	stable@vger.kernel.org
-Subject: [PATCH] dm: clear REQ_DM_POLL_LIST on embedded clone bio
-Date: Mon, 23 Nov 2026 16:40:21 +0000
-Message-ID: <20261123164021.463361-1-thiery.louis@gmail.com>
-X-Mailer: git-send-email 2.43.0
+        bh=TwwEqr3OnjXukgfvtpJZLmewy9+Abiehlm3ScQM1z60=;
+        b=BzVI09E9idSl2ToQxTvHA6zK8UjZNuBCBljNv47j+tC1js//Te0+EMhqLEDmIsazbQ
+         OsOacGc/kXzuiU6eHk+SuwGiaz7zfNcFWtcbhW+p6FQ6K6s2CumL14vki+7+6sodpE2P
+         ldlFwqbb+fquiNWW2HrtSqmG0K+CiquctvM7dPjpfWK4m6jBin3RgpNitJ3gsTE2goEC
+         lAXSySoLMAjXRWW8+S38y9CBkWvrpypmh090H4wWB8X4/Aya6P3p2LS69SQQiXJ2PoWj
+         HaNy/OE6EBMSfxo+aWJZKNS4mVL1VNNUT0KWXK8p9RAXvHHH5MFzMo5d7dnaC5B6VyMY
+         m79g==
+X-Forwarded-Encrypted: i=1; AL+hErE6gggdW3xr/QnnQrJ5L1rv0gSMyF5WNcQjkdX48D1Qugk+X3Gq+ZwWFAB25q8q+KDM2F1yxQIHjQ==@lists.linux.dev
+X-Gm-Message-State: APuU4Z/biWyIRyz4PRhKlS/6tUh+bj6e02w9H4jCYAjn8pWRXkDsjrQo
+	cp4tl5axbJdmW/C11rWOBKlW9AZ8pFT2PgOuM1XlqNV/OYDCfo8xQdo=
+X-Gm-Gg: AZFdTZf3hIXGGi/kZkv1fhghQqSiPQMb91lWPFv7PXN6gWB9p3aVpjUtC7Zh+ZsFSEi
+	WDs8/bisNNHaoRwdnAAuROU+zXHGkvr9WrjREVXDhpiU0ucrqGAxPtybqY1zlnhu/YksopYWt99
+	rHWLDOdhiYh9uQKzDSfp41NdFHrdSZCyr7WYG8g8IF2xM3i/24eYftetwOYPLi9d+ci9xy/nBpv
+	Nt8sYaFZiMtXTRLGoY4pdyg6fgrlTel9sGf3L9s6QKO5eGShTx+Qx9plewnUx8oTT+UHmaHsr8n
+	n76GTnlz6GpFFYY/8lAGOOrC8yPkDksQw/Pez5OwfbiboA0AlwOR9KF3C37FrbZFSWwumA9uM8O
+	JWGRuAmPEDCfmOJTfOTq8TpK2Z8ytQlvMVzRRf9tA8Jd7W/o/hEoZnFh6u+IrEJye3buIoMPjSB
+	hJVONM2tMS1aJIG+uZTu2dWJmCNX3T8K/FowkYPh51YKhK0xG3l6Dc3zEh4kvSOTC1aPQOTKXeD
+	G1VcbCLKTUERbH6/V0HupC9IZAPEEu1n1r6cdIjHQOxF9wcZuwVWiyjArgG2wEnrLCvYOSY6tfJ
+	NnzHvFctzMY4N3Gmy0gXOqs0J+vnYaXylJE9DtE+5JI9yULq9flNCfz33V2cP7HJW57B
+X-Received: by 2002:a5d:5d81:0:b0:4a3:1468:c483 with SMTP id ffacd0b85a97d-4abb4b85a38mr24156844f8f.4.1795453793485;
+        Mon, 23 Nov 2026 09:09:53 -0800 (PST)
+Received: from localhost (86.red-88-28-10.dynamicip.rima-tde.net. [88.28.10.86])
+        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-4ab6b110ba3sm19036291f8f.35.2026.11.23.09.09.52
+        (version=TLS1_3 cipher=TLS_AES_128_GCM_SHA256 bits=128/128);
+        Mon, 23 Nov 2026 09:09:52 -0800 (PST)
+Message-ID: <64b6d939-f527-417c-b5f8-c804e02846fe@gmail.com>
+Date: Mon, 23 Nov 2026 18:09:51 +0100
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Post: <mailto:dm-devel@lists.linux.dev>
@@ -103,71 +91,42 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 List-Owner: <mailto:dm-devel+owner@lists.linux.dev>
 Precedence: list
 MIME-Version: 1.0
+Subject: Re: [PATCH RESEND 03/13] multipath-tools: hwtable: add FUJITSU
+ ETERNUS VX710/VX740
+To: Martin Wilck <mwilck@suse.com>
+Cc: Benjamin Marzinski <bmarzins@redhat.com>,
+ Christophe Varoqui <christophe.varoqui@opensvc.com>,
+ DM_DEVEL-ML <dm-devel@lists.linux.dev>
+References: <20261113125549.504780-1-xose.vazquez@gmail.com>
+ <20261113125549.504780-4-xose.vazquez@gmail.com>
+ <16d621bce8b1e5f027f07a8b235be0d1f6f05796.camel@suse.com>
+Content-Language: en-US, en-GB, es-ES
+From: Xose Vazquez Perez <xose.vazquez@gmail.com>
+In-Reply-To: <16d621bce8b1e5f027f07a8b235be0d1f6f05796.camel@suse.com>
+Content-Type: text/plain; charset=UTF-8; format=flowed
 Content-Transfer-Encoding: 8bit
 
-When a polled bio is split across a target boundary (for example a
-dm-striped chunk boundary), dm_split_and_process_bio() re-submits the
-trimmed remainder of the original bio and then calls dm_queue_poll_io(),
-which sets REQ_DM_POLL_LIST (aliased to REQ_DRV) on the original bio.
+On 11/23/26 4:00 PM, Martin Wilck wrote:
 
-When the remainder subsequently enters dm_split_and_process_bio(),
-alloc_io() clones it into the embedded io->tio.clone, inheriting
-REQ_DM_POLL_LIST. alloc_tio() only clears REQ_DM_POLL_LIST in its else
-branch for non-embedded clones, leaving REQ_DRV set on the embedded
-clone that polled normal I/O uses.
+> On Fri, 2026-11-13 at 13:55 +0100, Xose Vazquez Perez wrote:
 
-The leaked REQ_DRV flag is misinterpreted by lower layers. On NVMe
-(where REQ_NVME_MPATH is also defined as REQ_DRV), nvme_start_request()
-calls nvme_mpath_start_request(). For a single-path namespace where
-ns->head->disk is NULL (with CONFIG_NVME_MULTIPATH=y), dereferencing
-disk->queue triggers a kernel NULL pointer dereference:
+>> +	{
+>> +		// ETERNUS VX700 series
+>> +		.vendor        = "FUJITSU",
+>> +		.product       = "ETERNUS_VX700",
+>> +		.pgpolicy      = MULTIBUS,
+>> +		.no_path_retry = 120,
+>> +	},
+> 
+> I see this in the manual (my Japanese being a bit rusty), but are you
+> certain that the VX700 has no ALUA support? If it does, it's at least
+> misleading to set pgpolicy to MULTIBUS here, as this will be overridden
+> by ALUA auto-detection.
+The Fujitsu manuals specify an active-active setup with
+"path_grouping_policy multibus", and the "multipath -ll"
+example shows all paths active in a single group:
 
-  BUG: kernel NULL pointer dereference, address: 0000000000000050
-  RIP: 0010:nvme_mpath_start_request+0x28/0xc0
-  Call Trace:
-   nvme_prep_rq+0x5e0/0xa90
-   nvme_queue_rq+0x40/0x1a0
-   __blk_mq_issue_directly+0x45/0xb0
-   blk_mq_try_issue_directly+0x85/0x100
-   blk_mq_submit_bio+0x6c9/0x710
-   submit_bio_noacct_nocheck+0x127/0x330
-   blkdev_direct_IO+0x230/0x680
+page  8: https://www.fsastech.com/ja-jp/products/storage/assets-a/manual/afa-disk/p3am-3912.pdf
+page 35: https://www.fsastech.com/ja-jp/products/storage/assets-a/manual/afa-disk/p3am-6362.pdf
 
-On stacked DM devices, a lower DM layer also sees REQ_DM_POLL_LIST
-already set on the incoming clone and treats its bi_private as a dm_io
-poll list head.
-
-Move the REQ_DM_POLL_LIST clear out of the else branch in alloc_tio() so
-it applies to both embedded and non-embedded clones.
-
-Fixes: b99fdcdc3636 ("dm: support bio polling")
-Cc: stable@vger.kernel.org
-Signed-off-by: Louis Thiery <thiery.louis@gmail.com>
----
- drivers/md/dm.c | 6 +++---
- 1 file changed, 3 insertions(+), 3 deletions(-)
-
-diff --git a/drivers/md/dm.c b/drivers/md/dm.c
-index 1881d8611..79972f17f 100644
---- a/drivers/md/dm.c
-+++ b/drivers/md/dm.c
-@@ -628,13 +628,13 @@ static struct bio *alloc_tio(struct clone_info *ci, struct dm_target *ti,
- 		if (!clone)
- 			return NULL;
- 
--		/* REQ_DM_POLL_LIST shouldn't be inherited */
--		clone->bi_opf &= ~REQ_DM_POLL_LIST;
--
- 		tio = clone_to_tio(clone);
- 		tio->flags = 0; /* also clears DM_TIO_INSIDE_DM_IO */
- 	}
- 
-+	/* REQ_DM_POLL_LIST shouldn't be inherited */
-+	clone->bi_opf &= ~REQ_DM_POLL_LIST;
-+
- 	tio->magic = DM_TIO_MAGIC;
- 	tio->io = ci->io;
- 	tio->ti = ti;
--- 
-2.43.0
-
+I did not see ALUA support mentioned in the docs.
