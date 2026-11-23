@@ -1,87 +1,79 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=170.10.129.124
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=74.125.82.179
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1795465940;
-	b=TX2lmBeUcQA7yxSg4jSC78ZHYzW09f0au/fFasdOrws6w4zp6xoC43CDhX3JcxYzLYJL
-	 hFCzTw3lbCp4j9ZQcUa0B41REx+jV0DWC67XBabJrD1/ol8nvnuS8W3EdHp6XXKhJ1+X5
-	 33JW7HajBuqh6iXRPz56n+DueP0enNJmeDjr2+q2q5QDZpo3LuaJpXPPKvb8UJNhr3MnW
-	 gJx8iiv6Mepj1v74Jk7kyEfC07WmeCvq/2/e7UM3Fbrb52/r4a/aG7F9mRmPEW90UqOhk
-	 nElPzA6BQDFi2R3JcqkwGOdFuOSX0RbEtH1LWtC11muhUKp9GYU8ygWEbysJhtUrGxQ==
+	t=1795466077;
+	b=mQYSFi5NpZ9o08uY6U+Pzqpf7GhjFUy+x73V/Deg2KOSrMhDl+HcO7stFI7ItdcsqNB5
+	 EXUFcGb6TuZMSIMTjqVfZlW8wRmv7aIj9RUOK5G54mcpM7tEoa7g6MnWog3qqgRLQdQaD
+	 zPGM3OLZOpajlxTiS77KFzm66Q93uOI8f6r3TTsuNWMhzoz8Wq5Qj8FcK1pY3ifLwvu+M
+	 4nCafs7tBbccDJeX/tFzgu38V3JJIxDjF3OG/NLGKC3WejgsbpasPE5yKGasOxjiaRta0
+	 jBsPK8CKG5jp5/DOc/AqrrxNDDzmiFTSZ9MVGpgn1ZmfwvnIx1fdB06s+8JuF9E2yQQ==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1795465940;
-	h=DMARC-Filter:DKIM-Signature:Received:X-MC-Unique:
-	 X-Mimecast-MFC-AGG-ID:Received:Received:Received:Received:Date:From:
-	 To:Cc:Subject:Message-ID:References:MIME-Version:In-Reply-To:
-	 X-Scanned-By:X-Mimecast-Spam-Score:X-Mimecast-MFC-PROC-ID:
-	 X-Mimecast-Originator:Content-Type:Content-Disposition:
-	 Content-Transfer-Encoding;
-	bh=zKxrjart6ynP+rGIOanm7JgPrwjRI/hWTjEgjmSJj8s=;
-	b=YThrvO9NN4CXBdL4g+r8tTAWfpfI1rQLw05pViqi8Bpo0+EPS7AQx5OFp9P5d3aOVP4P
-	 SQaExXZNuHml0oLc+M2a07hrv7qEmj5f3MAcLrW5DiaQRFLKm12XgHHA6swA2juqk4mN/
-	 1c7RrpX9tv3HxMCfKYPptAHLwlS9N/K9era65SXA3HhtbEEoFkcJYknf1o3wQdDXK5Qjx
-	 DOAcyZPJx+Lh5MYF7141GSvr72yBwlfRfjS570cdj0YoWDKggopNBYuJpY6d3Wc9o8kWb
-	 XvaOLDyMd+BiNS2uM8K3k0joV25Fu0XAEqvRczs7uTA2AimmaRDHQ0Qhjs+o8TXFlXg==
+	a=rsa-sha256; c=relaxed/relaxed; t=1795466077;
+	h=DMARC-Filter:Received:X-Google-DKIM-Signature:X-Gm-Message-State:
+	 X-Gm-Gg:X-Received:Received:From:To:Cc:Subject:Date:Message-ID:
+	 X-Mailer:MIME-Version:Content-Transfer-Encoding;
+	bh=6D1L1HWYJhyUpOeTtQIUZeke2hr8L4TI6fulnbgEFlU=;
+	b=xa/tvF7ZEsRVdYcpRbGV36H/4Ay1hxZzfj0W7bPZDVIqGhf8T5o47UYhaivLPIPf/VRF
+	 NzFOrtUdLByFOBHsg/rZsMS3Owx5u/yWHBbB+zTzfUT7uN1asSgv+X6wufiW2G4j4s4CZ
+	 WrUmuuRl4ga2xwyeB/zOBJW/WXNtxTmozytuhiG4sVpt58lwwDmQIyejPVaXuDahnA2JT
+	 cSMy9e3N56RxNTknJMLZ3u4qaqp8sNRGEQIgaSlXB+j/LBt8C0yOuXrytkOE1waS+vd1c
+	 vs7Neq78B19byrOFZqifbSCYGzCSv87wRSPznnbx0ONOFVPlHCXPH92aW+d6Tj48/bQ==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dmarc=pass header.from=redhat.com;
-	spf=pass smtp.mailfrom=redhat.com;
-	dkim=pass header.d=redhat.com header.i=@redhat.com header.a=rsa-sha256 header.s=mimecast20190719 header.b=K3PIpzzR;
-	arc=none smtp.remote-ip=170.10.129.124
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	dmarc=none header.from=jakejoyner.com;
+	spf=pass smtp.mailfrom=gmail.com;
+	arc=none smtp.remote-ip=74.125.82.179
+Received: from mail-dy1-f179.google.com (mail-dy1-f179.google.com [74.125.82.179])
+	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 9BE07606A321
-	for <dm-devel@lists.linux.dev>; Mon, 23 Nov 2026 20:32:19 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 9BE07606A321
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.a=rsa-sha256 header.s=mimecast20190719 header.b=K3PIpzzR
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1795465938;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=zKxrjart6ynP+rGIOanm7JgPrwjRI/hWTjEgjmSJj8s=;
-	b=K3PIpzzRP6Ir50fdfGNvqFi4Uu6Gt+PaNltqwnzQy1oiTwF+nbEq9xr9HjKSWI9uauoHMh
-	XJj578gE6krNgeWwENQ1uAp5L+kBPlBOM0ien0Bu6gxs4/+q1pfGvk5xoW8N247SRexHe4
-	kwYSOlsy2AWu1fLk00V6XiUgevHjcGk=
-Received: from mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-57-1i8VDQbDPNSuk4OmJ7_4WQ-1; Mon,
- 23 Nov 2026 20:32:14 +0000
-X-MC-Unique: 1i8VDQbDPNSuk4OmJ7_4WQ-1
-X-Mimecast-MFC-AGG-ID: 1i8VDQbDPNSuk4OmJ7_4WQ_1795465933
-Received: from mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.111])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id E2D30180060C;
-	Mon, 23 Nov 2026 20:32:11 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (bmarzins-01.fast.eng.rdu2.dc.redhat.com [10.6.23.12])
-	by mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 013C11800548;
-	Mon, 23 Nov 2026 20:32:10 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.17.1) with ESMTPS id 6ANKW93K3446108
-	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
-	Mon, 23 Nov 2026 15:32:09 -0500
-Received: (from bmarzins@localhost)
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.18.1/Submit) id 6ANKW5VN3446086;
-	Mon, 23 Nov 2026 15:32:05 -0500
-Date: Mon, 23 Nov 2026 15:32:05 -0500
-From: Benjamin Marzinski <bmarzins@redhat.com>
-To: sashiko-reviews@lists.linux.dev
-Cc: Jens Axboe <axboe@kernel.dk>, Christoph Hellwig <hch@lst.de>,
-        Hannes Reinecke <hare@suse.de>, Keith Busch <kbusch@kernel.org>,
-        "Martin K . Petersen" <mkp@kernel.org>,
-        Mikulas Patocka <mpatocka@redhat.com>,
-        Mike Snitzer <snitzer@kernel.org>, dm-devel@lists.linux.dev
-Subject: Re: [PATCH v2 RESEND] block: stack max_hw_discard_sectors on bottom
- max_discard_sectors
-Message-ID: <awSixRC9HeRiGQvJ@redhat.com>
-References: <20261123193000.3419445-1-bmarzins@redhat.com>
- <sashiko-outbox-229949@kernel.org>
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D8A66606A32D
+	for <dm-devel@lists.linux.dev>; Mon, 23 Nov 2026 20:34:36 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org D8A66606A32D
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=jakejoyner.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+Received: by mail-dy1-f179.google.com with SMTP id 5a478bee46e88-384d1928a45so279972eec.3
+        for <dm-devel@lists.linux.dev>; Mon, 23 Nov 2026 12:34:36 -0800 (PST)
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20260707; t=1795466076; x=1796070876;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
+         :message-id:reply-to:content-type;
+        bh=6D1L1HWYJhyUpOeTtQIUZeke2hr8L4TI6fulnbgEFlU=;
+        b=DtltnElFSbxcAJrgC4l1Mnw9Xw5zmDq35mIe6ErrLGQWRUcGFoKOaYz4BSYxy5+hh5
+         hOk2GZOqXLA7C3HsOUWn/Q03EXdaTp+0QWiWBNNcCEWRFZehRlLTuWp/bcKWW3TxiKYh
+         1T81zRPeemRp5S9UFlfK572pU5QpFEonO0Bkfz4klda4WkRpYObmS+W+8C61Az8XA/xO
+         lrmfaKkfiqgKt9OALauEkEbfpOm0+CjPjLbZB+OgG/xiPxhhrBuJTzSdZpXGD7sxxiNr
+         t3x2rpsHH6WMHVQ/XNfJK31rjG8qr0qDPOQcPNMoGBen0W/eshHU10d5+svDBnGdc8CH
+         DANg==
+X-Gm-Message-State: APuU4Z+G5kmKf+lgvuI/ANKd6xb8HFE8/LGDiUqOQzwqkGYLi2OZpfQB
+	+8p651VJY1GrEi5jC1nBX7cZOWBR/znBCvMr9e8ElW71Rjt+TO0t0u8n
+X-Gm-Gg: AZFdTZebEmWqHYjbGnseeVQ6W54AgcyoDoiewe3uHCJuNKr0B7zR1sgoUuRLQu7WP0M
+	vGzoM0ovxYLnopoO94LiQs9ZsM7bJZ4tK5HGHTB3l52RUeKxGr+pU77J5ydoLjoCBPVHukP95l5
+	TXSN6/b+Ay2dK9PA8UDvP2oOS+EyWqd816VYG+XBh13NloYsuMToFAVroWsSVKLC6WZxzT9GLMB
+	fWmlyMAlSBrypO6gB/ZqCKasoA+QQwhcqjA7s/twdmJ1KAJ/9FoI9ODPNtp4rsfNMk+/x/Wg3Us
+	nYe9EmctyXB+L/FFtZy4RiybfSz/4esp1BX5wS7VnRgt2+ofXspH/braFznu1bXDmZjlt6+zRWm
+	I3CkZCNdEojx1m24VioJVFRCho2Pma/JY5/yXRKK63s19hFY29r9aXjoO6/qQAaq4NMRfOWpGMz
+	BDdwCqiGNzyilnHw3x1M7CtKYPyEfXnt+EenocK8R1ltXUwEmnlQXOMCzrfSazJ8/3Wfl0Uahfl
+	g59WR82c6voSVVrJWejyQOZTmw0sugbH3ZMDIkYQzImdbam1OsB/72ChrfLWGVz3lww2z/KgiUA
+	gsAV9+4lw7ZVRQ1rG7FOL/1E8k0BPvqp/28BeCyIHLVxqbQNiAx6zmtB4g==
+X-Received: by 2002:a05:7301:2624:b0:385:1a45:47b3 with SMTP id 5a478bee46e88-3856e24682amr20580204eec.1.1795466075720;
+        Mon, 23 Nov 2026 12:34:35 -0800 (PST)
+Received: from localhost ([47.156.153.166])
+        by smtp.gmail.com with ESMTPSA id 5a478bee46e88-38567ea2cc5sm36001274eec.29.2026.11.23.12.34.34
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Mon, 23 Nov 2026 12:34:35 -0800 (PST)
+From: Jake Joyner <jake@jakejoyner.com>
+To: Alasdair Kergon <agk@redhat.com>,
+	Mike Snitzer <snitzer@kernel.org>,
+	Mikulas Patocka <mpatocka@redhat.com>,
+	Benjamin Marzinski <bmarzins@redhat.com>
+Cc: dm-devel@lists.linux.dev,
+	linux-kernel@vger.kernel.org,
+	Jake Joyner <jake@jakejoyner.com>,
+	syzbot+3f8f5b65af8de862dcec@syzkaller.appspotmail.com
+Subject: [PATCH] dm-verity: fix shift-out-of-bounds when computing hash level sizes
+Date: Mon, 23 Nov 2026 12:34:13 -0800
+Message-ID: <20261123203413.145298-1-jake@jakejoyner.com>
+X-Mailer: git-send-email 2.56.0
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Post: <mailto:dm-devel@lists.linux.dev>
@@ -91,87 +83,65 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 List-Owner: <mailto:dm-devel+owner@lists.linux.dev>
 Precedence: list
 MIME-Version: 1.0
-In-Reply-To: <sashiko-outbox-229949@kernel.org>
-X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.111
-X-Mimecast-Spam-Score: 0
-X-Mimecast-MFC-PROC-ID: RZvq-4xsSYVFsLoOpJfpVGvGKwW6L_go-yPlxBfnNzs_1795465933
-X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset=iso-8859-1
-Content-Disposition: inline
 Content-Transfer-Encoding: 8bit
 
-On Mon, Nov 23, 2026 at 07:41:43PM +0000, sashiko-bot@kernel.org wrote:
-> Thank you for your contribution! Sashiko AI review found 1 potential
-> issue to consider:
-> - [Medium] dm: set_discard_limits() copies underlying
->   max_hw_discard_sectors
-> --
-> 
-> commit 54b96a4a0a953173383ea0e1a1b7ffcb363bc984
-> Author: Benjamin Marzinski <bmarzins@redhat.com>
-> 
-> block: stack max_hw_discard_sectors on bottom max_discard_sectors
-> 
-> This commit stacks the upper device's max_hw_discard_sectors from the
-> bottom device's max_discard_sectors in blk_stack_limits() and updates
-> dm_calculate_queue_limits() to copy each target's max_hw_discard_sectors
-> into max_discard_sectors before stacking it into the table limits.
-> 
-> > diff --git a/drivers/md/dm-table.c b/drivers/md/dm-table.c
-> > index 48f25ab6b7fa6..4cabe26450941 100644
-> > --- a/drivers/md/dm-table.c
-> > +++ b/drivers/md/dm-table.c
-> > @@ -1834,8 +1834,11 @@ int dm_calculate_queue_limits(struct dm_table *t,
-> >  combine_limits:
-> >  		/*
-> >  		 * Merge this target's queue limits into the overall limits
-> > -		 * for the table.
-> > +		 * for the table. In blk_stack_limits() the upper device's
-> > +		 * max_hw_discard_sectors is based on the lower device's
-> > +		 * max_discard_sectors, so copy this value over first.
-> >  		 */
-> > +		ti_limits.max_discard_sectors = ti_limits.max_hw_discard_sectors;
-> >  		if (blk_stack_limits(limits, &ti_limits, 0) < 0)
-> >  			DMWARN("%s: adding target device (start sect %llu len %llu) "
-> >  			       "caused an alignment inconsistency",
-> 
-> [Severity: Medium]
-> Should set_discard_limits() in dm-cache and dm-clone also use the
-> underlying device's max_discard_sectors instead of max_hw_discard_sectors?
+verity_ctr() computes the number of hash blocks at each level of the
+hash tree as
 
-This is a valid issue, but fixing dm-cache and dm-clone is not dependent
-on this patch, and that fix should go in through linux-dm instead of
-linux-block, like this patch. I have already sent a separate patch to
-dm-devel to fix dm-cache and dm-clone.
+	s = (data_blocks + (1 << n) - 1) >> n
 
-https://lore.kernel.org/all/20261123053235.3060754-1-bmarzins@redhat.com/
+where n = (i + 1) * hash_per_block_bits, i.e. data_blocks / 2^n rounded
+up.
 
--Ben
+The loop that counts the levels only stops once
+hash_per_block_bits * levels is 64 or more, so n can be 64 or larger for
+the top level. For example, with 1024-byte hash blocks and sha512,
+hash_per_block_bits is 4, and a large enough number of data blocks gives
+16 levels and n = 64. Shifting a 64-bit value by 64 or more is undefined
+behaviour, and UBSAN reports:
+
+  UBSAN: shift-out-of-bounds in drivers/md/dm-verity-target.c:1598:38
+  shift exponent 64 is too large for 64-bit type 'long long unsigned int'
+
+data_blocks is non-zero here (levels is 0 otherwise) and smaller than
+2^64, so data_blocks / 2^n rounded up is 1 whenever n >= 64. Use that
+value directly instead of shifting.
+
+With this change the syzbot reproducer no longer triggers the report on
+v7.4-rc4 in QEMU, and the table is still rejected with "Hash device is
+too small".
+
+Fixes: b1bf2de07271 ("dm verity: fix inability to use a few specific devices sizes")
+Reported-by: syzbot+3f8f5b65af8de862dcec@syzkaller.appspotmail.com
+Closes: https://syzkaller.appspot.com/bug?extid=3f8f5b65af8de862dcec
+Signed-off-by: Jake Joyner <jake@jakejoyner.com>
+---
+The code change is mine. An AI assistant (Claude) helped me reproduce
+the syzbot report, reviewed the change and helped word this description.
+
+ drivers/md/dm-verity-target.c | 7 +++++--
+ 1 file changed, 5 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/md/dm-verity-target.c b/drivers/md/dm-verity-target.c
+index 306ed1f6c118..78fe3c8f23b4 100644
+--- a/drivers/md/dm-verity-target.c
++++ b/drivers/md/dm-verity-target.c
+@@ -1593,10 +1593,13 @@ static int verity_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ 	hash_position = v->hash_start;
+ 	for (i = v->levels - 1; i >= 0; i--) {
+ 		sector_t s;
++		unsigned int shift = (i + 1) * v->hash_per_block_bits;
  
-> When discard passdown is enabled, cache_io_hints() and clone_io_hints()
-> call set_discard_limits() to replace the target's stacked discard limits
-> with those of the origin or destination device alone:
-> 
-> drivers/md/dm-cache-target.c:set_discard_limits() {
->     ...
-> 	limits->max_hw_discard_sectors = origin_limits->max_hw_discard_sectors;
-> 	limits->discard_granularity = origin_limits->discard_granularity;
-> 	limits->discard_alignment = origin_limits->discard_alignment;
-> }
-> 
-> drivers/md/dm-clone-target.c:set_discard_limits() {
->     ...
-> 	limits->max_hw_discard_sectors = dest_limits->max_hw_discard_sectors;
-> 	limits->discard_granularity = dest_limits->discard_granularity;
-> 	limits->discard_alignment = dest_limits->discard_alignment;
-> 	limits->max_discard_segments = dest_limits->max_discard_segments;
-> }
-> 
-> Copying ti_limits.max_hw_discard_sectors into ti_limits.max_discard_sectors
-> at combine_limits propagates origin_limits->max_hw_discard_sectors (or
-> dest_limits->max_hw_discard_sectors) into the table limits, bypassing any
-> smaller max_discard_sectors configured on the origin or destination device.
-> 
-> -- 
-> Sashiko AI review · https://sashiko.dev/#/patchset/20261123193000.3419445-1-bmarzins@redhat.com?part=1
+ 		v->hash_level_block[i] = hash_position;
+-		s = (v->data_blocks + ((sector_t)1 << ((i + 1) * v->hash_per_block_bits)) - 1)
+-					>> ((i + 1) * v->hash_per_block_bits);
++		if (shift >= 64)
++			s = 1;
++		else
++			s = (v->data_blocks + ((sector_t)1 << shift) - 1) >> shift;
+ 		if (hash_position + s < hash_position) {
+ 			ti->error = "Hash device offset overflow";
+ 			r = -E2BIG;
+-- 
+2.56.0
 
