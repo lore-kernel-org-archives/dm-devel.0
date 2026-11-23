@@ -1,78 +1,99 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=170.10.129.124
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=74.125.82.46
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1795448194;
-	b=SD8knyNrhV4p+alBkQyxScJnaj60Vr0Gq0TJs3fUdfielOQ0ohnq+K9N+jVZuEkar887
-	 iK6tDN1SyM5FPT5Rpvuzlr9h8l3mJAo1e0Hxiir5uvCOAM4wkPzQxayvIf9KBQhLVxcHy
-	 mMoN45VwRvB4nRWuHyu095536aDkwe4UDOjwl4o9lWG99qAMwCUX/8OlFLQp8+FCFZcLY
-	 GLYna8fRfg+Ztg557IcDe/LLqn5Msrt+gX9dcku6g4rtloj3icC7eLH+qsXIhWRG7EIwX
-	 ZyvW+pzQ6b03O0YpweTaEqzm1KJUkLEjvJ6/r0P8tX1ZOk8iwVNqKcAg3rILdQqJ4tw==
+	t=1795452047;
+	b=Dg4qveCEPMr3ksUmuTD7yeiKAyjR6zzvD/izcRf5YobGtXCadPOhxqToiNgh3PlTICG9
+	 Pv9gmUU4tWV8SEslcpzW7NNs2ZGwh6VeSmJ1Axwk7mpsDUQwDVDPCCB0rBFENH1nRjvKE
+	 DK/hx0ehWNJpbBdaG9aWC83p+SBAe/UBM7zAlcq2bnbIJE8LcIm0vAI9wkq59fTy5MU9F
+	 PcdOMxGmAwA5t/UnFdJdXsMq0XNd/lgwl7sZkElsHmQCStAaICpFdh6tSHrbaSk6XWVl/
+	 PrMXg2/gbwZt2/zuIEfSN7+mi8Om+vnce/shP4SnmPlMZK6txGxO2eV9WajTPiwOfsg==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1795448194;
-	h=DMARC-Filter:DKIM-Signature:Received:X-MC-Unique:
-	 X-Mimecast-MFC-AGG-ID:Received:Received:Date:From:To:cc:Subject:
-	 In-Reply-To:Message-ID:References:MIME-Version:X-Scanned-By:
-	 X-Mimecast-Spam-Score:X-Mimecast-MFC-PROC-ID:X-Mimecast-Originator:
-	 Content-Type;
-	bh=1XFcPod1FFohR6V4AAF/gEfpUeCtMF7v05o2OAE5Wyo=;
-	b=voI8lQQx+Y1VcD2FDOV1UE34MMhxeMQiC5GjRWPzmbL3N5n9kSPJzewd1/sPUvoVwV64
-	 2v5M+DPGIn0FPF13TTMDgH+eN7WsMk/IncikRnrkKvMAjkIwVKIdZBv1ScAx2zQmlq/5g
-	 f4Mbkr+ugw3wtAzOvdHGZy2w8z2qAOtSt8n9oP/2+G0zUbdZKp535mvZ3vIW1Qcnsxl1s
-	 5qP9KVLnxYwYitFIJ+3tQk39FPtvHxVpRv0mfjkJ6+rMp3F+lx35eOxf5b/rGRsaTFOFX
-	 xCuZD+9Cvk1YHn0THqQTtoyTqdtIHcUCF6arCiYPOej/bgOwdoeKC4KGIWjlpaqo2hw==
+	a=rsa-sha256; c=relaxed/relaxed; t=1795452047;
+	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
+	 X-Forwarded-Encrypted:X-Gm-Message-State:X-Gm-Gg:X-Received:Received:
+	 From:To:Cc:Subject:Date:Message-ID:X-Mailer:MIME-Version:
+	 Content-Transfer-Encoding;
+	bh=P5/ZiEeoOQolEtqZd6duqT2B+ydqubbd46Mv2EwUK7A=;
+	b=j4mWyNYk5uc6QCRgUBVlyiIU04taqC7i07uEnmalsxpnxBMQKs8AgmrLEnXrbjZRiZvr
+	 v+KE4ePDiPlE2aAu5xJBp+7oIMw6BsUif1lhuwawTS760RPdbIgEJrREpkDWGHzBh5ia2
+	 n5hGvYm9i6OusQp/h2FtrOprmM/RDyonhMfCs2O4FDRgjEMVxPQJWsucccNJL9rXaE/vE
+	 6R0cWSHTFqJHaDMMMwUgBwJgX0tw1LldULuwzt214ZBTDHRWTsCkrzQac1YbPRCnPGy/C
+	 9WP9DyThb1DpePo5LXB91Bw6NYDoehNanlA51QQo5hLns2Zm7owZ5STFkSRPzUgkjdQ==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dmarc=pass header.from=redhat.com;
-	spf=pass smtp.mailfrom=redhat.com;
-	dkim=pass header.d=redhat.com header.i=@redhat.com header.a=rsa-sha256 header.s=mimecast20190719 header.b="Y1u0/pF7";
-	arc=none smtp.remote-ip=170.10.129.124
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	dmarc=pass header.from=gmail.com;
+	spf=pass smtp.mailfrom=gmail.com;
+	dkim=pass header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=Q2kG7G5z;
+	arc=none smtp.remote-ip=74.125.82.46
+Received: from mail-dl1-f46.google.com (mail-dl1-f46.google.com [74.125.82.46])
+	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1F1BB606A31A
-	for <dm-devel@lists.linux.dev>; Mon, 23 Nov 2026 15:36:33 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 1F1BB606A31A
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id C75A4606A31F
+	for <dm-devel@lists.linux.dev>; Mon, 23 Nov 2026 16:40:46 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org C75A4606A31F
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.a=rsa-sha256 header.s=mimecast20190719 header.b=Y1u0/pF7
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1795448193;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 in-reply-to:in-reply-to:references:references;
-	bh=1XFcPod1FFohR6V4AAF/gEfpUeCtMF7v05o2OAE5Wyo=;
-	b=Y1u0/pF724pxAPiy77Z8bjuKm2Ll/m9rbHsTiAouxFt1ruaOpGD8ceABrKRZ8dXJzTfgeE
-	68TnH/s5kjgGmeU8F9OGRj9pyTztowyzIff4icS36izhV6QNHrcYZwtXneWQVIVzJ4RATF
-	dWl7pel5JjqAOnQx5E94ufANJEbmhN4=
-Received: from mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-659-t5uJ-he9OR607hSFGokdKg-1; Mon,
- 23 Nov 2026 15:36:29 +0000
-X-MC-Unique: t5uJ-he9OR607hSFGokdKg-1
-X-Mimecast-MFC-AGG-ID: t5uJ-he9OR607hSFGokdKg_1795448187
-Received: from mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.4])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mx-prod-mc-06.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 9C9E21801319;
-	Mon, 23 Nov 2026 15:36:26 +0000 (UTC)
-Received: from mpatocka-thinkpadx1carbongen12.rmtcz.csb (headnet04.pony-001.prod.iad2.dc.redhat.com [10.2.32.116])
-	by mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id ECEA53001DA7;
-	Mon, 23 Nov 2026 15:36:22 +0000 (UTC)
-Date: Mon, 23 Nov 2026 16:36:20 +0100 (CET)
-From: Mikulas Patocka <mpatocka@redhat.com>
-To: Yongpeng Yang <yangyongpeng.storage@gmail.com>, 
-    Andrew Morton <akpm@linux-foundation.org>, 
-    Dave Chinner <david@fromorbit.com>
-cc: agk@redhat.com, snitzer@kernel.org, bmarzins@redhat.com, 
-    zkabelac@redhat.com, okozina@redhat.com, dm-devel@lists.linux.dev, 
-    linux-mm@kvack.org
-Subject: Re: [PATCH 2/4] dm-bufio: allow exposing a client in sysfs under a
- caller-chosen kobject
-In-Reply-To: <20261119162819.1627180-1-yangyongpeng.storage@gmail.com>
-Message-ID: <5e21caf9-5aaf-8007-0e71-598d7828697e@redhat.com>
-References: <2033a6a7-b8c4-99cc-f351-e83579a238ec@redhat.com> <20261119162819.1627180-1-yangyongpeng.storage@gmail.com>
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=Q2kG7G5z
+Received: by mail-dl1-f46.google.com with SMTP id a92af1059eb24-1a2af4c8d00so5967958c88.0
+        for <dm-devel@lists.linux.dev>; Mon, 23 Nov 2026 08:40:46 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20260707; t=1795452046; x=1796056846; darn=lists.linux.dev;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:from:to:cc:subject:date:message-id:reply-to:content-type;
+        bh=P5/ZiEeoOQolEtqZd6duqT2B+ydqubbd46Mv2EwUK7A=;
+        b=Q2kG7G5zqkKWCthMvkq1yKcVfYacxv8Lf3F5eqzVkTraWCHLYoSbXG3ApKGD/xf746
+         Z9U4lplVAOru8KqMHz0x0UNZ2T/navRV2ZaI2cLAJxmAlZyCZMg6EeBfsAvbqon+tMkX
+         davVqAyUzm0phYWpQUc7u1w/wJMENA5WaB5ByQaYcCxq8e+PUUc+DGFMD/9KTwq8YVLw
+         U6KzZibDBdR/W6ZwRG3K8OXWJwvRcq8StE3/PAjwEkIXQpAOa0gr+PgGLa3s80Dh0VNv
+         Mgo8WijESdHGNxpYqrWYOGd6K1KIduj299T2GxHQ41ycqUWNdzafSkM6+7anEvV8TfJj
+         5HwA==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20260707; t=1795452046; x=1796056846;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
+         :message-id:reply-to:content-type;
+        bh=P5/ZiEeoOQolEtqZd6duqT2B+ydqubbd46Mv2EwUK7A=;
+        b=KB6nFiq3Ao/5A5uJoVRaRsXn6XmzBvJNxLNTNYka1EHhZ2/JR+POmLJioe9nCv8ARy
+         5UtMVGP2qDiygsst4g2oKOqzuwIpmj8YXI8f6qr3GqaKnJNBwmNt2TUJYT6+vQL9s3AH
+         V75ohSdNN6BkwggCVnQIjQPHFeQ0crzjynPKsUtpjRssk281wPWE0ASLwdXFGQppVNL4
+         O3Z9cRraGzaELtISXM1t0nbXSdIFaDZkFPk/PybTI62SwzM1nzdhThBy6yKtrvSM+6to
+         y9Eagf7TvpdqOR7brvQtmI6qv3Ki595ujz2uBk+7Ap1oQ805EHWVtLRsyoIzv5fYS3SM
+         SCJA==
+X-Forwarded-Encrypted: i=1; AL+hErExUBnmHo3SEugGIgK5VffvTEkN6lnOJCC8r8JZ8uUguQtXYzWAvXyZnNPgEUgVviLysgn5icM3qQ==@lists.linux.dev
+X-Gm-Message-State: APuU4Z/v+i/Rc4Qly/rNYB8sd9ttzvCQ5aPzP5Q9u+SqtzGsNEb8jSJ+
+	FOcwf2KGEPzko3j8dUuXLpUh+M+JeAazpMoe+0NzTQWgRAlICao9FdDj
+X-Gm-Gg: AZFdTZeQ2fZ4ZkaCalcURV2WQaQaw6FM+MLMEqHkqDGLMLRQ4jtSvyoiVPXg/UapaZM
+	k2wIxfDyUgxVhnzovJ5EnZBOVUyfRelRBVmc+qHLdp1URT8Cn7kgScx7KzuPQUqzmsX3DxqKiLI
+	6QUPVGcSYGxFSVKlrtvMNqSXG4BP3W2fNJLhlB/DNXyCVxrOkY70rC9bjbJfC80nEKcgc7DOIj6
+	WfberD4aZXV4bOTX/Y7B5Fal5gsL8XILFz+3+VF016dSzSa2CfZaZQrrik4lvhaxa4ingGCehHu
+	1g6Fn5vxlEk1Ti+jITOVC6DuXzuXZJ+W3CPfhLQkqzg+KG6Rju4Jt/DnppQAyFnwWU7uRP2x3uG
+	TwFFQR/gyKyxCRxflDKZ3/LI/3dOEvuaymkkPb5Zl46vg0mmDlRoMKgEXReQTpS6DioQKS6Lwpw
+	SojS9KuJWb9l/N+c0sg+EqwiBLUtUAZlRyvJF9eltPgiLoImOAToLb/fCCQxTEeCOsuj7MIK7HL
+	scuNoXlqnd2/ICvX2C26UtkeKztbxBH+Z91JiaoQeL5c8d6Sl1DrQTwdkoVWVvzuelRvLPZkHEx
+	L4E+zVryU21u4bJ6ac41Dn/tx9PcxO+o6xPNqvFwOff2w0zR4PgjAEp4zXsyl1Kj6tW/SINvTO0
+	KTgd0PKwY
+X-Received: by 2002:a05:701a:844e:20b0:1b5:6c13:c76c with SMTP id a92af1059eb24-1b56c13c7a8mr6689110c88.15.1795452045824;
+        Mon, 23 Nov 2026 08:40:45 -0800 (PST)
+Received: from lounas.tail428e48.ts.net ([157.131.129.22])
+        by smtp.gmail.com with ESMTPSA id a92af1059eb24-1b556847fdasm33225486c88.13.2026.11.23.08.40.44
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Mon, 23 Nov 2026 08:40:45 -0800 (PST)
+From: Louis Thiery <thiery.louis@gmail.com>
+To: agk@redhat.com,
+	snitzer@kernel.org,
+	mpatocka@redhat.com,
+	bmarzins@redhat.com
+Cc: ming.lei@redhat.com,
+	dm-devel@lists.linux.dev,
+	linux-block@vger.kernel.org,
+	linux-nvme@lists.infradead.org,
+	linux-kernel@vger.kernel.org,
+	Louis Thiery <thiery.louis@gmail.com>,
+	stable@vger.kernel.org
+Subject: [PATCH] dm: clear REQ_DM_POLL_LIST on embedded clone bio
+Date: Mon, 23 Nov 2026 16:40:21 +0000
+Message-ID: <20261123164021.463361-1-thiery.louis@gmail.com>
+X-Mailer: git-send-email 2.43.0
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Post: <mailto:dm-devel@lists.linux.dev>
@@ -82,74 +103,71 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 List-Owner: <mailto:dm-devel+owner@lists.linux.dev>
 Precedence: list
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.4
-X-Mimecast-Spam-Score: 0
-X-Mimecast-MFC-PROC-ID: 1VxBvZS3gWRDHVSzZtAX4zwtBEPAs41VD2gWzPkyaps_1795448187
-X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 8bit
 
+When a polled bio is split across a target boundary (for example a
+dm-striped chunk boundary), dm_split_and_process_bio() re-submits the
+trimmed remainder of the original bio and then calls dm_queue_poll_io(),
+which sets REQ_DM_POLL_LIST (aliased to REQ_DRV) on the original bio.
 
+When the remainder subsequently enters dm_split_and_process_bio(),
+alloc_io() clones it into the embedded io->tio.clone, inheriting
+REQ_DM_POLL_LIST. alloc_tio() only clears REQ_DM_POLL_LIST in its else
+branch for non-embedded clones, leaving REQ_DRV set on the embedded
+clone that polled normal I/O uses.
 
-On Fri, 20 Nov 2026, Yongpeng Yang wrote:
+The leaked REQ_DRV flag is misinterpreted by lower layers. On NVMe
+(where REQ_NVME_MPATH is also defined as REQ_DRV), nvme_start_request()
+calls nvme_mpath_start_request(). For a single-path namespace where
+ns->head->disk is NULL (with CONFIG_NVME_MULTIPATH=y), dereferencing
+disk->queue triggers a kernel NULL pointer dereference:
 
-> On Thu, Nov 19, 2026, Mikulas Patocka wrote:
-> > Is the kernel dropping dm-bufio buffers too aggressively? Or is it not
-> > dropping them so that they consume too much memory?
-> 
-> Both, and the tension is why one global value cannot work. Our hash
-> areas run from 0.x MB to 40+ MB: the 256 KiB default makes large devices
-> re-read evicted hash blocks, while a uniformly large value makes every
-> cold, idle device hold memory forever -- and most verity devices are
-> cold most of the time, which is what small-memory systems complain about.
+  BUG: kernel NULL pointer dereference, address: 0000000000000050
+  RIP: 0010:nvme_mpath_start_request+0x28/0xc0
+  Call Trace:
+   nvme_prep_rq+0x5e0/0xa90
+   nvme_queue_rq+0x40/0x1a0
+   __blk_mq_issue_directly+0x45/0xb0
+   blk_mq_try_issue_directly+0x85/0x100
+   blk_mq_submit_bio+0x6c9/0x710
+   submit_bio_noacct_nocheck+0x127/0x330
+   blkdev_direct_IO+0x230/0x680
 
-What about improving the shrinker memory management?
+On stacked DM devices, a lower DM layer also sees REQ_DM_POLL_LIST
+already set on the incoming clone and treats its bi_private as a dm_io
+poll list head.
 
-The problem with shrinkers is that the generic memory management code 
-doesn't know how old are objects in the registered shrinkers. So, it may 
-ask the shrinkers that have only recently used objects to free memory.
+Move the REQ_DM_POLL_LIST clear out of the else branch in alloc_tio() so
+it applies to both embedded and non-embedded clones.
 
-Maybe we could add an upcall that returns the last used time of the oldest 
-object in a given shrinker, select the shrinker with the oldest object and 
-shrink from it? Would this be feasible?
+Fixes: b99fdcdc3636 ("dm: support bio polling")
+Cc: stable@vger.kernel.org
+Signed-off-by: Louis Thiery <thiery.louis@gmail.com>
+---
+ drivers/md/dm.c | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
 
-> > Could it be fixed through other means that are more general? (for
-> > example, having a global dm-bufio shrinker and dropping buffers from
-> > the client that has the longest unused buffer)
-> 
-> A global LRU shrinker would tell hot from cold given time, but:
-> 
-> - Our userspace already knows which device will be used and when, so
->   it does not need the heuristic, it can drop exactly that device's
->   hash blocks, precisely and immediately.
-
-Please, show some numbers - how much does this patchset improve Android 
-boot time (if you are prefetching blocks that will be needed at boot) or 
-application load time?
-
-Would prefetching with the readahead() syscall be better? (it would 
-prefetch data down to the page cache, so I presume it would be more 
-efficient)
-
-Back in the era of mechanical disks, there used to be a daemon that 
-prefetched blocks to improve boot time. With SSDs, the idea was abandoned 
-because it didn't provide any advantage. Are you implementing something 
-like this?
-
-> - On low-memory devices we need the memory back quickly, not when
->   pressure finally ages the buffers out.
-
-I don't see how shrinking bufio should be different from shrinking page 
-cache, inodes, dentries or other kernel objects.
-
-Maybe you need to tune /proc/sys/vm/min_free_kbytes if the kernel is not 
-shrinking memory fast enough.
-
-> - Verity, thin and cache clients share one pool with very different
->   access patterns; a single LRU lets them fight for it, while
->   per-client floors keep the shares apart.
-> 
-> Thanks for the review,
-> Yongpeng
-
-Mikulas
+diff --git a/drivers/md/dm.c b/drivers/md/dm.c
+index 1881d8611..79972f17f 100644
+--- a/drivers/md/dm.c
++++ b/drivers/md/dm.c
+@@ -628,13 +628,13 @@ static struct bio *alloc_tio(struct clone_info *ci, struct dm_target *ti,
+ 		if (!clone)
+ 			return NULL;
+ 
+-		/* REQ_DM_POLL_LIST shouldn't be inherited */
+-		clone->bi_opf &= ~REQ_DM_POLL_LIST;
+-
+ 		tio = clone_to_tio(clone);
+ 		tio->flags = 0; /* also clears DM_TIO_INSIDE_DM_IO */
+ 	}
+ 
++	/* REQ_DM_POLL_LIST shouldn't be inherited */
++	clone->bi_opf &= ~REQ_DM_POLL_LIST;
++
+ 	tio->magic = DM_TIO_MAGIC;
+ 	tio->io = ci->io;
+ 	tio->ti = ti;
+-- 
+2.43.0
 
