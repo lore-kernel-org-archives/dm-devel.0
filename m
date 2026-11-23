@@ -1,58 +1,70 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=100.103.45.18
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=170.10.133.124
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1795466531;
-	b=CXhvsLyfwRr30AecGfrP1UMRz0nZ7646RNJW68fPxJe3yScRH7uLf8wYP1otm4s3CSLJ
-	 QwQ4n8hVF3YSBNsgmo6vJsyKLMwsYZKgjwK8aKtnnxnWuP6lcRBC/gOroK1r/LvlTr6Wi
-	 zJU6ZfGQ/dhh0UAwgAYpZr8a6KgIIMRufD8GlVF9Gx751YVosU6tLzx+Gk+9Yj+a7IuGd
-	 sM2GBuyvyiS/RWQE4flUiCZViMTp8SrfqNyEbw/9KgP53/sg8bPEf4j4oSuQ1kooYJ+az
-	 mNEGflORipNNOCBuT7ddQvDSJRZVytf7zdJQIpQOC4QpNq0EkVJm+OVwcRI3GMt27zA==
+	t=1795467243;
+	b=HBW/G/mRugdRGf3Fbomx5Nvd26HDldLwyb85mB3cveFhrheXNXPkpL8zpSubfW4t2qgE
+	 4cVUlJZqiBODH/Dsl/j9/52JLxfp/P574O6Rx2j9FQ+DWugGXIofBr9oYHs2QfR8VYcZL
+	 J4ESIi6dmyez2kF7AyA+mgtax0XcIL7ofu8cieSjLWp4XILAIjdIekr8TMetRtkBwubzV
+	 sPneSOA2pFAVTpFKkY58zWHryusOCd5m1zIkHUzRHneVIW6tc6Pj8DkD9VhOdaQ+mg0Da
+	 mJeXRxBTeDWlkMLPo1Fm1lsrES6CdJ4lgpPF1DqXzSF1AsCZEe0Q9ZWb+aUbr8FVdew==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1795466531;
-	h=Received:DKIM-Signature:Message-ID:From:Subject:Reply-To:To:Cc:
-	 In-Reply-To:References:Content-Type:Content-Transfer-Encoding:Date;
-	bh=YkHq8BoFq1lI3g44PvutpueEpB2lYRjaY8du0gcLNC4=;
-	b=0nhUlCpWpGc2xuN1cYizAr/U5CkaTDPKloRBdpKoZt4e0UxY3LURzomiVNeA501N7vIs
-	 DN0HMkPhDWVkpcG9POldBWzzK7cv0MTBOxMB5dnuiQnkX9FYeuG1d8iHVTd1lXnwI27QQ
-	 4cmVVCKA60kMF++HQCKxlG+rSZQldmSr1JQqvBw5Riy8FJSEXTgkrkaV+TpxwTcTPTF40
-	 dOnEIE+3F3VRuWpWNTXoDWKk/w2Pwf0miV1LgP1xk5oZHHcF+KiclK+OZED2WrD6Ffy9a
-	 DxbnGVEreivPSAfkSlM7UeoMmF1bhkAfIF9DBBev8fguKYvXGiZj+Orw2zkAFpjtocg==
+	a=rsa-sha256; c=relaxed/relaxed; t=1795467243;
+	h=DMARC-Filter:DKIM-Signature:Received:X-MC-Unique:
+	 X-Mimecast-MFC-AGG-ID:Received:Received:Date:From:To:Subject:
+	 Message-ID:MIME-Version:X-Scanned-By:X-Mimecast-Spam-Score:
+	 X-Mimecast-MFC-PROC-ID:X-Mimecast-Originator:Content-Type;
+	bh=GhA40jSqAzYnZOzmB5zRSHYFym9cdt7vilib5MV6saU=;
+	b=oUOYEXhhLLUSry4mggAc7M+hCftCy2KAGAtHJEXHvZ6jEqrwMziId0s46cCT9WND0hUD
+	 JgWLd0GW8Rabb+Q8pC90guWCrh4kXRmohW7rOyaxeTq+IM/ApJXx39hBRazZDNPmEX03P
+	 SsCTLimyjJ5OjhCSos9KmgkuiospOy6kn4wQbfzqE/PG8JDRlsQ3MdqymtdfwjITx+s9O
+	 vlsX6fn0QgiwY6UOB1kv7fGtrTNOZUkLw+FeM4MVlqJcOt9IK1Wm1GD/bpPN6PjwG6kmp
+	 Mtx6vgdS3n5w9xgavhTyOiYq+SPXG4D6kkyu7VLFfS+z44FbimxU74AfCCW1gwVZnKQ==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=WmvGdHuM;
-	arc=none smtp.remote-ip=100.103.45.18
-Received: from smtp.kernel.org (quasi.space.kernel.org [100.103.45.18])
+	dmarc=pass header.from=redhat.com;
+	spf=pass smtp.mailfrom=redhat.com;
+	dkim=pass header.d=redhat.com header.i=@redhat.com header.a=rsa-sha256 header.s=mimecast20190719 header.b=cBmJOAJd;
+	arc=none smtp.remote-ip=170.10.133.124
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature ECDSA (prime256v1))
+	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 6C2B2606A337
-	for <dm-devel@lists.linux.dev>; Mon, 23 Nov 2026 20:42:11 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 4502F606A31E
+	for <dm-devel@lists.linux.dev>; Mon, 23 Nov 2026 20:54:03 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 4502F606A31E
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=WmvGdHuM
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 5123B1F000C6;
-	Mon, 23 Nov 2026 20:42:10 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
-	s=k20260515; t=1795466530;
-	bh=YkHq8BoFq1lI3g44PvutpueEpB2lYRjaY8du0gcLNC4=;
-	h=From:Subject:Reply-To:To:Cc:In-Reply-To:References:Date;
-	b=WmvGdHuMaEDXZLSaC9Atpm5sTW/X3kt6b4i22ALOhZA2SU9f3hbDa/H/w9abLQkpb
-	 VTnu5JUrw04fArTJRMiDWptM8k55bvS55cT7KYQgJzNHDTmd0WaJEIGUNV/FQ8UuCD
-	 LSV1Y3VxfbbPy6v0R504ZLtKA+Dhd+IJrCXhb6MGi0BYMKEkINTQXpHlQK4P+SdxZv
-	 XbjT67IVglGE/IshUZUxc/7/Iujl2hAkwynWQBEQnD9/t9TyZ9ST09xvy/NNeQk+tm
-	 lDPD7kHc23qXgb3O/LyrADhxbjgXRLrV6mQXGYihl9QHDoOf4Rz8DtQJIQJDvDiUlR
-	 +0gpxvtlhl5Lw==
-Message-ID: <sashiko-outbox-230016@kernel.org>
-From: sashiko-bot@kernel.org
-Subject: Re: [PATCH] dm-verity: fix shift-out-of-bounds when computing hash
- level sizes
-Reply-To: sashiko-reviews@lists.linux.dev
-To: "Jake Joyner" <jake@jakejoyner.com>, "Alasdair Kergon" <agk@redhat.com>, "Mike
- Snitzer" <snitzer@kernel.org>, "Mikulas Patocka" <mpatocka@redhat.com>, "Benjamin
- Marzinski" <bmarzins@redhat.com>
-Cc: dm-devel@lists.linux.dev, syzbot+3f8f5b65af8de862dcec@syzkaller.appspotmail.com
-In-Reply-To: <20261123203413.145298-1-jake@jakejoyner.com>
-References: <20261123203413.145298-1-jake@jakejoyner.com>
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: quoted-printable
-Date: Mon, 23 Nov 2026 20:42:09 +0000
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.a=rsa-sha256 header.s=mimecast20190719 header.b=cBmJOAJd
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1795467242;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:mime-version:mime-version:content-type:content-type;
+	bh=GhA40jSqAzYnZOzmB5zRSHYFym9cdt7vilib5MV6saU=;
+	b=cBmJOAJduswLfRM7AAwNOiHRoRoCGrZaWWQgjZ6yPg4LaOAsgsDDbsp0lOgYiFINGu00jA
+	NlFynM3Eq4ZQHF9+KuAFK/hx0r3ly3BXrPK8S2lq1D1XisPEhgI0DxU1t7k7cQj5nU5+Kf
+	rClrFEbpDA0qHlCvwHxJU5cSOzrumqc=
+Received: from mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-54-186-198-63.us-west-2.compute.amazonaws.com [54.186.198.63]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-556-eK-_mOLLMtiWuPVHryGd6Q-1; Mon,
+ 23 Nov 2026 20:53:58 +0000
+X-MC-Unique: eK-_mOLLMtiWuPVHryGd6Q-1
+X-Mimecast-MFC-AGG-ID: eK-_mOLLMtiWuPVHryGd6Q_1795467237
+Received: from mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.111])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 46C1D1956051;
+	Mon, 23 Nov 2026 20:53:57 +0000 (UTC)
+Received: from mpatocka-thinkpadx1carbongen12.rmtcz.csb (headnet04.pony-001.prod.iad2.dc.redhat.com [10.2.32.116])
+	by mx-prod-int-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 82AC01800551;
+	Mon, 23 Nov 2026 20:53:55 +0000 (UTC)
+Date: Mon, 23 Nov 2026 21:53:52 +0100 (CET)
+From: Mikulas Patocka <mpatocka@redhat.com>
+To: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>, 
+    Benjamin Marzinski <bmarzins@redhat.com>, 
+    Ming-Hung Tsai <mtsai@redhat.com>, dm-devel@lists.linux.dev
+Subject: [PATCH] dm-cache: delete unused dm_cache_metadata_set_read_write
+Message-ID: <80363388-6be5-c75c-652c-8b99096c5cd1@redhat.com>
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Post: <mailto:dm-devel@lists.linux.dev>
@@ -61,74 +73,70 @@ List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 List-Owner: <mailto:dm-devel+owner@lists.linux.dev>
 Precedence: list
+MIME-Version: 1.0
+X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.111
+X-Mimecast-Spam-Score: 0
+X-Mimecast-MFC-PROC-ID: R_geXtRslsmfByzQea8nqofXe0P9fk1hmS83st21BTg_1795467237
+X-Mimecast-Originator: redhat.com
+Content-Type: text/plain; charset=US-ASCII
 
-Thank you for your contribution! Sashiko AI review found 1 potential
-issue to consider:
-- [Medium] dm-verity: 64-bit addition overflow in verity_ctr() hash
-  level calculation
---
+dm_cache_metadata_set_read_write can't change the state from read-only to
+read-write - the macro WRITE_LOCK_VOID returns if the device is
+read-only, thus dm_bm_set_read_write is not executed.
 
-commit cd7aad3c8d1954be46e65f7c6faabc1543f1ca63
-Author: Jake Joyner <jake@jakejoyner.com>
+Luckily, this doesn't cause any user-visible bug because the change from
+read-only to read-write is never requested. So, we can just delete the
+non-working code.
 
-dm-verity: fix shift-out-of-bounds when computing hash level sizes
+Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
+Assisted-by: Claude:claude-opus-5
 
-This commit avoids shifting by 64 or more in verity_ctr() when computing
-the number of hash blocks at the top level of the hash tree, setting the
-level block count directly to 1 when the shift count reaches 64.
+---
+ drivers/md/dm-cache-metadata.c |    7 -------
+ drivers/md/dm-cache-metadata.h |    1 -
+ drivers/md/dm-cache-target.c   |    1 -
+ 3 files changed, 9 deletions(-)
 
-> diff --git a/drivers/md/dm-verity-target.c b/drivers/md/dm-verity-target.c
-> index 1c0ce746adf67..553e85aa0a457 100644
-> --- a/drivers/md/dm-verity-target.c
-> +++ b/drivers/md/dm-verity-target.c
-> @@ -1583,10 +1583,13 @@ static int verity_ctr(struct dm_target *ti, unsig=
-ned int argc, char **argv)
->  	hash_position =3D v->hash_start;
->  	for (i =3D v->levels - 1; i >=3D 0; i--) {
->  		sector_t s;
-> +		unsigned int shift =3D (i + 1) * v->hash_per_block_bits;
-> =20
->  		v->hash_level_block[i] =3D hash_position;
-> -		s =3D (v->data_blocks + ((sector_t)1 << ((i + 1) * v->hash_per_block_b=
-its)) - 1)
-> -					>> ((i + 1) * v->hash_per_block_bits);
-> +		if (shift >=3D 64)
-> +			s =3D 1;
-> +		else
-> +			s =3D (v->data_blocks + ((sector_t)1 << shift) - 1) >> shift;
+Index: linux-2.6/drivers/md/dm-cache-metadata.c
+===================================================================
+--- linux-2.6.orig/drivers/md/dm-cache-metadata.c
++++ linux-2.6/drivers/md/dm-cache-metadata.c
+@@ -1729,13 +1729,6 @@ void dm_cache_metadata_set_read_only(str
+ 	WRITE_UNLOCK(cmd);
+ }
+ 
+-void dm_cache_metadata_set_read_write(struct dm_cache_metadata *cmd)
+-{
+-	WRITE_LOCK_VOID(cmd);
+-	dm_bm_set_read_write(cmd->bm);
+-	WRITE_UNLOCK(cmd);
+-}
+-
+ int dm_cache_metadata_set_needs_check(struct dm_cache_metadata *cmd)
+ {
+ 	int r;
+Index: linux-2.6/drivers/md/dm-cache-metadata.h
+===================================================================
+--- linux-2.6.orig/drivers/md/dm-cache-metadata.h
++++ linux-2.6/drivers/md/dm-cache-metadata.h
+@@ -138,7 +138,6 @@ int dm_cache_write_hints(struct dm_cache
+ int dm_cache_metadata_needs_check(struct dm_cache_metadata *cmd, bool *result);
+ int dm_cache_metadata_set_needs_check(struct dm_cache_metadata *cmd);
+ void dm_cache_metadata_set_read_only(struct dm_cache_metadata *cmd);
+-void dm_cache_metadata_set_read_write(struct dm_cache_metadata *cmd);
+ int dm_cache_metadata_abort(struct dm_cache_metadata *cmd);
+ 
+ /*
+Index: linux-2.6/drivers/md/dm-cache-target.c
+===================================================================
+--- linux-2.6.orig/drivers/md/dm-cache-target.c
++++ linux-2.6/drivers/md/dm-cache-target.c
+@@ -904,7 +904,6 @@ static void set_cache_mode(struct cache
+ 		break;
+ 
+ 	case CM_WRITE:
+-		dm_cache_metadata_set_read_write(cache->cmd);
+ 		break;
+ 	}
+ 
 
-[Severity: Medium]
-Can the addition in the else branch still overflow sector_t and wrap s to 0
-for the lower levels when v->data_blocks is near U64_MAX?
-
-With 512-byte data blocks (v->data_dev_block_bits =3D=3D SECTOR_SHIFT),
-verity_ctr() accepts v->data_blocks up to U64_MAX.  When v->data_blocks is
-U64_MAX and the top level has shift >=3D 64, this sets s =3D 1 for the top
-level while every lower level with 1 <=3D shift < 64 overflows the 64-bit
-addition and computes s =3D 0.  That leaves v->hash_end at v->hash_start + =
-1,
-allowing the table to pass the dm_bufio_get_device_size() check on a small
-hash device and later underflowing the block count in verity_prefetch_io()
-when hash_block_end is clamped to v->hash_end - 1:
-
-drivers/md/dm-verity-target.c:verity_prefetch_io() {
-    ...
-			if (unlikely(hash_block_end >=3D v->hash_end))
-				hash_block_end =3D v->hash_end - 1;
-		}
-no_prefetch_cluster:
-		dm_bufio_prefetch_with_ioprio(v->bufio, hash_block_start,
-					hash_block_end - hash_block_start + 1,
-					pw->ioprio);
-    ...
-}
-
-Since v->data_blocks is always non-zero when v->levels > 0, computing s as
-((v->data_blocks - 1) >> shift) + 1 would avoid both the 64-bit addition
-overflow and the shift-out-of-bounds when shift =3D=3D 64 (or for all shift=
- < 64
- alongside the shift >=3D 64 check).
-
---=20
-Sashiko AI review =C2=B7 https://sashiko.dev/#/patchset/20261123203413.1452=
-98-1-jake@jakejoyner.com?part=3D1
