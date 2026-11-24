@@ -1,57 +1,73 @@
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=100.103.45.18
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1795523720;
-	b=rOpM3pBOGfS6eddGxuoSFtDv3MLT6TpaEVyEl/bfOcvGygLwRONforOrLELHZYwVGogf
-	 pRjLnnL+h197gvoso7hbY76SgQ/9Blid0x1jcY08KmNHrYtT9q7rJ5yDRl51GeOg1rf0e
-	 BOCbR0tTUHE8RtalA2T2PwlPqBIMhcZ1j0lTJPiCbLGSVubRE6xTMNS+Ng32hemYX8SvJ
-	 6jkkFDvOix9wqKQ8ZzLP0hvH9wei5xbohzUgoV3pLsCZJr69a5qHXJWPkZ1erY2GqMeYu
-	 A8fdP+FhNa6YCHeg7hYHclrADogGAYkIEWAN0NvxE+83okyXQVgKUnQ43JmPbM+FweQ==
+	t=1795532963;
+	b=MTT5tTv0rrRVeW4dOXB8E7LgPBa6PVxoN5Y0DpDOVpSDRJ+oN9pR/HsehJbPKHZuoCcf
+	 RVBdwFIcOBqe4NOQ3EEN3mkbN8OHAqo0/PuLxxs3idu0B5Rl2CR97jfp6Rh43fVyED3u9
+	 3Q11jP41NX/vJZFgI9Lp2cGU0mSOXQsdVDKV2pv0oiqTiUZGmrh0oigJZLsA/pBPcPoOO
+	 AWpP+AG3iqQzhRml1hCzJpZD0H1Rv+TPRfnwe1XOfsH016DcSmqUpqiTCq08z5XpXQ04O
+	 g+HqFE48BuYvoxMUmyZaDeW3AMhwHmhe8WXSg0dfroOecZ/BqCQ4Tk83j6y7vGPMeJA==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1795523720;
-	h=Received:DKIM-Signature:Message-ID:From:Subject:Reply-To:To:Cc:
-	 In-Reply-To:References:Content-Type:Content-Transfer-Encoding:Date;
-	bh=kmweTMZBzgzXbDeqq323Vxvj5oKHS564hSHQQblhjpo=;
-	b=QrzImYbnzYtZkGKIX0HEOxK4VY7b6xehLvAzIG01YyK+2zqqzavMm1BlGp/fgh37z5BZ
-	 ThnC789smM6X1TBybUEV88c7X/c0wAXKgHNbaNxowS+87ZSeLHuexYCM21W2zirNDiMof
-	 gPY57GuQNBgm8jD/6V5FZUr2d0hrOMnr3a6TrL9b3NHP0a3sgbTq+Y5RZVTH4O4N84D4J
-	 DGxpYbksPnTHmybB7CPYSHUWLqud3i9Mz0C8LdrgAYK2piDaeWqt94u5oEIBREACgzsBn
-	 o7GJIKMmWwpN6ZRokqfVbmaMdV63oMlxpnThQ54CK2MeOUsmvyrJwolVcfRRMQGP+2A==
+	a=rsa-sha256; c=relaxed/relaxed; t=1795532963;
+	h=Received:DKIM-Signature:Date:From:To:Cc:Subject:Message-ID:
+	 References:MIME-Version:Content-Type:Content-Disposition:In-Reply-To;
+	bh=K+IekPDE+jkqEoJ25TetgowrP8a4LUWhHnBuiLXn8A8=;
+	b=D/ZQuH8RJb5ohZPVopFV6q1o+rlMLEWwXsjgY8PPSBC8YQsnnNthgHkBgZH1xymVO5+A
+	 wOQsYEuDGfsnNZH4IkQVO/D8QRQOZ2FR/tm4AsmfByjRyjSxf5XUAd6S2qSAtdh9au5dO
+	 L4H62+JNEH1T9yFam9BFtnOx16uKOELHA2oxAZTLAp0lMTmR0Rdmwd3px0rEQ7iSUdXZ1
+	 pjtkslSLI6cxtgSIfswPF/xNH7BhNe3kf7Flds3VmRePn5jtKtZfLnZPoziHOaoJbktHG
+	 c0ku1P5TgENr6lt/Mit5V1beeCjoF219CVN6SM3P2yjm5eUHpwiM+A8Fxt+LVbLz53g==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=ioVjX2c5;
+	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=AxiV7WZS;
 	arc=none smtp.remote-ip=100.103.45.18
 Received: from smtp.kernel.org (quasi.space.kernel.org [100.103.45.18])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 29CC8606A31E
-	for <dm-devel@lists.linux.dev>; Tue, 24 Nov 2026 12:35:19 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with UTF8SMTPS id 3ED24606A321;
+	Tue, 24 Nov 2026 15:09:23 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key, unprotected) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=ioVjX2c5
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id F14E31F000C0;
-	Tue, 24 Nov 2026 12:35:18 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=AxiV7WZS
+Received: by smtp.kernel.org (Postfix) with UTF8SMTPSA id 36FD81F000D4;
+	Tue, 24 Nov 2026 15:09:22 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
-	s=k20260515; t=1795523719;
-	bh=kmweTMZBzgzXbDeqq323Vxvj5oKHS564hSHQQblhjpo=;
-	h=From:Subject:Reply-To:To:Cc:In-Reply-To:References:Date;
-	b=ioVjX2c5ahKT1Wn41aVZWz8P93xN4XOXoUwovqEubRmI4iGvHVizBSidDryRZ9fJ3
-	 7SRfdqzosjljHLCgJOEsqpuw6TQJ+6reXIjRtQWtapOS97mdgLzDu3S4k55gPix3LH
-	 Te4lWUfxDa6sFj0PEBg0eezgkE5lVpA3VKdr88meBf5KN1vDx4Zcp5Ifw2YhUyaHzt
-	 mTCU1vhDBeZbXHiJ0vS2hkc55RvVkkorxUPFlIT25Zfw9xW8X1id2PFsmMjiVKDiP0
-	 /+Gy7R9Oz00jF4ccJj319ivlA/evPt8UesnkJWsKfDUAAgOst1QbJsB7rMLlcnL7Ho
-	 7CAS+vW8NqKMw==
-Message-ID: <sashiko-outbox-231146@kernel.org>
-From: sashiko-bot@kernel.org
-Subject: Re: [PATCH v2 1/3] dm persistent data: put back the reference a
- failed shadow dropped
-Reply-To: sashiko-reviews@lists.linux.dev
-To: "Denis V. Lunev" <den@openvz.org>, agk@redhat.com, snitzer@kernel.org, mpatocka@redhat.com, dm-devel@lists.linux.dev
-Cc: bmarzins@redhat.com, thornber@redhat.com
-In-Reply-To: <20261124122601.436965-2-den@openvz.org>
-References: <20261124122601.436965-1-den@openvz.org>
- <20261124122601.436965-2-den@openvz.org>
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: quoted-printable
-Date: Tue, 24 Nov 2026 12:35:18 +0000
+	s=k20260515; t=1795532962;
+	bh=K+IekPDE+jkqEoJ25TetgowrP8a4LUWhHnBuiLXn8A8=;
+	h=Date:From:To:Cc:Subject:References:In-Reply-To;
+	b=AxiV7WZSd4PJ6njfHxHjci8C4W3rlHZiStM2FsIJxUt9/7C+Ank9ouOae768ogJKt
+	 +S54ua88UepNEkPBO6qjzgCWCZWeSY7Nr1RNSJqOcNds+Ygoe+HJyxY11VPr0ZLXxk
+	 iaYHYERsCjcwthMRREuWi033qD+cFkVBdv3YAl5YuA6D6WGV+a3YtT6hT9u5hLYoA8
+	 02P71nq4V8c8pfqRkWRA5AXuZdmYn/SbEgClf0uNzk3s1IfiIu7l0hhXIe/KlG+hbA
+	 Oj+FZwYYVRWGv5aCyggVQaFSCQHBF64t+o1e+Quhe9huy6dUrx1Rwf5Cj1zg3Ygmba
+	 3b0AD2lJpQAyg==
+Date: Tue, 24 Nov 2026 17:09:18 +0200
+From: Jarkko Sakkinen <jarkko@kernel.org>
+To: sashiko-reviews@lists.linux.dev
+Cc: keyrings@vger.kernel.org, dm-devel@lists.linux.dev,
+	linux-crypto@vger.kernel.org, linux-security-module@vger.kernel.org,
+	Alasdair Kergon <agk@redhat.com>,
+	Andrew Morton <akpm@linux-foundation.org>,
+	Benjamin Marzinski <bmarzins@redhat.com>,
+	David Howells <dhowells@redhat.com>,
+	"David S. Miller" <davem@davemloft.net>,
+	David Woodhouse <dwmw2@infradead.org>,
+	Herbert Xu <herbert@gondor.apana.org.au>,
+	Ignat Korchagin <ignat@linux.win>,
+	James Bottomley <James.Bottomley@hansenpartnership.com>,
+	James Morris <jmorris@namei.org>, Jason Gunthorpe <jgg@ziepe.ca>,
+	Jonathan Corbet <corbet@lwn.net>, Lukas Wunner <lukas@wunner.de>,
+	Mike Snitzer <snitzer@kernel.org>,
+	Mikulas Patocka <mpatocka@redhat.com>,
+	Mimi Zohar <zohar@linux.ibm.com>, Paul Moore <paul@paul-moore.com>,
+	Peter Huewe <peterhuewe@gmx.de>,
+	Randy Dunlap <rdunlap@infradead.org>,
+	"Serge E. Hallyn" <serge@hallyn.com>,
+	Shuah Khan <skhan@linuxfoundation.org>,
+	James Prestwood <prestwoj@gmail.com>
+Subject: Re: [PATCH 9/9] KEYS: trusted: Add asymmetric key support for TPM2
+Message-ID: <awWonunbfilZrzQV@kernel.org>
+References: <20261124120044.1481752-1-jarkko@kernel.org>
+ <20261124120044.1481752-10-jarkko@kernel.org>
+ <sashiko-outbox-231131@kernel.org>
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Post: <mailto:dm-devel@lists.linux.dev>
@@ -60,82 +76,27 @@ List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 List-Owner: <mailto:dm-devel+owner@lists.linux.dev>
 Precedence: list
+MIME-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+In-Reply-To: <sashiko-outbox-231131@kernel.org>
 
-Thank you for your contribution! Sashiko AI review found 1 potential
-issue to consider:
-- [Medium] dm persistent data: leaked new block in __shadow_block() on
-  error
---
+On Tue, Nov 24, 2026 at 12:25:44PM +0000, sashiko-bot@kernel.org wrote:
+> Thank you for your contribution! Sashiko AI review found 2 potential
+> issues to consider:
+> - [Medium] KEYS: trusted: 32-bit param_size overflow in
+>   tpm2_asym_rsa_decrypt()
 
-commit 03aa675fd4998658022986a6e963e9c3d3429569
-Author: Denis V. Lunev <den@openvz.org>
+I've now learned that sometimes people expect you to fix these before
+they will review, or they get upset if you fix them and iterate the
+series. Someone will be rip their trousers whatever you do.
 
-dm persistent data: put back the reference a failed shadow dropped
+Or then, some gets pissed when some random bot gives feedback pm
+the next day.
 
-This commit restores the original block's reference count via
-dm_sm_inc_block() when __shadow_block() fails to read the original block
-or write-lock the new block.
+Since this is the worst of the worst I'll mark it down and let's
+consider it addressed.
 
-> diff --git a/drivers/md/persistent-data/dm-transaction-manager.c b/driver=
-s/md/persistent-data/dm-transaction-manager.c
-> index 7401add01d12e..cf203ebb5110e 100644
-> --- a/drivers/md/persistent-data/dm-transaction-manager.c
-> +++ b/drivers/md/persistent-data/dm-transaction-manager.c
-> @@ -303,7 +303,7 @@ static int __shadow_block(struct dm_transaction_manag=
-er *tm, dm_block_t orig,
-> =20
->  	r =3D dm_bm_read_lock(tm->bm, orig, v, &orig_block);
->  	if (r < 0)
-> -		return r;
-> +		goto out_put_orig;
-> =20
->  	/*
->  	 * It would be tempting to use dm_bm_unlock_move here, but some
-> @@ -315,13 +315,18 @@ static int __shadow_block(struct dm_transaction_man=
-ager *tm, dm_block_t orig,
->  	r =3D dm_bm_write_lock_zero(tm->bm, new, v, result);
->  	if (r) {
->  		dm_bm_unlock(orig_block);
-> -		return r;
-> +		goto out_put_orig;
->  	}
-> =20
->  	memcpy(dm_block_data(*result), dm_block_data(orig_block),
->  	       dm_bm_block_size(tm->bm));
-> =20
->  	dm_bm_unlock(orig_block);
-> +	return 0;
-> +
-> +out_put_orig:
-> +	/* The caller goes on using orig when the shadow fails. */
-> +	dm_sm_inc_block(tm->sm, orig);
->  	return r;
->  }
+I like Sashiko but don't know how to dance the dance.
 
-[Severity: Medium]
-Does this leak the newly allocated block new in the space map when
-__shadow_block() fails?
-
-__shadow_block() allocates new via dm_sm_new_block(tm->sm, &new) with a
-reference count of 1 before decrementing orig:
-
-drivers/md/persistent-data/dm-transaction-manager.c:__shadow_block() {
-	r =3D dm_sm_new_block(tm->sm, &new);
-	if (r < 0)
-		return r;
-
-	r =3D dm_sm_dec_block(tm->sm, orig);
-	if (r < 0)
-		return r;
-    ...
-}
-
-Unlike dm_tm_new_block(), which calls dm_sm_dec_block(tm->sm, new_block)
-on failure, neither out_put_orig nor the dm_sm_dec_block(tm->sm, orig)
-error path releases new.  Once the target recovers from the transient
-failure and commits a later transaction, new remains permanently allocated
-in the on-disk space map with nothing referencing it.
-
---=20
-Sashiko AI review =C2=B7 https://sashiko.dev/#/patchset/20261124122601.4369=
-65-1-den@openvz.org?part=3D1
+Br, Jarkko
