@@ -1,79 +1,55 @@
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=100.103.45.18
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1795561665;
-	b=ZnOOxnYRMlaGTRh7UFEoPI4b2cocRoIEk8oD1Qr5YV1h67cy29WxB9ix1wyBYFeRVueX
-	 6WflLrZQ0yGglSvUOpLZA2N8TQjg1mpLMyv5XlbjhLH8/1ew9fuGxWqA38x5wyDeymWzj
-	 QH0Vn6dwx2caqCG/4+WUgGCDDqG1b5lIZIhJFaIGRLqE2ZgTuHz3Jet3is9aGCWrcRHxi
-	 4vhXrm3tfN3Hzkl+rVSGybJGfRkqMclQdhfSw/bLFAteQdocOClcStgsQvk6gaZWn+znA
-	 5xB8fGY9h7xvqlwaeF51Gbo56DHzxd4xlVqL++CxyRaZ35VAdNIb0oYblNDkgKCvIDQ==
+	t=1795562963;
+	b=ZQHLjNyxNJ1zW8fe08c+gnyi1pAYble61670ctSmsVZxKM4McF4x1D/j9Mu+huJXvk0H
+	 M1buZ2aaSS7nijyMgS9gewMAL2iJ9hhho3vJ7jBIvK8sinf7fMxc0hXQfH2Vt0ChCsZOf
+	 jgpY3J/gYAM1PMWIB+dS6T7sJfIR4kOMClF0BGq9+t9XPOJsZoL4E7ASetUnhCo1rfuhP
+	 4uMv/GwQ3iVR9DA9d/1NPgojSQLXTbVGIY5YboNVVWvuXPdVm/snJJO4J+o5hDIoYa6/U
+	 1RUbwspdonXxaa6e1rk7nWNS2UzgXl/m9Fupofv0XFDUm8BhumPBAgnT03T0DnOh61A==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1795561665;
-	h=Received:DKIM-Signature:Date:From:To:Cc:Subject:Message-ID:
-	 References:MIME-Version:Content-Type:Content-Disposition:In-Reply-To;
-	bh=+1ShINOhrETVckZgwkDQ2yDcTAY5roVvnqnqdvL+Hbk=;
-	b=sTNKiREt5E7Ijj8nD5jPS62/i59+NwkTiq73IYHiDCq6sdjPmVfb34ZreB6j/eP+YzUB
-	 CqCgdDLj01MQI70AOwCoDTzJ4Qaww1KXFQosz6BBl4Q+p5fcGZA6CkO3HbajkRceOpGoR
-	 Ua++/EIRj9XzIBmB2+fnX1SqKuuF5uEf/X0ITYoKZpkzAOOhSEsQtCmif4pc6d25Ts1HO
-	 hmB95eNe2lduJJCTmJ+rnw+nlkpn4KGPIiXJybO9mYLJck8hAt+tpRc3u5kAaau4HYA/R
-	 4nNExNE27B7WSparM8mOy7N55eZj0+pWCwsFFPVZ/+Dl/bkkJGSNbQAmU88VijnWx1w==
+	a=rsa-sha256; c=relaxed/relaxed; t=1795562963;
+	h=Received:DKIM-Signature:Message-ID:From:Subject:Reply-To:To:Cc:
+	 In-Reply-To:References:Content-Type:Content-Transfer-Encoding:Date;
+	bh=5de2y9f3Or4nDvnChY7AZR91CsjEcbpNaS2qDqXcxwk=;
+	b=QafAGAVRJH6vadvPj9Wlg6h7V2wfOL9djFJwUAdzvO9g362diBC7BKdqm9wkqgQdc/MG
+	 Hw0mZ4r87M+lz2j2htNvqFUnybdm4fXy/iau8kcfzLW9b7xC9q3vtn1PI+2rY6z+q5ip9
+	 mr0IemjcPSed+a1g5ZTL+D1hN28yG+eLjajLb6bR3Ch89p+T0Ez46yU3jh5LrNlSvFCkM
+	 /vUpYCLvygtn1hUUoBvaOL9bEV2tjfAtc8eLed+36djL7ww3uLtGmNzKhod6/zNwfwFrq
+	 DP0kHP6g5/rohAPvyQjiw91gIhXNACKW/HfRFcLfMocm4QWnrZi8BOTITjauRI3h0dA==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=dVQjkdi+;
+	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=Ml2k39dI;
 	arc=none smtp.remote-ip=100.103.45.18
 Received: from smtp.kernel.org (quasi.space.kernel.org [100.103.45.18])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with UTF8SMTPS id B2DA4606A327;
-	Tue, 24 Nov 2026 23:07:45 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id D18F2606A31E
+	for <dm-devel@lists.linux.dev>; Tue, 24 Nov 2026 23:29:23 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=dVQjkdi+
-Received: by smtp.kernel.org (Postfix) with UTF8SMTPSA id BB17D1F000C0;
-	Tue, 24 Nov 2026 23:07:44 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=Ml2k39dI
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 0D9701F01569;
+	Tue, 24 Nov 2026 23:29:23 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
-	s=k20260515; t=1795561665;
-	bh=+1ShINOhrETVckZgwkDQ2yDcTAY5roVvnqnqdvL+Hbk=;
-	h=Date:From:To:Cc:Subject:References:In-Reply-To;
-	b=dVQjkdi+8IRvs0yX8C9we8uPqfWBw4PBtDidtovyXGmo6jzND4pqoWA5i9nS9C16q
-	 QmLLotzAOsH2d0e60fdXLQtsyWOyGdQCIec0Ay0nbE7jmq22QyPYcs8RZ5HwD3Xi9s
-	 1qykf2nNARtiKwl0Mlk3Oa8IpONRCgo8OPbdnFl6ggM4gbpUbqOiYI0zGyt0NHq86+
-	 2KqZuQppqAg996IAnB+YYMytFDCsHeqTsjq1nEzBb/xDsgy5GH137DtiREGq1+rj+V
-	 J6JKuWDX6n5j3AK4UQWTIKSlrTAhrhnf/UMaJd2hHtqM/9yygrwRJ+tYb39hwxi7IN
-	 HIZeeC4eAP7fw==
-Date: Wed, 25 Nov 2026 01:07:41 +0200
-From: Jarkko Sakkinen <jarkko@kernel.org>
-To: Eric Biggers <ebiggers@kernel.org>
-Cc: keyrings@vger.kernel.org, dm-devel@lists.linux.dev,
-	linux-crypto@vger.kernel.org, linux-doc@vger.kernel.org,
-	linux-integrity@vger.kernel.org, linux-kernel@vger.kernel.org,
-	linux-security-module@vger.kernel.org,
-	Ahmad Fatoum <a.fatoum@pengutronix.de>,
-	Alasdair Kergon <agk@redhat.com>,
-	Andrew Morton <akpm@linux-foundation.org>,
-	Benjamin Marzinski <bmarzins@redhat.com>,
-	David Gstir <david@sigma-star.at>,
-	David Howells <dhowells@redhat.com>,
-	"David S. Miller" <davem@davemloft.net>,
-	David Woodhouse <dwmw2@infradead.org>,
-	Herbert Xu <herbert@gondor.apana.org.au>,
-	Ignat Korchagin <ignat@linux.win>,
-	James Bottomley <James.Bottomley@hansenpartnership.com>,
-	James Morris <jmorris@namei.org>,
-	James Prestwood <prestwoj@gmail.com>,
-	Jason Gunthorpe <jgg@ziepe.ca>, Jonathan Corbet <corbet@lwn.net>,
-	Lukas Wunner <lukas@wunner.de>, Mike Snitzer <snitzer@kernel.org>,
-	Mikulas Patocka <mpatocka@redhat.com>,
-	Mimi Zohar <zohar@linux.ibm.com>, Paul Moore <paul@paul-moore.com>,
-	Peter Huewe <peterhuewe@gmx.de>,
-	Randy Dunlap <rdunlap@infradead.org>,
-	"Serge E. Hallyn" <serge@hallyn.com>,
-	Shuah Khan <skhan@linuxfoundation.org>,
-	Sumit Garg <sumit.garg@kernel.org>
-Subject: Re: [PATCH v2 6/9] KEYS: Factor out KEYCTL_PKEY
-Message-ID: <awYYvQwk6AWHhtNU@kernel.org>
-References: <20261124194043.1651679-1-jarkko@kernel.org>
- <20261124194043.1651679-7-jarkko@kernel.org>
- <20261124215035.GE2227373@google.com>
- <awYLCuCIG8--aa2Z@kernel.org>
+	s=k20260515; t=1795562963;
+	bh=5de2y9f3Or4nDvnChY7AZR91CsjEcbpNaS2qDqXcxwk=;
+	h=From:Subject:Reply-To:To:Cc:In-Reply-To:References:Date;
+	b=Ml2k39dI/Ce5yn9GuEyf4tm79nY8vwtz8j6NHHWvkDRLWiTwCebvjyirE8qdzLQih
+	 q71l9Hvh6TvfOHxleCwep837mDKwGAEaKolIQ1nkWa+DUl+ddK21ucIiHD0zbAA8S+
+	 6r9ALPcLChhahAeT0JJfDYIJduRrGaeDAnpumSl/Z0iNyEqkIi5etTG7oG6SCAhb5v
+	 BJlEExx7nDkm8+k27aUvbMauUz1FgvZLrEaQRyXC3vmML00e7dvCb9vClnMW+iuKro
+	 ESkDMT2pSNhXkiNQO3r5Lb2xQQ9F7HFdpVsNNuX4UEUKF2JOKk/upqqzijQgi2x+Vq
+	 dPPofvgQDW6FQ==
+Message-ID: <sashiko-outbox-232230@kernel.org>
+From: sashiko-bot@kernel.org
+Subject: Re: [PATCH v2] dm era: add lazy mode
+Reply-To: sashiko-reviews@lists.linux.dev
+To: "Ronnie Sahlberg" <ronniesahlberg@gmail.com>, dm-devel@lists.linux.dev
+Cc: agk@redhat.com, snitzer@kernel.org, mpatocka@redhat.com, bmarzins@redhat.com, ejt@redhat.com
+In-Reply-To: <20261124230651.494303-1-ronniesahlberg@gmail.com>
+References: <20261124230651.494303-1-ronniesahlberg@gmail.com>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+Date: Tue, 24 Nov 2026 23:29:22 +0000
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Post: <mailto:dm-devel@lists.linux.dev>
@@ -82,38 +58,140 @@ List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 List-Owner: <mailto:dm-devel+owner@lists.linux.dev>
 Precedence: list
-MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <awYLCuCIG8--aa2Z@kernel.org>
 
-On Wed, Nov 25, 2026 at 12:09:18AM +0200, Jarkko Sakkinen wrote:
-> On Tue, Nov 24, 2026 at 09:50:35PM +0000, Eric Biggers wrote:
-> > On Tue, Nov 24, 2026 at 09:40:40PM +0200, Jarkko Sakkinen wrote:
-> > > diff --git a/crypto/asymmetric_keys/Kconfig b/crypto/asymmetric_keys/Kconfig
-> > > index c73979b2e98e..1c78a9a663c5 100644
-> > > --- a/crypto/asymmetric_keys/Kconfig
-> > > +++ b/crypto/asymmetric_keys/Kconfig
-> > > @@ -2,6 +2,7 @@
-> > >  menuconfig ASYMMETRIC_KEY_TYPE
-> > >  	bool "Asymmetric (public-key cryptographic) key type"
-> > >  	depends on KEYS
-> > > +	select KEYCTL_PKEY
-> > >  	help
-> > >  	  This option provides support for a key type that holds the data for
-> > >  	  the asymmetric keys used for public key cryptographic operations such
-> > 
-> > Could we use this opportunity to give CONFIG_KEYCTL_PKEY an
-> > off-by-default prompt like CONFIG_KEY_DH_OPERATIONS, please?  There are
-> > a lot of systems that need ASYMMETRIC_KEY_TYPE for verifying signatures
-> > but don't the KEYCTL_PKEY keyctls.  The fact that the KEYCTL_PKEY
-> > keyctls get pulled in too has always been a huge problem, given the
-> > additional attack surface they expose as well as other issues like the
-> > kernel's RSA code not being resistant to timing attacks.
-> 
-> We can do that.
+Thank you for your contribution! Sashiko AI review found 2 potential
+issues to consider:
+- [Medium] dm era: incomplete metadata snapshot in metadata_take_snap()
+- [Medium] dm era: premature clearing of invalidation flags in
+  metadata_era_rollover()
+--
 
-I'd be also interested to hear, if there are any wishes from non-TPM
-trusted backend side. Thus, increased Cc-list.
+commit c7e0d839221a7af599bacfffe68cbee06cb7fae0
+Author: Ronnie Sahlberg <ronniesahlberg@gmail.com>
 
-Br, Jarkko
+dm era: add lazy mode
+
+This commit adds an optional "lazy" feature mode to dm-era that records new=
+ly
+written blocks in memory and flushes them on later metadata commits while
+marking the on-disk superblock dirty until all pending bits are persisted.
+
+> diff --git a/drivers/md/dm-era-target.c b/drivers/md/dm-era-target.c
+> index ea499adca4ce2..298b376ff785b 100644
+> --- a/drivers/md/dm-era-target.c
+> +++ b/drivers/md/dm-era-target.c
+
+[ ... ]
+
+> @@ -946,7 +1053,47 @@ static int metadata_new_era(struct era_metadata *md)
+>  	return 0;
+>  }
+> =20
+> -static int metadata_era_rollover(struct era_metadata *md)
+> +/*
+> + * era_map() sets bits without the worker in lazy mode, so switch it to =
+the
+> + * new writeset before archiving the old one.
+> + */
+> +static int metadata_era_rollover_lazy(struct era_metadata *md)
+> +{
+> +	int r;
+> +	struct writeset *old_writeset =3D md->current_writeset;
+> +	struct writeset *new_writeset =3D next_writeset(md);
+> +
+> +	r =3D writeset_init(&md->bitset_info, new_writeset, md->nr_blocks,
+> +			  md->needs_invalidate);
+> +	if (r) {
+> +		DMERR("%s: writeset_init failed", __func__);
+> +		return r;
+> +	}
+> +
+> +	swap_writeset(md, new_writeset);
+> +
+> +	if (old_writeset->md.root !=3D INVALID_WRITESET_ROOT) {
+> +		r =3D writeset_sync_pending(md, old_writeset);
+> +		if (!r)
+> +			r =3D __metadata_era_archive(md, old_writeset,
+> +						   md->current_era);
+> +		if (r) {
+> +			DMERR("%s: couldn't archive era %u", __func__,
+> +			      md->current_era);
+> +			md->tracking_lost =3D true;
+> +			dm_disk_bitset_init(md->tm, &md->bitset_info);
+> +			dm_bitset_del(&md->bitset_info, old_writeset->md.root);
+> +			old_writeset->md.root =3D INVALID_WRITESET_ROOT;
+> +			return r;
+> +		}
+> +	}
+> +
+> +	md->current_era++;
+> +
+> +	return 0;
+> +}
+
+[Severity: Medium]
+Can metadata_take_snap() capture an incomplete metadata snapshot after an
+archive failure here?
+
+When archiving old_writeset fails, new_writeset (initialized with all bits
+clear) has already been swapped into md->current_writeset and old_writeset =
+is
+deleted.  If the next rollover is triggered by take_metadata_snap,
+metadata_era_rollover() sets md->needs_invalidate =3D true and calls
+metadata_era_rollover_lazy(), which archives that incomplete writeset into
+md->writeset_tree_root and puts the all-ones invalidation writeset into the
+new md->current_writeset.
+
+Because a metadata snapshot only includes writeset_tree_root and
+era_array_root (and not current_writeset), the snapshot misses both the wri=
+tes
+from the failed archive and the all-ones invalidation writeset, while
+metadata_era_rollover() clears needs_invalidate and tracking_lost before the
+snapshot commit.
+
+[ ... ]
+
+> @@ -969,6 +1116,28 @@ static int metadata_era_rollover(struct era_metadat=
+a *md)
+>  	return 0;
+>  }
+> =20
+> +static int metadata_era_rollover(struct era_metadata *md)
+> +{
+> +	int r;
+> +
+> +	/* Writes may have been lost, so mark every block in the new era. */
+> +	if (md->tracking_lost)
+> +		md->needs_invalidate =3D true;
+> +
+> +	if (md->lazy)
+> +		r =3D metadata_era_rollover_lazy(md);
+> +	else
+> +		r =3D __metadata_era_rollover(md);
+> +
+> +	/* Cleared before the commit, which marks the metadata clean. */
+> +	if (!r && md->needs_invalidate) {
+> +		md->needs_invalidate =3D false;
+> +		md->tracking_lost =3D false;
+> +	}
+> +
+> +	return r;
+> +}
+
+[Severity: Medium]
+If the caller's metadata_commit() fails after metadata_era_rollover() clears
+md->needs_invalidate and md->tracking_lost, is the invalidation state lost?
+
+process_rpc_calls() and metadata_take_snap() call metadata_commit() after
+metadata_era_rollover() returns, without restoring needs_invalidate or
+tracking_lost on commit failure.  In addition, when a non-lazy target opens
+dirty metadata (setting needs_invalidate) and rolls over on preresume, a la=
+ter
+metadata_era_archive() failure in era_postsuspend() only sets tracking_lost=
+ if
+era->md->lazy is true, so the following metadata_commit() writes a clean
+version 1 superblock even though the invalidated era was not archived.
+
+--=20
+Sashiko AI review =C2=B7 https://sashiko.dev/#/patchset/20261124230651.4943=
+03-1-ronniesahlberg@gmail.com?part=3D1
