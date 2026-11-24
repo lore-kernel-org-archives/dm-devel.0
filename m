@@ -1,44 +1,44 @@
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=100.103.45.18
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1795549283;
-	b=aP4e8LZAQRaiB8TCiCNzTJzVTyBdelO0WEc2T93Hw+TidlvtTTtycBr4AI7k010/uiEk
-	 5wK9jd2AROl3U7KOeHIjNvvGCnPVY7qCzOVMCIoq/HmsZiwrcDDJaHXc4UaIAm806s2wD
-	 ebkSqGa8BKFlUcituxEHyYwDMYPHrhQL7TI9hERvLbAUr7Zv79pTcxwWYqTBqdQu8kG1F
-	 7oYNmK9yz1ctfH3Sfdq9jmmT4dVOxCBFBrOAp3wr+brCHFDfl5TJyGAIl5TdCq94xiDuD
-	 e+ona1/AW40ukEWAMJat94Zln7CyfEjNlUSJCMbe20swOF9uSWk8jOYPLpoJQPrCdew==
+	t=1795549275;
+	b=PaW2qaF3btszUqODcL3zue8+8LMWFpHEb1XL2knEHT5oZmQr78ZTdM0aDqjxFAXFa/et
+	 yHG1IwAeKIyhGIn3f9MYbCNE6E9OVFZNlgJt11V4qpX0N9E4Jq/9BUHpg+fHVs7Przo+w
+	 l9glN/iWx6bXaiN7YHHj120qPsDQKKzNF4X660/GSBuz6+p2557Wj83L5V3oOld79nULf
+	 nMn0BtboJMQCy5jVuh0NXzVwBh0PHKXhkEGlptUaNl5rQ6MIHRNYKYh1mBaOZ3etscJst
+	 g5yOaTkOKSIM4dtoAelgAhDEVunUgZT1rHr3Z/gekbPQnCy/WsEbK5VYDAUYSEXG9HA==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1795549283;
+	a=rsa-sha256; c=relaxed/relaxed; t=1795549275;
 	h=Received:DKIM-Signature:From:To:Cc:Subject:Date:Message-ID:X-Mailer:
 	 In-Reply-To:References:MIME-Version:Content-Transfer-Encoding;
-	bh=SV/yiOYP/0MeNKZw5YjS4f8WYb1DDXzMpTFrDVl9LTM=;
-	b=JZHY4vjFz8O0DXlRu8W2REbBxBINZZMOfQjN5zfhnsN+2DtJJL654Ulot+0Za/tUPLli
-	 RLj6iVYJgO8uHsK4/OoS00mwZEMTSc5fsh8Bsg/BvbL1DMaXx6x3HoYGuSlyle14f+G0r
-	 KklEyu50JcrPRSJUowFMqlUVwKV1bzogyga61MfMUUm8TN3hqoox0vekQI0aM1CCbuRIa
-	 jdp9TtLMUQHkaeEGXJN2/ablGaq/xbFq/1a7fu67/c4u0R9M38bXCJmwkbP9Jcq2sGKSu
-	 r9KJ+Oy+AdwJ5vyV9wEL4EDCuXbbNWgwYObks2lYwwm5pVcSS/dJN6ABVZvLsEFXC6w==
+	bh=nLyjKszxDxf0Z7d66Bl/V5iPNaKlz2X0D1ZETIU6Ae4=;
+	b=C+73GjZrgRisefWMZ+C+XbMLjfAasD17453b4yDfLxZ5eA5dgFsmTY3p5FknvqNkGCvh
+	 Ra0Zml9037/DIuPgr1DaYaHZZrZBSXZN+PSJ165nyd98XRV6WAuTsXlagQPBTefrv3wLg
+	 khQDXjVGsnqlLTKka7FRmLxFbUDydMGqEbnDLsvI3tHIe/kOjJFxzbVSR/QfERqER0Gfm
+	 Anxt+IX90DJBLFcfsylBKBfrv1/tcBvo0bubZJll97FOfHyZ9lu06n8ZxxNJWhspDcS1E
+	 3A21GSqQjTtqtPXbon/RdDPrq1JImXmo8MKUtMFlPnNEmHQX7X9evQgKHRaD/3B58Qw==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=WrfLv0p6;
+	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=VrRY9RSH;
 	arc=none smtp.remote-ip=100.103.45.18
 Received: from smtp.kernel.org (quasi.space.kernel.org [100.103.45.18])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with UTF8SMTPS id B738F606A326;
-	Tue, 24 Nov 2026 19:41:23 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with UTF8SMTPS id B38BC606A32E;
+	Tue, 24 Nov 2026 19:41:15 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=WrfLv0p6
-Received: by smtp.kernel.org (Postfix) with UTF8SMTPSA id 971D51F000CF;
-	Tue, 24 Nov 2026 19:41:22 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=VrRY9RSH
+Received: by smtp.kernel.org (Postfix) with UTF8SMTPSA id 8464A1F0093C;
+	Tue, 24 Nov 2026 19:41:14 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
-	s=k20260515; t=1795549283;
-	bh=SV/yiOYP/0MeNKZw5YjS4f8WYb1DDXzMpTFrDVl9LTM=;
+	s=k20260515; t=1795549275;
+	bh=nLyjKszxDxf0Z7d66Bl/V5iPNaKlz2X0D1ZETIU6Ae4=;
 	h=From:To:Cc:Subject:Date:In-Reply-To:References;
-	b=WrfLv0p6N8DWFntxW2KHnYkGxCbc9GF13XpqdpkuGVS9VqXYDWZk+17DjOwgmR+cf
-	 EUW38mUSEcDEgRmZV327Af1WpgQiXc3N3KUzHqy1U2xcbDKnRqSYyJ4MZcKzcGXDNl
-	 uR83W5tPCGDjq2laURNz+bSZFG7ojnjfk42b4dytUTyIWvI06yHn9paweH7sDTgipz
-	 nGnkf9nMqm9UKnv+UJ9reM5CYG4aRRt+eDuGkRR4/yp0dXnnJmvKQ/17BeLvGNkyNt
-	 ENdJEVY2XnrWHm0TDCxTstY1d4GHzbJhYBNDtWYcfU8qtHTg4S6sMUPA/pMdxrDjte
-	 3mwtKis1xCFYA==
+	b=VrRY9RSH2eFRg7sU0+AA3rXhb+w3/EtTsPyziWSd+YSWnclmRhKVoEHFq6UIw22Fi
+	 oso7gsoPBSiKOLM+mlH25j0p1Ow2+41hzlwPaZStt1AScHFz+YLkCVF0Rqko2CYyxW
+	 VqAILSXvWXX+UUeAngofto0bL6n08g2IPEutRKnpM3tircDkrdJlj4ME8HuCq6m0MO
+	 U9fmnzrg71sWbyAV9FIiWBr9hkbLpjwaOifjAVzJiZ+KPn8AsiXbMzOS3mmK6JDOd8
+	 5oPEZZzGdHc8TUJHBDALTHhSSsLVmQ0B2c9oOMLpcISKaC8IvmUEHnrf2gUdxTy7CV
+	 0tQyWi79dZKSQ==
 From: Jarkko Sakkinen <jarkko@kernel.org>
 To: keyrings@vger.kernel.org
 Cc: Jarkko Sakkinen <jarkko@kernel.org>,
@@ -73,9 +73,9 @@ Cc: Jarkko Sakkinen <jarkko@kernel.org>,
 	"Serge E. Hallyn" <serge@hallyn.com>,
 	Shuah Khan <skhan@linuxfoundation.org>,
 	Sumit Garg <sumit.garg@kernel.org>
-Subject: [PATCH v2 6/9] KEYS: Factor out KEYCTL_PKEY
-Date: Tue, 24 Nov 2026 21:40:40 +0200
-Message-ID: <20261124194043.1651679-7-jarkko@kernel.org>
+Subject: [PATCH v2 4/9] tpm: Add persistent hierarchies to tpm2_create_primary()
+Date: Tue, 24 Nov 2026 21:40:38 +0200
+Message-ID: <20261124194043.1651679-5-jarkko@kernel.org>
 X-Mailer: git-send-email 2.47.3
 In-Reply-To: <20261124194043.1651679-1-jarkko@kernel.org>
 References: <20261124194043.1651679-1-jarkko@kernel.org>
@@ -90,84 +90,290 @@ Precedence: list
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-Factor out CONFIG_KEYCTL_PKEY from CONFIG_ASYMMETRIC_KEY_TYPE so key
-types other than asymmetric can select keyctl public-key operations
-without pulling in crypto/asymmetric_keys/.
+TPMKey files can specify a 0x40 MSO permanent handle as parent, requiring
+TPM2_CreatePrimary with the TCG H-2 NIST P-256 template [1].
+
+Populate chip->null_ec_key_{x,y} in tpm2_parse_create_primary() only for
+TPM2_RH_NULL.
+
+Verify the returned key name against the locally computed TPMT_PUBLIC
+digest, and flush the transient handle on validation failure.
+
+[1] https://www.hansenpartnership.com/draft-bottomley-tpm2-keys.html#section-3.1.8
 
 Signed-off-by: Jarkko Sakkinen <jarkko@kernel.org>
 ---
- crypto/asymmetric_keys/Kconfig | 1 +
- security/keys/Kconfig          | 3 +++
- security/keys/Makefile         | 2 +-
- security/keys/internal.h       | 2 +-
- security/keys/keyctl.c         | 2 +-
- 5 files changed, 7 insertions(+), 3 deletions(-)
+ drivers/char/tpm/tpm2-sessions.c | 136 ++++++++++++++++++-------------
+ 1 file changed, 80 insertions(+), 56 deletions(-)
 
-diff --git a/crypto/asymmetric_keys/Kconfig b/crypto/asymmetric_keys/Kconfig
-index c73979b2e98e..1c78a9a663c5 100644
---- a/crypto/asymmetric_keys/Kconfig
-+++ b/crypto/asymmetric_keys/Kconfig
-@@ -2,6 +2,7 @@
- menuconfig ASYMMETRIC_KEY_TYPE
- 	bool "Asymmetric (public-key cryptographic) key type"
- 	depends on KEYS
-+	select KEYCTL_PKEY
- 	help
- 	  This option provides support for a key type that holds the data for
- 	  the asymmetric keys used for public key cryptographic operations such
-diff --git a/security/keys/Kconfig b/security/keys/Kconfig
-index 3f64d60d0f8a..c0cd894d306c 100644
---- a/security/keys/Kconfig
-+++ b/security/keys/Kconfig
-@@ -22,6 +22,9 @@ menuconfig KEYS
- 
- if KEYS
- 
-+config KEYCTL_PKEY
-+	bool
+diff --git a/drivers/char/tpm/tpm2-sessions.c b/drivers/char/tpm/tpm2-sessions.c
+index b3b4f7a89d9d..23f086de1f5d 100644
+--- a/drivers/char/tpm/tpm2-sessions.c
++++ b/drivers/char/tpm/tpm2-sessions.c
+@@ -1118,10 +1118,11 @@ int tpm2_sessions_init(struct tpm_chip *chip)
+ 	return rc;
+ }
+ #endif /* CONFIG_TCG_TPM2_HMAC */
 +
- config KEYS_REQUEST_CACHE
- 	bool "Enable temporary caching of the last request_key() result"
- 	help
-diff --git a/security/keys/Makefile b/security/keys/Makefile
-index 5f40807f05b3..aafd28f7ee2f 100644
---- a/security/keys/Makefile
-+++ b/security/keys/Makefile
-@@ -22,7 +22,7 @@ obj-$(CONFIG_PROC_FS) += proc.o
- obj-$(CONFIG_SYSCTL) += sysctl.o
- obj-$(CONFIG_PERSISTENT_KEYRINGS) += persistent.o
- obj-$(CONFIG_KEY_DH_OPERATIONS) += dh.o
--obj-$(CONFIG_ASYMMETRIC_KEY_TYPE) += keyctl_pkey.o
-+obj-$(CONFIG_KEYCTL_PKEY) += keyctl_pkey.o
+ /*
+- * A mask containing the object attributes for the kernel held null primary key
+- * used in HMAC encryption. For more information on specific attributes look up
+- * to "8.3 TPMA_OBJECT (Object Attributes)".
++ * A mask containing the object attributes for the TCG mandated H-2 ECC P-256
++ * primary storage key template. For more information on specific attributes
++ * look up "8.3 TPMA_OBJECT (Object Attributes)".
+  */
+ #define TPM2_OA_NULL_KEY ( \
+ 	TPM2_OA_NO_DA | \
+@@ -1151,17 +1152,23 @@ static int tpm2_parse_create_primary(struct tpm_chip *chip, struct tpm_buf *buf,
+ {
+ 	struct tpm_header *head = (struct tpm_header *)buf->data;
+ 	off_t offset_r = TPM_HEADER_SIZE, offset_t;
+-	u16 len = TPM_HEADER_SIZE;
++	u8 resp_name[SHA256_DIGEST_SIZE + 2];
+ 	u32 total_len = be32_to_cpu(head->length);
+ 	u32 val, param_len, keyhandle;
++#ifdef CONFIG_TCG_TPM2_HMAC
++	const u8 *ec_x, *ec_y;
++#endif
++	u16 len;
  
- #
- # Key types
-diff --git a/security/keys/internal.h b/security/keys/internal.h
-index c452d71cce03..28c6cd942c59 100644
---- a/security/keys/internal.h
-+++ b/security/keys/internal.h
-@@ -314,7 +314,7 @@ static inline long compat_keyctl_dh_compute(
+ 	keyhandle = tpm_buf_read_u32(buf, &offset_r);
+-	if (handle)
+-		*handle = keyhandle;
+-	else
+-		tpm2_flush_context(chip, keyhandle);
++	if (buf->flags & TPM_BUF_INVALID)
++		return -EINVAL;
+ 
+ 	param_len = tpm_buf_read_u32(buf, &offset_r);
++	if ((buf->flags & TPM_BUF_INVALID) ||
++	    param_len > total_len - TPM_HEADER_SIZE - 8)
++		goto err;
++
+ 	/*
+ 	 * param_len doesn't include the header, but all the other
+ 	 * lengths and offsets do, so add it to parm len to make
+@@ -1169,146 +1176,163 @@ static int tpm2_parse_create_primary(struct tpm_chip *chip, struct tpm_buf *buf,
+ 	 */
+ 	param_len += TPM_HEADER_SIZE;
+ 
+-	if (param_len + 8 > total_len)
+-		return -EINVAL;
+ 	len = tpm_buf_read_u16(buf, &offset_r);
+ 	offset_t = offset_r;
+-	if (offset_r + len > tpm_buf_length(buf))
+-		return -EINVAL;
+-	if (name) {
+-		/*
+-		 * now we have the public area, compute the name of
+-		 * the object
+-		 */
+-		put_unaligned_be16(TPM_ALG_SHA256, name);
+-		sha256(&buf->data[offset_r], len, name + 2);
+-	}
++	offset_r += len;
++	if ((buf->flags & TPM_BUF_INVALID) || offset_r > param_len)
++		goto err;
++
++	/*
++	 * Now we have the public area, compute the name of the object.
++	 */
++	put_unaligned_be16(TPM_ALG_SHA256, resp_name);
++	sha256(&buf->data[offset_t], len, resp_name + 2);
+ 
+ 	/* validate the public key */
+ 	val = tpm_buf_read_u16(buf, &offset_t);
+ 
+ 	/* key type (must be what we asked for) */
+ 	if (val != TPM_ALG_ECC)
+-		return -EINVAL;
++		goto err;
+ 	val = tpm_buf_read_u16(buf, &offset_t);
+ 
+ 	/* name algorithm */
+ 	if (val != TPM_ALG_SHA256)
+-		return -EINVAL;
++		goto err;
+ 	val = tpm_buf_read_u32(buf, &offset_t);
+ 
+ 	/* object properties */
+ 	if (val != TPM2_OA_NULL_KEY)
+-		return -EINVAL;
++		goto err;
+ 
+ 	/* auth policy (empty) */
+ 	val = tpm_buf_read_u16(buf, &offset_t);
+ 	if (val != 0)
+-		return -EINVAL;
++		goto err;
+ 
+ 	/* symmetric key parameters */
+ 	val = tpm_buf_read_u16(buf, &offset_t);
+ 	if (val != TPM_ALG_AES)
+-		return -EINVAL;
++		goto err;
+ 
+ 	/* symmetric key length */
+ 	val = tpm_buf_read_u16(buf, &offset_t);
+ 	if (val != AES_KEY_BITS)
+-		return -EINVAL;
++		goto err;
+ 
+ 	/* symmetric encryption scheme */
+ 	val = tpm_buf_read_u16(buf, &offset_t);
+ 	if (val != TPM_ALG_CFB)
+-		return -EINVAL;
++		goto err;
+ 
+ 	/* signing scheme */
+ 	val = tpm_buf_read_u16(buf, &offset_t);
+ 	if (val != TPM_ALG_NULL)
+-		return -EINVAL;
++		goto err;
+ 
+ 	/* ECC Curve */
+ 	val = tpm_buf_read_u16(buf, &offset_t);
+ 	if (val != TPM2_ECC_NIST_P256)
+-		return -EINVAL;
++		goto err;
+ 
+ 	/* KDF Scheme */
+ 	val = tpm_buf_read_u16(buf, &offset_t);
+ 	if (val != TPM_ALG_NULL)
+-		return -EINVAL;
++		goto err;
+ 
+ 	/* extract public key (x and y points) */
+ 	val = tpm_buf_read_u16(buf, &offset_t);
+-	if (val != EC_PT_SZ)
+-		return -EINVAL;
++	if ((buf->flags & TPM_BUF_INVALID) || val != EC_PT_SZ ||
++	    offset_t + val > offset_r)
++		goto err;
+ #ifdef CONFIG_TCG_TPM2_HMAC
+-	memcpy(chip->null_ec_key_x, &buf->data[offset_t], val);
++	ec_x = &buf->data[offset_t];
  #endif
+ 	offset_t += val;
+ 	val = tpm_buf_read_u16(buf, &offset_t);
+-	if (val != EC_PT_SZ)
+-		return -EINVAL;
++	if ((buf->flags & TPM_BUF_INVALID) || val != EC_PT_SZ ||
++	    offset_t + val > offset_r)
++		goto err;
+ #ifdef CONFIG_TCG_TPM2_HMAC
+-	memcpy(chip->null_ec_key_y, &buf->data[offset_t], val);
++	ec_y = &buf->data[offset_t];
+ #endif
+ 	offset_t += val;
+ 
+-	/* original length of the whole TPM2B */
+-	offset_r += len;
+-
+ 	/* should have exactly consumed the TPM2B public structure */
+ 	if (offset_t != offset_r)
+-		return -EINVAL;
+-	if (offset_r > param_len)
+-		return -EINVAL;
++		goto err;
+ 
+ 	/* creation data (skip) */
+ 	len = tpm_buf_read_u16(buf, &offset_r);
+ 	offset_r += len;
+ 	if (offset_r > param_len)
+-		return -EINVAL;
++		goto err;
+ 
+ 	/* creation digest (must be sha256) */
+ 	len = tpm_buf_read_u16(buf, &offset_r);
+ 	offset_r += len;
+ 	if (len != SHA256_DIGEST_SIZE || offset_r > param_len)
+-		return -EINVAL;
++		goto err;
+ 
+ 	/* TPMT_TK_CREATION follows */
+ 	/* tag, must be TPM_ST_CREATION (0x8021) */
+ 	val = tpm_buf_read_u16(buf, &offset_r);
+ 	if (val != TPM2_ST_CREATION || offset_r > param_len)
+-		return -EINVAL;
++		goto err;
+ 
+ 	/* hierarchy */
+ 	val = tpm_buf_read_u32(buf, &offset_r);
+ 	if (val != hierarchy || offset_r > param_len)
+-		return -EINVAL;
++		goto err;
+ 
+ 	/* the ticket digest HMAC (might not be sha256) */
+ 	len = tpm_buf_read_u16(buf, &offset_r);
+ 	offset_r += len;
+ 	if (offset_r > param_len)
+-		return -EINVAL;
++		goto err;
+ 
+ 	/*
+ 	 * finally we have the name, which is a sha256 digest plus a 2
+ 	 * byte algorithm type
+ 	 */
+ 	len = tpm_buf_read_u16(buf, &offset_r);
+-	if (offset_r + len != param_len + 8)
+-		return -EINVAL;
+-	if (len != SHA256_DIGEST_SIZE + 2)
+-		return -EINVAL;
++	if ((buf->flags & TPM_BUF_INVALID) ||
++	    offset_r + len != param_len + 8 ||
++	    len != SHA256_DIGEST_SIZE + 2)
++		goto err;
++
++	if (memcmp(resp_name, &buf->data[offset_r], sizeof(resp_name)) != 0) {
++		dev_err(&chip->dev, "primary key name comparison failed\n");
++		goto err;
++	}
+ 
+ #ifdef CONFIG_TCG_TPM2_HMAC
+-	if (memcmp(chip->null_key_name, &buf->data[offset_r],
+-		   SHA256_DIGEST_SIZE + 2) != 0) {
+-		dev_err(&chip->dev, "NULL Seed name comparison failed\n");
+-		return -EINVAL;
++	if (hierarchy == TPM2_RH_NULL) {
++		if (name == chip->null_key_name) {
++			memcpy(chip->null_ec_key_x, ec_x, EC_PT_SZ);
++			memcpy(chip->null_ec_key_y, ec_y, EC_PT_SZ);
++		} else if (memcmp(chip->null_key_name, resp_name,
++				  sizeof(resp_name)) != 0) {
++			dev_err(&chip->dev,
++				"NULL Seed name comparison failed\n");
++			goto err;
++		}
+ 	}
  #endif
  
--#ifdef CONFIG_ASYMMETRIC_KEY_TYPE
-+#ifdef CONFIG_KEYCTL_PKEY
- extern long keyctl_pkey_query(key_serial_t,
- 			      const char __user *,
- 			      struct keyctl_pkey_query __user *);
-diff --git a/security/keys/keyctl.c b/security/keys/keyctl.c
-index d6b10fd67627..417bba539bb1 100644
---- a/security/keys/keyctl.c
-+++ b/security/keys/keyctl.c
-@@ -28,7 +28,7 @@ static const unsigned char keyrings_capabilities[2] = {
- 	[0] = (KEYCTL_CAPS0_CAPABILITIES |
- 	       (IS_ENABLED(CONFIG_PERSISTENT_KEYRINGS)	? KEYCTL_CAPS0_PERSISTENT_KEYRINGS : 0) |
- 	       (IS_ENABLED(CONFIG_KEY_DH_OPERATIONS)	? KEYCTL_CAPS0_DIFFIE_HELLMAN : 0) |
--	       (IS_ENABLED(CONFIG_ASYMMETRIC_KEY_TYPE)	? KEYCTL_CAPS0_PUBLIC_KEY : 0) |
-+	       (IS_ENABLED(CONFIG_KEYCTL_PKEY)		? KEYCTL_CAPS0_PUBLIC_KEY : 0) |
- 	       (IS_ENABLED(CONFIG_BIG_KEYS)		? KEYCTL_CAPS0_BIG_KEY : 0) |
- 	       KEYCTL_CAPS0_INVALIDATE |
- 	       KEYCTL_CAPS0_RESTRICT_KEYRING |
++	if (name)
++		memcpy(name, resp_name, sizeof(resp_name));
++
++	if (handle)
++		*handle = keyhandle;
++	else
++		tpm2_flush_context(chip, keyhandle);
++
+ 	return 0;
++
++err:
++	tpm2_flush_context(chip, keyhandle);
++	return -EINVAL;
+ }
+ 
+ /**
+@@ -1420,7 +1444,7 @@ int tpm2_create_primary(struct tpm_chip *chip, u32 hierarchy, u32 *handle,
+ 	tpm_buf_append_u32(buf, 0);
+ 
+ 	rc = tpm_transmit_cmd(chip, buf, 0,
+-			      "attempting to create NULL primary");
++			      "attempting to create primary key");
+ 
+ 	if (rc == TPM2_RC_SUCCESS)
+ 		rc = tpm2_parse_create_primary(chip, buf, handle, hierarchy,
 -- 
 2.47.3
 
