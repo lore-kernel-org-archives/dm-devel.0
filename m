@@ -1,83 +1,83 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.128.47
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.128.52
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1795523167;
-	b=KWv/uFHFo8verhpOeLEHtXFp+R1WWB9589DXg3ekW7yvytcwrJW0V7WbrsSdYCqBUvZ/
-	 QbtaLu76EVHHyetG81oIO66UHJ7JliUVhZke1xkvBQJ3m1i4SBIwi81G2Pk9+G/7dIvPN
-	 GqcxBp0bK1HTJwa+R3MWbeTY2q2SdYAIW3MgRFgMj36R8wCl3Z03oo7TNs2+ftigpPqwd
-	 nSLRjWO1tdqLrg/gej/tngezIz01Kcge3aeVMmZtRaBp1yltZQAkt3AXKoVHUmySkFLAt
-	 SItRwUXTumTpgNmHeqQWmG/QefQe9DTaeMbvJeEoAcfiTDgfFosAkp77WoxfI7UA9bA==
+	t=1795523168;
+	b=Ti289V9p5f0MLenJ5PSQFDefar4MfNYEjz/bSGqKgfDERq9jdw2e6G5DHoPJ89BUEN+O
+	 csd/1JhdTpPdJzofT0PUVLSjx3cPksKqP0Wm2u5tBDBXXkbvobFKt40QCKFhBtVc6j9ps
+	 8x9E0QXPgUtstUbiJLusRRl+gX7R8k4uvPz7aQ45biAEv85Dcu1BpmHw8piE9WDLzrwgZ
+	 YInJFhB31RgWYm4T4YVEYBdTwsBEg5mzNt7v6bnZToYInN2sJXJ8Yq9XpNALwHIykGRjW
+	 D8eKgvq1GIDm+Kb77RqdcN1m6wzlGtkoMeDeIhAOhx/CsLloIfb6Xp6VQpu6zoSFxDw==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1795523167;
+	a=rsa-sha256; c=relaxed/relaxed; t=1795523168;
 	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
 	 X-Forwarded-Encrypted:X-Gm-Message-State:X-Gm-Gg:X-Received:Received:
 	 From:To:Cc:Subject:Date:Message-ID:X-Mailer:In-Reply-To:References:
 	 MIME-Version:Content-Transfer-Encoding;
-	bh=Gt2Xoct00o0UZmPrmLiXkNLZXaxGE333WSwLDI5A/G4=;
-	b=Yzj+5Gx65A8wjMI1dQBdSiWVjvzzh/ze47iTi7LZLxExWezB/kD76+BP+znIub8WSfKB
-	 2BTw7I5txc/pJNWPYvCbpscz9lRl5NZmB8wJau/YETUzhjGUPqZ8btYlnoqAi6xBE3tVH
-	 1VNVPVNdf9bAzQn8w+UAer7uLcwugs6lnKRpfeSebQAFw+WlAa5c6+IOW7U/ylR2fogUY
-	 q6rC7UUsFJAKH+P3XrR2/IafATjb0hOZVS1qW8j7wt30arzE36/95BINNQkql4X+5+tEH
-	 uZxdG7dWPmkaRgV2341o+IUNNvg9h05WTYvQRZUS3faGHNSCRrFJZyBDHCroiDBYJLQ==
+	bh=SqV4Jv6wNfUGVd/YP57RFpsT3eJh+v6vOgo/2e6RqII=;
+	b=EPOoWamzE/lw7SCNDlK+hKhXv24WrQI7c4EjKIhcKPb4yeFZ6zuCG7ZAk9lVo3+xBdAQ
+	 9aR7A5sYUENzCOJRtw9KWJpLFCZ9zPmH1Qwmh1vdSHbWw2JprGzKNa7mRc76hs/R3JGms
+	 1GVCp8RhNXizK96b9IHo45XA73k9L2sfwhiSXJNDxgCw+lc/XVEgR380rY6qh6qCAOdSk
+	 0EK5mr+56KxrIS0u86S4F/3mBuUWQ9ETR71EnRlkzP0lSPBEhUIsy9Tnv/eXPW/tNT/Uv
+	 STC9WODvCt2WdmAPawq7sU66DLyiX46FiB5AdGytIRl0J+Idc398TnKCYiY9DLVPGfA==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
 	dmarc=pass header.from=openvz.org;
 	spf=pass smtp.mailfrom=openvz.org;
-	dkim=pass header.d=openvz.org header.i=@openvz.org header.a=rsa-sha256 header.s=google header.b="iWeadg/K";
-	arc=none smtp.remote-ip=209.85.128.47
-Received: from mail-wm1-f47.google.com (mail-wm1-f47.google.com [209.85.128.47])
+	dkim=pass header.d=openvz.org header.i=@openvz.org header.a=rsa-sha256 header.s=google header.b=MKe0YAVA;
+	arc=none smtp.remote-ip=209.85.128.52
+Received: from mail-wm1-f52.google.com (mail-wm1-f52.google.com [209.85.128.52])
 	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A3648606A332
-	for <dm-devel@lists.linux.dev>; Tue, 24 Nov 2026 12:26:06 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org A3648606A332
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id AE2B2606A682
+	for <dm-devel@lists.linux.dev>; Tue, 24 Nov 2026 12:26:07 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org AE2B2606A682
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=openvz.org
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=openvz.org
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=openvz.org header.i=@openvz.org header.a=rsa-sha256 header.s=google header.b=iWeadg/K
-Received: by mail-wm1-f47.google.com with SMTP id 5b1f17b1804b1-4bb64c99d2fso43014365e9.3
-        for <dm-devel@lists.linux.dev>; Tue, 24 Nov 2026 04:26:06 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=openvz.org header.i=@openvz.org header.a=rsa-sha256 header.s=google header.b=MKe0YAVA
+Received: by mail-wm1-f52.google.com with SMTP id 5b1f17b1804b1-4b467581b98so42667605e9.0
+        for <dm-devel@lists.linux.dev>; Tue, 24 Nov 2026 04:26:07 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=openvz.org; s=google; t=1795523165; x=1796127965; darn=lists.linux.dev;
+        d=openvz.org; s=google; t=1795523166; x=1796127966; darn=lists.linux.dev;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to:content-type;
-        bh=Gt2Xoct00o0UZmPrmLiXkNLZXaxGE333WSwLDI5A/G4=;
-        b=iWeadg/Kh8seham6HZzvmRx/jM2jMjJhr6LMy7aD80GV+wAPQarBqe/xd2Rn78H4kO
-         kzrSi9N6+JJDuNetSmp8iMHGvSKfELzPaLc3EirxPJjNDQTKuXKFXzF4gCbdHaj7j56z
-         ap7vzTANo7odJRuO14JBRbc1iL+bKCRlWYQYXyYjVy4Urxv25j0qAEKyY/AEtkS67rXt
-         i4oBP1Z7TYTXSL/sT6incB5YM9kmbNF7oeZvO7APWf47aJwtjZE8dEA2blXKqMFHZSIk
-         sIYfQtkSvkF7ZmVERyTbOYUDP2nCsBSjpq6iVSiePGegGvP99iccbdWapfYmLuJU2+qV
-         2OGQ==
+        bh=SqV4Jv6wNfUGVd/YP57RFpsT3eJh+v6vOgo/2e6RqII=;
+        b=MKe0YAVAiOjbBk2p7ST0M3DHVtC0zA56xqgup7aSwKqxIAP/W3YhsRCmL3/nmNUq5v
+         xb6uhtwZrU16xrdmh/T2uZxNHMSo1mhrQoI0MeChe2UwH8nMiXWHftKS61+mt5zuyoT8
+         AuMCIDTzLnTa+kvKIXNgCWeTpNlJTBsAjk7zAd2RId6Ssd4hRKSVc5ryAX4KmiVNXKZe
+         jnkUcfyze7e+GKOYs7njOE9/4KXyUN2MA6jhTVXe6mhRU2W9E14HjcEM1yDSkmQkuf6D
+         qteJkv+nUdJdIDMoAsevj5a18dBXtZyciN3TLR+HoEh5dkDuTp4kd1UvgpyTxL/MiO+g
+         i6lQ==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1795523165; x=1796127965;
+        d=1e100.net; s=20260707; t=1795523166; x=1796127966;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:x-gm-gg:x-gm-message-state:from
          :to:cc:subject:date:message-id:reply-to:content-type;
-        bh=Gt2Xoct00o0UZmPrmLiXkNLZXaxGE333WSwLDI5A/G4=;
-        b=LIZZ7WOY2q5EYQYhuoCFLKNKzfHAG9pIaQdqvgDGYPGzkQNCXuNN3hixI4pgtbKg2O
-         VnwBeOM6G63XuMUqa9/fsrZ+50b+F3aSVcxSj5owkYrmJ8GUeCQBiozJ/0pQi+NAiNKD
-         o4h05JdiQztrBvDuH90A8b7td1mnaRKp2r8Xa70JlHzzIfL8aDCU4+z0quLCPN2DbvVR
-         PyotLUOtPGqiLkeXcSNHKsfa+QZrrJthSQNQXK5UJC3c4cVhCBvryr+FLKTrnzWK0V6T
-         NSdZ3WNKtjDQ9WdfaepUffuNtnxSo+eROVsEeZhurJuWwxXl522C9x1D0Tuy9OcZmjI+
-         NO4w==
-X-Forwarded-Encrypted: i=1; AL+hErHgrJYOjLNq9LVMK7nipBiHOcACInihkXPIJbUmmeDm7PvjPAfhIbCkhzK3s7RJsryYcBbHMzLGeQ==@lists.linux.dev
-X-Gm-Message-State: APuU4Z+CF2lLr2UH08X64buTVR+TIxgI1c8CluvorePfnRvYchRt5Y5R
-	V8y/NPS4cktXomccTtD/8ABERNLfsxPjreOtP5czlApyVLwqFU+mlboMr3z2lltCa4k=
-X-Gm-Gg: AZFdTZe3TyBHNhRfwaUqCYmJLwVkDukqWkjkc+w7AcEi0wxwMN9bvxEC2kuP0/ux6M/
-	j/ghLQHJQ9/iobrP40s4F5KpwyLjWe/eDvYP9v/Ii8GIJ1NBX4C7v2nVIDtrH0JVjFoa6GYmh4m
-	5y7c9kJ2Ux1TB7kej5jltSvUM4LnXYlFWMa1czgtYqMGd1+WCc4ZYbpldUlA9hx1ERuublhfUu+
-	pHTShbhfRqyZweGCL41RYib1ci9+PZFZkbBSfrtbi9UxhWM5Y8oiQhIv30oM47ZS4Oo9mFH6Z81
-	Hh271Mzn+JNZBGJxT1BiDiQUWrqm1SiCCY8IxvtMT4CdV2mI2J4Xx94oRoiY+SQPf4Tw0WE2ojN
-	7k2IuDdeJPVU/esJUgvTvGkAVnUUUT8sG2VQtDNgRCo/9TPweNh8YWbVesI47jI7HRkNuME6GN0
-	EPjGW4/mJpNrvw4Mphqdv8oHc/KFUijJs39M+2+mfSfQdnFWOaRAq8lVErc9eLxCWXHkS9/rptM
-	l/i1u4lOWoVGT7X9JXpD7p0RMRmEkOCafWFN4B8uQw1gvSRIWtfvXkfhnXu7lNOlWmencTL0Eh9
-	Z7SWbYFzd65lBOPkcjyKt2zeQhg=
-X-Received: by 2002:a05:600c:1c08:b0:4bb:7757:fe6d with SMTP id 5b1f17b1804b1-4bb88804c5fmr364836555e9.11.1795523165066;
-        Tue, 24 Nov 2026 04:26:05 -0800 (PST)
+        bh=SqV4Jv6wNfUGVd/YP57RFpsT3eJh+v6vOgo/2e6RqII=;
+        b=uJW0eV/5VuMNWcnSTkeKp0R/nFjFdBq98ZTvGdjVl6W706qEeA/k+AxtbYHfKXtYsF
+         e4eUruUiCn5m3eihnihRQtkO/EcOFPcUq9JqCAt1s/q2PkOTfIhysVOmGZ7CKMIARxT3
+         KUBs32+AXiH4k7Kvhb0CPp+s1jnPd97DXSLXmMu0c9sQ0BIZwxG54Xek6k4eOf06rnRr
+         fu8bgpDiI7BHQBzv9R6eh6+AJyUS6B/X52O9gnxF4yM0JhhAiITmQncES48rCRD2/27k
+         6/1x6EoJZuFlxzOROFsNg8qonAGRlTv5bLhH2Bqn36m3ODs3fytWKDGPWzzu8JP3+LGC
+         ijwQ==
+X-Forwarded-Encrypted: i=1; AL+hErEF8lwJONt4jzTJwxl/xvomsFKn0j4SxJA4kKYn3dLyGgwu/jWjFFfUO543/VUB9cKRFzbib0lRBw==@lists.linux.dev
+X-Gm-Message-State: APuU4Z+GXGDKP4BPSMI5TjVsodYeH/YK9u/aDEOKOoHN8MKnXh8rYg0K
+	wFip72ph5fFLHhfazZQzw9PgrQx1YvPkDcjIMK76PdlihkkQbOGSeAKt5ecdDgI3IGw=
+X-Gm-Gg: AZFdTZf+3xgNTbdyZJaMXDWmO7B5y6GF9ryVBk/U+wZIQDtPlFtDAB9xX5a1fZpWODt
+	GKdxddUmOwb6j6ts9uqyLdYVvfAf+mo11XXJgO+ik50pd/iP5xVQp+UzwFYp74p5G9Y0dNbkOga
+	zwuPNsgb8u8HQGazhawPDALAE8IXEzomiUHmo3uJARIAy3JUa04ZmBf9GwF0NZvVBV63nkS5GON
+	L8gyCf2dDwi4ZdTMZ4dfNkp2089hDXh0hTCij5NIDB2rQi8Ih7Iu+xvS2kMT+07e/Y1WXUlr4JZ
+	+hU995IINO9ytA5fiyIPBI/hITsWuxzxNBkIDD2TntmaQXfeM3Ce5aOz5O1DvTDAJhNF1lguSBV
+	CkXCmfyghHsiLKpUFl+HeqfYn8Bz2JIFzCIY4ArrfJbDN2elaJcp/oYGgVbav2ewNiXDD9a8Ys6
+	ghJ5TIyjfEjgZtlO+E3HvnMTqCMLdhasq+HHqtaO3hyzRkOZ+fpnSJeEpJDYLfNwLQb7HVsFSQK
+	iQy5gQYC9zS64f3Q/SeQZIQyh6WAW7BcWV9PmEGeLMhpYZ3hYK5s7of5vnHvUjR9SHUaYIa+3ZF
+	F0nE3vRBUDnvSm/NEEZkN1UXFXsW1XNPwzUDR4BnOHx6W9Xn
+X-Received: by 2002:a05:600c:468c:b0:4bb:6d61:af7c with SMTP id 5b1f17b1804b1-4bb88944bf5mr286853905e9.35.1795523166104;
+        Tue, 24 Nov 2026 04:26:06 -0800 (PST)
 Received: from artemis.sw.ru ([2a06:5b06:b600:300:8dcd:31dc:bf64:9564])
-        by smtp.gmail.com with ESMTPSA id 5b1f17b1804b1-4bb853ca452sm423615975e9.15.2026.11.24.04.26.04
+        by smtp.gmail.com with ESMTPSA id 5b1f17b1804b1-4bb853ca452sm423615975e9.15.2026.11.24.04.26.05
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Tue, 24 Nov 2026 04:26:04 -0800 (PST)
+        Tue, 24 Nov 2026 04:26:05 -0800 (PST)
 From: "Denis V. Lunev" <den@openvz.org>
 To: agk@redhat.com,
 	snitzer@kernel.org,
@@ -88,9 +88,9 @@ Cc: bmarzins@redhat.com,
 	linux-kernel@vger.kernel.org,
 	stable@vger.kernel.org,
 	den@openvz.org
-Subject: [PATCH v2 1/3] dm persistent data: put back the reference a failed shadow dropped
-Date: Tue, 24 Nov 2026 13:25:59 +0100
-Message-ID: <20261124122601.436965-2-den@openvz.org>
+Subject: [PATCH v2 2/3] dm era: refuse metadata rpcs once the target is suspended
+Date: Tue, 24 Nov 2026 13:26:00 +0100
+Message-ID: <20261124122601.436965-3-den@openvz.org>
 X-Mailer: git-send-email 2.55.0
 In-Reply-To: <20261124122601.436965-1-den@openvz.org>
 References: <20261124122601.436965-1-den@openvz.org>
@@ -107,70 +107,72 @@ Content-Transfer-Encoding: 8bit
 
 From: Denis V. Lunev <den@openvz.org>
 
-__shadow_block() drops the original block's reference before it reads
-the block, and every error return after that leaves the caller pointing
-at a block the space map has given away.
+An rpc reaches the worker in two steps: the caller puts it on the rpc
+list, then wake_worker() queues the work unless the target is
+suspended. stop_worker() raises that flag and drains the workqueue with
+no ordering against either step, so an rpc can land on both sides of
+the drain.
 
-metadata_ll_commit() shows what that costs. It stores the new block in
-ll->bitmap_root only when the shadow succeeds, so a failed read leaves
-the space map's index root at a block whose count has already reached
-zero. Every commit after that shadows the same block, fails to
-decrement it, and fails:
+An rpc queued before the flag is raised, whose wake_worker() runs after
+it, is never served. The caller waits for a completion that only the
+next resume can deliver, and it waits holding the table srcu, so a
+reload blocks in dm_swap_table() and the device can no longer be
+reloaded or removed.
+
+An rpc whose wake_worker() read the flag as clear can instead queue the
+work after drain_workqueue() has returned. The worker then commits the
+metadata beside the commit era_postsuspend() runs in its own thread.
+Both commits allocate from the same space map and take the same block,
+which corrupts it, and every commit after that fails:
 
   device-mapper: space map common: unable to decrement block
   device-mapper: era: metadata_commit: pre commit failed
 
-The metadata never recovers. dm-era reports "era Error" and fails the
-writes it was tracking, which takes the workload's filesystem
-read-only. A read of a metadata block can fail for a transient reason,
-and one failure is enough to get here.
+Add the rpc and queue the work under the rpc lock, take that lock to
+raise the flag, and refuse an rpc that arrives once it is raised. An
+rpc that made it onto the list is then queued before the drain waits
+for it.
 
-Take the reference back where the shadow fails, rather than moving the
-decrement past the copy. Dropping it later would hold the copy's write
-lock across dm_sm_dec_block(), which starts by shadowing a bitmap block
-of its own and so takes two more locks, and the targets size their
-dm-bufio reserve for the peak without them. commit 490ae017f54e ("dm
-thin metadata: THIN_MAX_CONCURRENT_LOCKS should be 6") set thin's
-budget to exactly what rebalance3() reaches today.
+Userspace sees one change. A status query on a suspended era device
+used to block until the device was resumed, and now reports the target
+in error.
 
-Fixes: 3241b1d3e0aa ("dm: add persistent data library")
+Fixes: eec40579d848 ("dm: add era target")
 Cc: stable@vger.kernel.org
 Signed-off-by: Denis V. Lunev <den@openvz.org>
 ---
- drivers/md/persistent-data/dm-transaction-manager.c | 9 +++++++--
- 1 file changed, 7 insertions(+), 2 deletions(-)
+ drivers/md/dm-era-target.c | 9 ++++++++-
+ 1 file changed, 8 insertions(+), 1 deletion(-)
 
-diff --git a/drivers/md/persistent-data/dm-transaction-manager.c b/drivers/md/persistent-data/dm-transaction-manager.c
-index 7401add01d12..cf203ebb5110 100644
---- a/drivers/md/persistent-data/dm-transaction-manager.c
-+++ b/drivers/md/persistent-data/dm-transaction-manager.c
-@@ -303,7 +303,7 @@ static int __shadow_block(struct dm_transaction_manager *tm, dm_block_t orig,
+diff --git a/drivers/md/dm-era-target.c b/drivers/md/dm-era-target.c
+index ea499adca4ce..29b0602e7849 100644
+--- a/drivers/md/dm-era-target.c
++++ b/drivers/md/dm-era-target.c
+@@ -1389,10 +1389,14 @@ static int perform_rpc(struct era *era, struct rpc *rpc)
+ 	init_completion(&rpc->complete);
  
- 	r = dm_bm_read_lock(tm->bm, orig, v, &orig_block);
- 	if (r < 0)
--		return r;
-+		goto out_put_orig;
+ 	spin_lock(&era->rpc_lock);
++	if (atomic_read(&era->suspended)) {
++		spin_unlock(&era->rpc_lock);
++		return -EBUSY;
++	}
+ 	list_add(&rpc->list, &era->rpc_calls);
++	queue_work(era->wq, &era->worker);
+ 	spin_unlock(&era->rpc_lock);
  
- 	/*
- 	 * It would be tempting to use dm_bm_unlock_move here, but some
-@@ -315,13 +315,18 @@ static int __shadow_block(struct dm_transaction_manager *tm, dm_block_t orig,
- 	r = dm_bm_write_lock_zero(tm->bm, new, v, result);
- 	if (r) {
- 		dm_bm_unlock(orig_block);
--		return r;
-+		goto out_put_orig;
- 	}
+-	wake_worker(era);
+ 	wait_for_completion(&rpc->complete);
  
- 	memcpy(dm_block_data(*result), dm_block_data(orig_block),
- 	       dm_bm_block_size(tm->bm));
+ 	return rpc->result;
+@@ -1427,7 +1431,10 @@ static void start_worker(struct era *era)
  
- 	dm_bm_unlock(orig_block);
-+	return 0;
+ static void stop_worker(struct era *era)
+ {
++	spin_lock(&era->rpc_lock);
+ 	atomic_set(&era->suspended, 1);
++	spin_unlock(&era->rpc_lock);
 +
-+out_put_orig:
-+	/* The caller goes on using orig when the shadow fails. */
-+	dm_sm_inc_block(tm->sm, orig);
- 	return r;
+ 	drain_workqueue(era->wq);
  }
  
 -- 
