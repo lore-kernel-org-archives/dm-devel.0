@@ -1,93 +1,89 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=195.135.223.130
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=195.135.223.131
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1795606599;
-	b=rKDKJ9nF+cVJ4pgSMy5xb3GfWIV1/HaH5+G740AWUqCSAg5lmQ/ZMopVcRPD41QCKmm+
-	 Sa3HsQwz8IVxXqSn+NJsubPWDuegA0QmUR30nNgUbzKaW42UHKaB8gFlXkM+LUfAELmgm
-	 Xra4G/qD7yPIj4aeIDQsBnc5scovMHQPH7ZBOWfeds2MaFSJ8zGm5h45eA0FSdAJ4JtJu
-	 Q0ZQIAAWx6cpPRNRClZ1tqZZ+bqwctT45DsRNwLNY58KcTIO+6npzDrCf+sBXAGfXfzkq
-	 tf7vqV0/3LTCPIKHoVUuUXKqweQSZsLL6HUVaBx/iL9QXGTLeXkpYqm4ol8r9qfAEiw==
+	t=1795606966;
+	b=EAUJ4fua1nNQsT/CBtjXXhT4sXFpBuoZzql97WD0uSCBT2KsAR2RsWbN2yXE0+LmMIvc
+	 bjQPJMp/fXXSHJNGIcL9YvbYsmphBjhJWSQf16EX86kIzhEcQCg6MJqiHcO3s4BYsuJFa
+	 dMqG8k4oUQzt0AxBK027eKm8uU8ZVL2u+rKHkSK3Hy+3Ip+LZE11yEUXNhUqgMl4b+oxw
+	 E7sgkU10ntgHZoOmhQ/478v3ooMXkz/aL6wtQJ2H8RtoXMbifxpDS7fdcnJNWCsCEhyiR
+	 qrvpIiN7GoD4l5OyPqapa9+VnR4ve4gUy63WNSTatXZhdVZfWeoMyk6nwoUcZl4T3eQ==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1795606599;
+	a=rsa-sha256; c=relaxed/relaxed; t=1795606966;
 	h=DMARC-Filter:Received:DKIM-Signature:DKIM-Signature:Received:
 	 Received:Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
 	 Content-Type:Content-Transfer-Encoding:User-Agent:MIME-Version:
-	 X-Spamd-Result:X-Spam-Score:X-Spam-Level:X-Spam-Flag;
-	bh=sLmZBMAVmmaJw67QCxAYxx8WC+tzLZE8eqkkhiO5ocY=;
-	b=b72dF3HMKYNZjHs34gPSHH2EZp6NfAtr8fwOK2haIQ6yk96t8O5x0K2oNPfK33B+py/b
-	 6MYu0/k6O8v8Vntiag9MNsX9U+R8jAK94EfyBSERGXhbp7afjPpyoilzuUFfG5PsnegYU
-	 pWkSq2Vwd8l9eNovudMuD1WTSaq3zYFyJiAvSQGQkQ5QR7zJQMv54kBcnvV9y9rL1R8ns
-	 3B7YoOYvcax0jyPORgBi5LNM+Jtx+nUej6L5KPkvP8Eq8C8zCdsckoIwk83XuFANf4XVM
-	 WeJedYd1AiMY+ROicvF4J+VLWCYd33Gnzr71x9rKBmI3Y5T2UwTcX+juLDDhiRApcTw==
+	 X-Rspamd-Queue-Id:X-Spam-Level:X-Rspamd-Server:X-Rspamd-Action:
+	 X-Spam-Flag:X-Spamd-Result:X-Spam-Score;
+	bh=VlXi/S86x8dgQRU79aRyYODqM4HwYWUGda3dNwxCuA4=;
+	b=Pbel0E6v8z0JUdTF52ux1cFG59eK/gHhJcbMbRDvtQIJfqP+UwpgXkd9HWW+CPlZGjCn
+	 k1JXugE47tGlmHD4NHPsLojrhvL/hTOdmJCtu6mHyka3uxPOC9Jcxt52FjvO3rfF7nSw9
+	 TlpKbfCwKI/dDwesqvg1JTW7Buub+hV5OyHK8+12KRT0OPal2WM8v91VVKrnh6sGck7j9
+	 /vaKVDd0PB3KVqi9OHgB6NnLdL0s8cbiyaacuBKjE28LlfN9BFtiAQ7iA3VZl9neDeHpZ
+	 OzwIEnt6vPTunS3nbumrPCmFtLPkJRpNeEHF02esa40RTXF2mQxCCnBlZkhp5H4Nrwg==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
 	dmarc=pass header.from=suse.com;
 	spf=pass smtp.mailfrom=suse.com;
-	dkim=pass header.d=suse.com header.i=@suse.com header.a=rsa-sha256 header.s=susede1 header.b="GYdVXU/n";
-	dkim=pass header.d=suse.com header.i=@suse.com header.a=rsa-sha256 header.s=susede1 header.b="GYdVXU/n";
-	arc=none smtp.remote-ip=195.135.223.130
-Received: from smtp-out1.suse.de (smtp-out1.suse.de [195.135.223.130])
+	dkim=pass header.d=suse.com header.i=@suse.com header.a=rsa-sha256 header.s=susede1 header.b=ViawF8aM;
+	dkim=pass header.d=suse.com header.i=@suse.com header.a=rsa-sha256 header.s=susede1 header.b=ViawF8aM;
+	arc=none smtp.remote-ip=195.135.223.131
+Received: from smtp-out2.suse.de (smtp-out2.suse.de [195.135.223.131])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A3D15606A323
-	for <dm-devel@lists.linux.dev>; Wed, 25 Nov 2026 11:36:38 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org A3D15606A323
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 531BE606A31E
+	for <dm-devel@lists.linux.dev>; Wed, 25 Nov 2026 11:42:46 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 531BE606A31E
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key, unprotected) header.d=suse.com header.i=@suse.com header.a=rsa-sha256 header.s=susede1 header.b=GYdVXU/n;
-	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.a=rsa-sha256 header.s=susede1 header.b=GYdVXU/n
-Received: from imap1.dmz-prg2.suse.org (unknown [10.150.64.97])
+	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.a=rsa-sha256 header.s=susede1 header.b=ViawF8aM;
+	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.a=rsa-sha256 header.s=susede1 header.b=ViawF8aM
+Received: from imap1.dmz-prg2.suse.org (imap1.dmz-prg2.suse.org [IPv6:2a07:de40:b281:104:10:150:64:97])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
 	(No client certificate requested)
-	by smtp-out1.suse.de (Postfix) with ESMTPS id DE51B22113;
-	Wed, 25 Nov 2026 11:36:36 +0000 (UTC)
+	by smtp-out2.suse.de (Postfix) with ESMTPS id 7D7A31F7A2;
+	Wed, 25 Nov 2026 11:42:44 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
-	t=1795606596; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	t=1795606964; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
 	 mime-version:mime-version:content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=sLmZBMAVmmaJw67QCxAYxx8WC+tzLZE8eqkkhiO5ocY=;
-	b=GYdVXU/ndjHFyNqB1YaDezxIj2SelFxr7WFMebEQed57res1bJLlNqMBb73FtW1BOuAJKO
-	zxOrKLiYtZZiIABI6ms375TG1sIpaXZwB6eWnUqqvnN7gfZYlDyYGQqgUwxxnlPMyY8Tr4
-	UswykJ84lNQnFK8Bl3V/8waFGwqRh6w=
-Authentication-Results: smtp-out1.suse.de;
-	none
+	bh=VlXi/S86x8dgQRU79aRyYODqM4HwYWUGda3dNwxCuA4=;
+	b=ViawF8aM5ookihdm0EwG/WUxRt8+uoBq4VZoB+VdM7omXNHgn8njbpkxd5v6Cq2SjRoljV
+	mRq+1PVUIxM9R7aMwTTAFaEBXp8htsqUmhNYzaEff7EX/WpR7oZHPZbXCDukuyk50cYs5n
+	JEeiWi71t6R0KKGOl6F0jLlfv44lUtg=
+Authentication-Results: smtp-out2.suse.de;
+	dkim=pass header.d=suse.com header.s=susede1 header.b=ViawF8aM
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
-	t=1795606596; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	t=1795606964; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
 	 mime-version:mime-version:content-type:content-type:
 	 content-transfer-encoding:content-transfer-encoding:
 	 in-reply-to:in-reply-to:references:references;
-	bh=sLmZBMAVmmaJw67QCxAYxx8WC+tzLZE8eqkkhiO5ocY=;
-	b=GYdVXU/ndjHFyNqB1YaDezxIj2SelFxr7WFMebEQed57res1bJLlNqMBb73FtW1BOuAJKO
-	zxOrKLiYtZZiIABI6ms375TG1sIpaXZwB6eWnUqqvnN7gfZYlDyYGQqgUwxxnlPMyY8Tr4
-	UswykJ84lNQnFK8Bl3V/8waFGwqRh6w=
+	bh=VlXi/S86x8dgQRU79aRyYODqM4HwYWUGda3dNwxCuA4=;
+	b=ViawF8aM5ookihdm0EwG/WUxRt8+uoBq4VZoB+VdM7omXNHgn8njbpkxd5v6Cq2SjRoljV
+	mRq+1PVUIxM9R7aMwTTAFaEBXp8htsqUmhNYzaEff7EX/WpR7oZHPZbXCDukuyk50cYs5n
+	JEeiWi71t6R0KKGOl6F0jLlfv44lUtg=
 Received: from imap1.dmz-prg2.suse.org (localhost [127.0.0.1])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
 	(No client certificate requested)
-	by imap1.dmz-prg2.suse.org (Postfix) with ESMTPS id 9D5C31339F;
-	Wed, 25 Nov 2026 11:36:36 +0000 (UTC)
+	by imap1.dmz-prg2.suse.org (Postfix) with ESMTPS id 3D8C01339F;
+	Wed, 25 Nov 2026 11:42:44 +0000 (UTC)
 Received: from dovecot-director2.suse.de ([2a07:de40:b281:106:10:150:64:167])
 	by imap1.dmz-prg2.suse.org with ESMTPSA
-	id RWInHUTIBmteLwAAD6G6ig
-	(envelope-from <mwilck@suse.com>); Wed, 25 Nov 2026 11:36:36 +0000
-Message-ID: <89db7e4d1245afe989c69163fd940335ff8db9a6.camel@suse.com>
-Subject: Re: [PATCH 01/13] multipath-tools: multipathd.8.in: fix mandoc
- WARNINGs
+	id uulgBLTJBmsrNgAAD6G6ig
+	(envelope-from <mwilck@suse.com>); Wed, 25 Nov 2026 11:42:44 +0000
+Message-ID: <e187be141dc1e65cb643fc5ba77c4a1cff536f99.camel@suse.com>
+Subject: Re: [PATCH 5/7] multipath-tools: multipathc: print version string
+ on startup
 From: Martin Wilck <mwilck@suse.com>
-To: Xose Vazquez Perez <xose.vazquez@gmail.com>, Benjamin Marzinski
-	 <bmarzins@redhat.com>
-Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>, DM_DEVEL-ML
-	 <dm-devel@lists.linux.dev>
-Date: Wed, 25 Nov 2026 12:36:36 +0100
-In-Reply-To: <e35c05f4-e5d4-4394-b4a0-7222d3bb0753@gmail.com>
-References: <20261113125549.504780-1-xose.vazquez@gmail.com>
-	 <20261113125549.504780-2-xose.vazquez@gmail.com>
-	 <avt3vc307mk4FHZK@redhat.com>
-	 <ac29a29d-9932-495a-b75f-1fe4fe7948c7@gmail.com>
-	 <av80EsBawOfxfHXK@redhat.com>
-	 <e35c05f4-e5d4-4394-b4a0-7222d3bb0753@gmail.com>
+To: Xose Vazquez Perez <xose.vazquez@gmail.com>
+Cc: Benjamin Marzinski <bmarzins@redhat.com>, Christophe Varoqui
+	 <christophe.varoqui@opensvc.com>, DM_DEVEL-ML <dm-devel@lists.linux.dev>
+Date: Wed, 25 Nov 2026 12:42:43 +0100
+In-Reply-To: <20261125102605.82009-6-xose.vazquez@gmail.com>
+References: <20261125102605.82009-1-xose.vazquez@gmail.com>
+	 <20261125102605.82009-6-xose.vazquez@gmail.com>
 Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: quoted-printable
 User-Agent: Evolution 3.62.1 
@@ -100,39 +96,61 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 List-Owner: <mailto:dm-devel+owner@lists.linux.dev>
 Precedence: list
 MIME-Version: 1.0
-X-Spamd-Result: default: False [-11.80 / 50.00];
+X-Rspamd-Queue-Id: 7D7A31F7A2
+X-Spam-Level: 
+X-Rspamd-Server: rspamd2.dmz-prg2.suse.org
+X-Rspamd-Action: no action
+X-Spam-Flag: NO
+X-Spamd-Result: default: False [-12.01 / 50.00];
 	SUSE_INTERNAL_BYPASS(-9.00)[];
 	BAYES_HAM(-3.00)[100.00%];
 	SUSPICIOUS_RECIPS(1.50)[];
 	NEURAL_HAM_LONG(-1.00)[-1.000];
+	R_DKIM_ALLOW(-0.20)[suse.com:s=susede1];
 	NEURAL_HAM_SHORT(-0.20)[-1.000];
 	MIME_GOOD(-0.10)[text/plain];
+	MX_GOOD(-0.01)[];
 	TO_MATCH_ENVRCPT_ALL(0.00)[];
 	TO_DN_ALL(0.00)[];
-	URIBL_BLOCKED(0.00)[suse.com:email];
-	FREEMAIL_TO(0.00)[gmail.com,redhat.com];
 	DKIM_SIGNED(0.00)[suse.com:s=susede1];
+	FREEMAIL_TO(0.00)[gmail.com];
+	URIBL_BLOCKED(0.00)[imap1.dmz-prg2.suse.org:rdns,imap1.dmz-prg2.suse.org:helo,suse.com:dkim,suse.com:email,linux.dev:email,opensvc.com:email];
 	ARC_NA(0.00)[];
+	RBL_SPAMHAUS_BLOCKED_OPENRESOLVER(0.00)[2a07:de40:b281:104:10:150:64:97:from];
 	FREEMAIL_ENVRCPT(0.00)[gmail.com];
-	RCPT_COUNT_THREE(0.00)[4];
+	DKIM_TRACE(0.00)[suse.com:+];
 	MIME_TRACE(0.00)[0:+];
+	RCVD_COUNT_TWO(0.00)[2];
+	DNSWL_BLOCKED(0.00)[2a07:de40:b281:104:10:150:64:97:from,2a07:de40:b281:106:10:150:64:167:received];
 	FROM_EQ_ENVFROM(0.00)[];
 	FROM_HAS_DN(0.00)[];
 	RCVD_TLS_ALL(0.00)[];
-	RCVD_COUNT_TWO(0.00)[2];
-	TAGGED_RCPT(0.00)[];
 	MID_RHS_MATCH_FROM(0.00)[];
+	TAGGED_RCPT(0.00)[];
+	RECEIVED_SPAMHAUS_BLOCKED_OPENRESOLVER(0.00)[2a07:de40:b281:106:10:150:64:167:received];
+	RCPT_COUNT_THREE(0.00)[4];
 	RCVD_VIA_SMTP_AUTH(0.00)[];
-	DBL_BLOCKED_OPENRESOLVER(0.00)[imap1.dmz-prg2.suse.org:helo,suse.com:email]
-X-Spam-Score: -11.80
-X-Spam-Level: 
-X-Spam-Flag: NO
+	DBL_BLOCKED_OPENRESOLVER(0.00)[suse.com:dkim,suse.com:email,linux.dev:email,imap1.dmz-prg2.suse.org:rdns,imap1.dmz-prg2.suse.org:helo]
+X-Spam-Score: -12.01
 
-On Wed, 2026-11-25 at 11:24 +0100, Xose Vazquez Perez wrote:
-> Restoring the previous layout, as I think it reads better.
+On Wed, 2026-11-25 at 11:26 +0100, Xose Vazquez Perez wrote:
+> Cc: Martin Wilck <mwilck@suse.com>
+> Cc: Benjamin Marzinski <bmarzins@redhat.com>
+> Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
+> Cc: DM_DEVEL-ML <dm-devel@lists.linux.dev>
+> Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
+> ---
+> =C2=A0multipathd/multipathc.c | 3 +++
+> =C2=A01 file changed, 3 insertions(+)
+>=20
 
-Thanks. I'll apply this as a fixup (with your authorship and s-o-b), as
-I have already applied your series to the "tip" branch.
+What for? I'd prefer multipathd not to be chatty, and I fail to see the
+benefit of this unsolicited output.
+
+It would be nice to have a "show version" command that would print not
+only the multipath-tools version but also the versions of relevant
+other componenents (libdm, kernel dm, kernel mpath). But that's a
+different thing.
 
 Martin
 
