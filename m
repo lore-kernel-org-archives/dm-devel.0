@@ -1,93 +1,93 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.128.50
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.221.50
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1795602373;
-	b=NI8XZ/qCyTavA4IZ+Gl20CZ3bAfsrWtBPQ3mQVkBnKmteTX/C+pWD4kTZn9bebMuHYnO
-	 v2cA1ReQvVPf8sgDRS2OQ3f8OqNZNmuHabpkTowmIhF9vXsEvtjIzrczUVgrtWynwXbOG
-	 bWsneryAuq1wwLnh2J3HOKkDArWK6SqgnD1eDID0HJLnSlwQ0U5T/UthtZmyfK1+Jm9/n
-	 Tuau6cRmoeSgUxSY+w3C2JHk76DG9hqrLiPd7eAQEya4zVVjcHTDIHO/W9X2dBdFY4aZ6
-	 qG4beNIT5Oydl3dlPLJ/VH+xQ48ZocruwwC3k7qkhFn/FMujFNmvrs1G8xw0CSSskTA==
+	t=1795602376;
+	b=rDP76jamhstUS8oy5U53KTSk5rkDQGQTcOGec4YxWiGgSfRYOepDRMkNgyaE0hF2AqRq
+	 OetR9ymiwUsg20+18HpUri2S1h3WlaE+SmOHOC+WHgaZ32lNsvE4TcR6kZgBfBOFttlrZ
+	 pqf9BNCAi5jqVzBNiHAhHtvi4Njof9Yw4NUEoYJsd8bvNGJedY5B/iMtRXOcP8KyFO32q
+	 EueOzkXRGadEmRZkZ0sGNuM4ZNKeeUsTCvSs6ffMGcZKTfgMJMclSUJsSbAliscleQyT9
+	 hRdueaQXDwrIQ/Jqhla95+WoaRSJft0o0Eh5xsSiP+CB3pbhtuywv2Jfh+8SAdqrwrw==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1795602373;
+	a=rsa-sha256; c=relaxed/relaxed; t=1795602376;
 	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
 	 X-Forwarded-Encrypted:X-Gm-Message-State:X-Gm-Gg:X-Received:Received:
 	 From:To:Cc:Subject:Date:Message-ID:X-Mailer:In-Reply-To:References:
 	 MIME-Version:X-Patchwork-Bot:Content-Transfer-Encoding;
-	bh=f82AZnbiSGXKlRUvqZF+jiJJSzJYJK0bJ9wk7mhSUn8=;
-	b=KhLw7kh/Vx8IbB7e4mi0I6PZ0ftYiWJ6ta0ZCF4sWn+JzialXhbVeqWcoXdDnEurNXfP
-	 NusONNcRuFI0tbEkT43BOEGMy0O0TNVd3f56VRM9rlH+bpNg0M4YhrMdKCJIWq/aFTFvC
-	 WT7zcjBeu9/ikaKB9CsbTF/LDWMywgjP01vfQIdZXF1xcea8GEJSqgjO0eALkZlGQfnPk
-	 NNI3nKPqTSp29OgFv8skjIvJsOVgd3KkN5WyK0j7tJx9RCQrz0gWRRVhJ5WBL8PyXo0sC
-	 r0/jV7ahMFZbdb60ojaot0Q1BvYivzPVJ+cCCE5Z2Fv46SQ7rQLG4HRm84Y+aEzw+3w==
+	bh=EBVfefCd2O+shqjo5CX8uJdQ93lKLEbuhJ7PKxXbrqQ=;
+	b=LxF4vYXtDsQRjH7PnDHWR13I6Cg+wDl5/KK9vLlt/Cifcne0s++gwSWYgL2wC0xFacJn
+	 Y3IKucSV+ElP2QOyiFlmhvZkTEb8SVsLgKN2sw9I/1SHTAIAOWgyKUjv4XsIfqNDuEJgC
+	 F5BYG7w6l67KZrhWUh9mZiDuWU71kenEoYn9p5HzfSGA53Tpf0SWmibgfaOxUBHryPT/k
+	 JgDpsBB0RNpQKlFH2aGaADUqC7s+Ru2eB60NljoInXOEqcVspr/Ma26Z5yUxRJqDM3woI
+	 4PjBAjtesIibFKR5F9BNh4IwdWku1sVguDvsJPnFzpf82kW6IXmELkW/ZGmCZAmoFlA==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
 	dmarc=pass header.from=gmail.com;
 	spf=pass smtp.mailfrom=gmail.com;
-	dkim=pass header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=fdrFl3sd;
-	arc=none smtp.remote-ip=209.85.128.50
-Received: from mail-wm1-f50.google.com (mail-wm1-f50.google.com [209.85.128.50])
+	dkim=pass header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b="D/Ip9i8u";
+	arc=none smtp.remote-ip=209.85.221.50
+Received: from mail-wr1-f50.google.com (mail-wr1-f50.google.com [209.85.221.50])
 	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id BD069606A335
-	for <dm-devel@lists.linux.dev>; Wed, 25 Nov 2026 10:26:12 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org BD069606A335
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 64570606A329
+	for <dm-devel@lists.linux.dev>; Wed, 25 Nov 2026 10:26:15 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 64570606A329
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=fdrFl3sd
-Received: by mail-wm1-f50.google.com with SMTP id 5b1f17b1804b1-4bba5e1b9f9so259295e9.3
-        for <dm-devel@lists.linux.dev>; Wed, 25 Nov 2026 02:26:12 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=D/Ip9i8u
+Received: by mail-wr1-f50.google.com with SMTP id ffacd0b85a97d-49a357e48a2so413506f8f.3
+        for <dm-devel@lists.linux.dev>; Wed, 25 Nov 2026 02:26:15 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20260707; t=1795602371; x=1796207171; darn=lists.linux.dev;
+        d=gmail.com; s=20260707; t=1795602374; x=1796207174; darn=lists.linux.dev;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:from:to:cc:subject:date
          :message-id:reply-to:content-type;
-        bh=f82AZnbiSGXKlRUvqZF+jiJJSzJYJK0bJ9wk7mhSUn8=;
-        b=fdrFl3sd+2QmLFAPrhDM748YZQZUyHWR//1y47TsOtZgeRwWS2yMgyxiqI08wbf5dQ
-         JF219/hYEar711dn9UeMTCTMviPRvVOfSNqX+7m5FDiohXfRSvfEkDf8Buih6oT9UWPw
-         gkWnaVLZ30uLIhoOeMprDjrVadTmZa8vZ9Y3sGijNpW72UuE88rzgniHvF6sanj4xSki
-         s23VbgCLqW+Ny7OMN4dA1yJLzUnV5Q2riHhfZgd8rCRQ8k0DXKsZRmuWhaLqH/P8q7vN
-         06Yh2xNkNyMlzG2T7UtmEx14WY35V8y7ugaToDpM2mlFICvd0LT6n2L2gpgfjhXvh9i9
-         gpCw==
+        bh=EBVfefCd2O+shqjo5CX8uJdQ93lKLEbuhJ7PKxXbrqQ=;
+        b=D/Ip9i8uDAZtNJcfQUVQfqXX8mJxtKetXnq66VIDxpivE+e7lZczdVtyAojtnLg3hg
+         Yo7xa7W9QV8zcsHECW9D9FvfKvKlGBFTuXwHDp9WuIrhPuADjzTks8eQdQci/Tu/rmAz
+         xFDq9P0fE6FbqYx/36+byOdePZR9fCBXPTAr3bd5jZGiKFjXuXtc1rnJjlYnSaQInvI4
+         USOto7QWoetgMvu1TBtx1KMj58kEVoGh3N9FSRTDnz2Tt0tYn3kAIgb25/FNXjt24X47
+         a0A9sIA2FMY7FYHcHxBOb4KoXVluskm1apy9h/f7vZNH2hqIDG325qa/VrpqPoj9XpaM
+         3bjA==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1795602371; x=1796207171;
+        d=1e100.net; s=20260707; t=1795602374; x=1796207174;
         h=content-transfer-encoding:mime-version:references:in-reply-to
          :message-id:date:subject:cc:to:from:x-gm-gg:x-gm-message-state:from
          :to:cc:subject:date:message-id:reply-to:content-type;
-        bh=f82AZnbiSGXKlRUvqZF+jiJJSzJYJK0bJ9wk7mhSUn8=;
-        b=0ZTJLTJX05IbysVdRueHIyL/pNode2VrVmFQjW16iaA2dvAca5Ankl02SKWkp/biLA
-         yzTAL7q/kC5C/dbUGynpef04XbWaIeNBidbtYeuQwD/55NTM27dU3Pd6WNZXqoKXB9Gp
-         q6CYXxGxNjjgZ3Uhk4BeFXGOgeeTF+CAtHl0JSdss1fgbLfQSR9yMOYP2rz6BPgXMzYc
-         M2lbUyCouMZ6TXXRzENRR8wRDwl8bczkkEiBS3MaS9swdl5K5V20nxM2Je6/2Q56xdp5
-         gzbUDHLK/Mnhxw0B5GkyN9ns1K2SfG8kIjyWUSW6lKMXkLeDfEw4lsrGBCfbk/fTbLX0
-         TURg==
-X-Forwarded-Encrypted: i=1; AL+hErGDlOeTx1wuEsXjXwSggoo4qzlZVRZfT0w2Ycx0kGtNsb/xcanMcaPE+LhrRoNj9SzyBT5dfIDnhQ==@lists.linux.dev
-X-Gm-Message-State: APuU4Z9lwwl+YkoLtfaltNfdhD0FL8qXXHL8hEAxKEdF4fKUg5SibCvs
-	+9I+Q6JFPDy2OJWtqRBbp9d4JSQ4n2qFKzgsFGVDS4e0fSH13+V2niU=
-X-Gm-Gg: AZFdTZeC8x1ihCkonCxfdWeym0jPXidO/GPUh2bYkzIvjnK2Gq6H0PWJHAYZLlCAoLx
-	+uccyFW45lAcCHjRmeKlP2DuXOEWgWIxqS6FD9uEda1K53bgfQtN2eIE0jllBEeyxptUV68WC9U
-	YKo+b4ZOUuBrt4PizZIs9wgbthcgYfQYwhZ3T3ghUXmOCS/yUnrNJt2LNowRpVVGHES0llHt7UA
-	seFYyjVFzkcNbOLBv+Qr4qt7FCgWJeuuGc/tk0Rtm/z7yty6hesyO2bti6Xobhy2ehV/8Q3Ysra
-	qnmDP0+T17k5vdsS+JpHfnOnkdISuFyaWthKrAEUf9Cu3O3GRZRe4tqP4phpdfPKkbB+8HHw+Q+
-	kENWbU1pPtl8Q6y1u0oXYny3NQqDPDUZhnIKXi1nDzf+XMEsjrsFw3Q91MkDtWHjjBgG0kjTjiU
-	USro/QqdT9bQ64bVKtxKUyYW2144FuMF9YYOlcnxlfpgncBLwqgYFTaGlQKuQfmoc1BWVRF92Yd
-	Pz+4wT4aoAfSzfNLj7Bt+ZnOrSnfxvK4sU77EljjTn/mRCavWKfLX+rX19zkrj5P6QU9SPFD6yv
-	bUVCQ974Yi8Qzud2pXaO4xKlHl+wcQp/pQ6y5EgQoQYyxqGMVeMfVRw2IRMwg2DJrA==
-X-Received: by 2002:a05:600c:8206:b0:4a0:1f9e:5f78 with SMTP id 5b1f17b1804b1-4bb88787d87mr313848565e9.0.1795602371012;
-        Wed, 25 Nov 2026 02:26:11 -0800 (PST)
+        bh=EBVfefCd2O+shqjo5CX8uJdQ93lKLEbuhJ7PKxXbrqQ=;
+        b=f0sfm6xG0mI3GYXSeNQXc3plLO8bLz1HBvRBSm3GmGz8yhFdZsjda4is2JEsumE3CY
+         4bci7d+cRKfhvbi2lxl/fohcO/7CfCYoKorvodyc4pl6vWRx473sxSKdxwP1gZd5+ZrG
+         ss5x6G/wJ44DnD0OrxgP6hHUpOaOLgrlYO80B4KxTfytib1wrlD6tyR02fb0lSSikBNX
+         cNfpYOz7Dwb6XY/qoxV0a9CWdpwqZC9u9eRgBUkWP54C8+/GsArhFisJA0G1yAqnWwXa
+         ezOCfcIppkPggsVTK+UgINXh9odtI5EYL/zTicLxPzs3kt+l0x7fndYP+ndbzU/UaY+8
+         u+uQ==
+X-Forwarded-Encrypted: i=1; AL+hErGIiYNwHwaSnv7ovXx42CuJFSpfXeKmKExN8NMJLqPEYHV+JpY18QXCQCKNOJlFkoaGOic9SAuRXA==@lists.linux.dev
+X-Gm-Message-State: APuU4Z9fbdbMQgyPPqXu+07otbJS339rNIpfHzzUQ0215dFohz3e6SPv
+	01nIwSetA2IdHa9YD5PWruL/9M9EtzwZRAozng/ac4P3DA3lG14vvVY=
+X-Gm-Gg: AZFdTZdbch/Hyg9XPeBVju2z3jUy7aGBMg/V8mf1L9yG1APQmJadvlAxwMyVwWN2nZ2
+	Y1DyDUEvpHfqoSx1mQRIj/zyfOZ3g8leSIwvdXj/bxJ2t29pqVxVvofOBmgSWb4zVN7XOigklEk
+	bF1u4UlJZcVkd/NpSCnbz6fl/A/xGA1GcRiSb1mABSqtlBxNgfP51pgFeziti3ApRidlm/yofAj
+	bU1xKgWykUmipNdOwfS+d6YkK0okhTlYVuLXUn5m0VqVvgRAzWxGHa9De0X2qcZNpjV5K/62AqH
+	ENNXG11GZcBscbw4sKK/kK9qf80Pk2Y3zy8nBHQeyToZ+mFnGis/kbCNlOi85+0d9VpdCoE+PnD
+	xKLL6KeYHQfhb7mUFnF+4EZfYKyOeRSSdzGlEgVPaYoT/fAlp7V4oiAhRhFj3gCQ0QD1llEQw8k
+	2ufgIdnkD+pGCmQKq0faz2XC+4jaKuDWJHi4xKAX7pcchw7BBw+UIwLYOyOQS3w3AeQQpBS0y7c
+	2RcL/USGec2gsLuu3pajoxYf3OfPjjfIjMlvItBXmFroxp6MHrn+zW/AS8iBlnXkOYYCVkIqWHf
+	Hk7CLIwdytbFpW0XNmo9gzMQismuAUQdA3e5FgB5wxksPe5V8MMT6i4kiyjbjokwjQ==
+X-Received: by 2002:a05:6000:4013:b0:48a:f5c5:d077 with SMTP id ffacd0b85a97d-4abada78637mr36826903f8f.2.1795602374463;
+        Wed, 25 Nov 2026 02:26:14 -0800 (PST)
 Received: from localhost (69.red-80-39-28.staticip.rima-tde.net. [80.39.28.69])
-        by smtp.gmail.com with ESMTPSA id 5b1f17b1804b1-4bb85399e2esm568463065e9.7.2026.11.25.02.26.10
+        by smtp.gmail.com with ESMTPSA id ffacd0b85a97d-4ab6a680355sm28061984f8f.27.2026.11.25.02.26.13
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Wed, 25 Nov 2026 02:26:10 -0800 (PST)
+        Wed, 25 Nov 2026 02:26:14 -0800 (PST)
 From: Xose Vazquez Perez <xose.vazquez@gmail.com>
 To: 
 Cc: Xose Vazquez Perez <xose.vazquez@gmail.com>,
-	Benjamin Marzinski <bmarzins@redhat.com>,
 	Martin Wilck <mwilck@suse.com>,
+	Benjamin Marzinski <bmarzins@redhat.com>,
 	Christophe Varoqui <christophe.varoqui@opensvc.com>,
 	DM_DEVEL-ML <dm-devel@lists.linux.dev>
-Subject: [PATCH 1/7] multipath-tools: hwtable: reformat EMC/Celerra entry
-Date: Wed, 25 Nov 2026 11:25:58 +0100
-Message-ID: <20261125102605.82009-2-xose.vazquez@gmail.com>
+Subject: [PATCH 4/7] multipath-tools: hwtable: add StorONE/S1
+Date: Wed, 25 Nov 2026 11:26:01 +0100
+Message-ID: <20261125102605.82009-5-xose.vazquez@gmail.com>
 X-Mailer: git-send-email 2.56.1
 In-Reply-To: <20261125102605.82009-1-xose.vazquez@gmail.com>
 References: <20261125102605.82009-1-xose.vazquez@gmail.com>
@@ -103,33 +103,40 @@ MIME-Version: 1.0
 X-Patchwork-Bot: notify
 Content-Transfer-Encoding: 8bit
 
-Move product description inside the braces and drop the vendor name.
+Config on: https://docs.onestor.com/books/linux/page/linux-nfs-fc-and-iscsi#bkmrk-multipath-configurat
 
-Suggested-by: Benjamin Marzinski <bmarzins@redhat.com>
-Reviewed-by: Benjamin Marzinski <bmarzins@redhat.com>
 Cc: Martin Wilck <mwilck@suse.com>
 Cc: Benjamin Marzinski <bmarzins@redhat.com>
 Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>
 Cc: DM_DEVEL-ML <dm-devel@lists.linux.dev>
 Signed-off-by: Xose Vazquez Perez <xose.vazquez@gmail.com>
 ---
- libmultipath/hwtable.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ libmultipath/hwtable.c | 12 ++++++++++++
+ 1 file changed, 12 insertions(+)
 
 diff --git a/libmultipath/hwtable.c b/libmultipath/hwtable.c
-index a37fa7d8..c6bf2d90 100644
+index 64bd9c9f..ee3cea5a 100644
 --- a/libmultipath/hwtable.c
 +++ b/libmultipath/hwtable.c
-@@ -412,8 +412,8 @@ static struct hwentry default_hw[] = {
- 		.pgpolicy      = MULTIBUS,
- 		.no_path_retry = 30,
+@@ -1461,6 +1461,18 @@ static struct hwentry default_hw[] = {
+ 		.product       = "OpenFlex",
+ 		.no_path_retry = NO_PATH_RETRY_QUEUE,
  	},
--		// EMC Celerra
- 	{
-+		// Celerra
- 		.vendor        = "EMC",
- 		.product       = "Celerra",
- 		.pgpolicy      = MULTIBUS,
++	/*
++	 * StorONE
++	 */
++	{
++		// S1
++		.vendor        = "STORONE",
++		.product       = "S1",
++		.pgpolicy      = GROUP_BY_PRIO,
++		.prio_name     = PRIO_ALUA,
++		.pgfailback    = -FAILBACK_IMMEDIATE,
++		.no_path_retry = 30,
++	},
+ 	/*
+ 	 * EOL
+ 	 */
 -- 
 2.56.1
 
