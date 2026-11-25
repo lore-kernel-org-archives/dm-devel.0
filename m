@@ -1,68 +1,96 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=111.22.67.151
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=195.135.223.130
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1795604652;
-	b=v/SWNLm2ySfCiPzHj0uMHS+xxaBYPcgpl6IVlYW57xRPxv06cLLOWmAQ7pZW0LZFsFoB
-	 xGlSOG6F0FRbKnnbJgjckEOWisMSn+80v1uVrq22KfWVEG66RNw9trY998Znh4Gz63cJU
-	 jMNSNWLmZqJ7csVJJ9sP0/ESrpW26+M8CBIwFOWETKY5rDFVq4Lz7VLyA/A+WbnvkfW+F
-	 jvn44QB+oFNGS6hOm0HxbCQhiBrBzZ45UV3DNsK0Uzm/0T3C4+nYk4gAtRlrwB4UxohIo
-	 hPfsZmagL7fC5CIlgTTksP883OzkVAx5WzfvckvxiAbYXsHAtdaa5jlJElwVKnmJzcw==
+	t=1795606599;
+	b=rKDKJ9nF+cVJ4pgSMy5xb3GfWIV1/HaH5+G740AWUqCSAg5lmQ/ZMopVcRPD41QCKmm+
+	 Sa3HsQwz8IVxXqSn+NJsubPWDuegA0QmUR30nNgUbzKaW42UHKaB8gFlXkM+LUfAELmgm
+	 Xra4G/qD7yPIj4aeIDQsBnc5scovMHQPH7ZBOWfeds2MaFSJ8zGm5h45eA0FSdAJ4JtJu
+	 Q0ZQIAAWx6cpPRNRClZ1tqZZ+bqwctT45DsRNwLNY58KcTIO+6npzDrCf+sBXAGfXfzkq
+	 tf7vqV0/3LTCPIKHoVUuUXKqweQSZsLL6HUVaBx/iL9QXGTLeXkpYqm4ol8r9qfAEiw==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1795604652;
-	h=DMARC-Filter:DKIM-Signature:X-RM-TagInfo:X-RM-SPAM-FLAG:Received:
-	 X-RM-TRANSID:X-RM-TagInfo:X-RM-SPAM-FLAG:Received:X-RM-TRANSID:From:
-	 To:Cc:Subject:Date:Message-ID:X-Mailer:In-Reply-To:References:
-	 MIME-Version:Content-Transfer-Encoding;
-	bh=3Ed/dwsYEtwCWH9KjuZt1ohLbpuZvRwKKfK5cvZH8Hs=;
-	b=4vM4Fblb/uIMnMf+Zs9+9YONkEUm4CxTt55owOaqa++RURR1sfFZ80sRKojHcT33ugR+
-	 Ar5blIaiHyv3brSiME55zcrnMh5ERZT8rXpWxbM3gm44i1B2jScDgzoBzMLtiEh1TfPi5
-	 bdb0TcDP3hfnBiKWubROdlgfO7KQTJk9dsxO7pXm0j/218G92q9lb3JKF598mgrgaZstd
-	 qAt4fgaDskQmUUGJ1hvMZA0jG8QUTbQfpsc9EbdrNq6Z1Tq1GY6PplL0uI9Gc3fLUFeQY
-	 P0+8I0Fjt3K5nuBYrLMhTelxddF9x/yXl6M2qZY7KU8tAPOWmOmOMbG9l3HpoetwIUQ==
+	a=rsa-sha256; c=relaxed/relaxed; t=1795606599;
+	h=DMARC-Filter:Received:DKIM-Signature:DKIM-Signature:Received:
+	 Received:Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
+	 Content-Type:Content-Transfer-Encoding:User-Agent:MIME-Version:
+	 X-Spamd-Result:X-Spam-Score:X-Spam-Level:X-Spam-Flag;
+	bh=sLmZBMAVmmaJw67QCxAYxx8WC+tzLZE8eqkkhiO5ocY=;
+	b=b72dF3HMKYNZjHs34gPSHH2EZp6NfAtr8fwOK2haIQ6yk96t8O5x0K2oNPfK33B+py/b
+	 6MYu0/k6O8v8Vntiag9MNsX9U+R8jAK94EfyBSERGXhbp7afjPpyoilzuUFfG5PsnegYU
+	 pWkSq2Vwd8l9eNovudMuD1WTSaq3zYFyJiAvSQGQkQ5QR7zJQMv54kBcnvV9y9rL1R8ns
+	 3B7YoOYvcax0jyPORgBi5LNM+Jtx+nUej6L5KPkvP8Eq8C8zCdsckoIwk83XuFANf4XVM
+	 WeJedYd1AiMY+ROicvF4J+VLWCYd33Gnzr71x9rKBmI3Y5T2UwTcX+juLDDhiRApcTw==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dmarc=pass header.from=cmss.chinamobile.com;
-	spf=pass smtp.mailfrom=cmss.chinamobile.com;
-	dkim=pass header.d=cmss.chinamobile.com header.i=@cmss.chinamobile.com header.a=rsa-sha256 header.s=default header.b=w7TuWmIZ;
-	arc=none smtp.remote-ip=111.22.67.151
-Received: from cmccmta8.chinamobile.com (cmccmta8.chinamobile.com [111.22.67.151])
-	by smtp.subspace.kernel.org (Postfix) with ESMTP id 0AC2E606A31E
-	for <dm-devel@lists.linux.dev>; Wed, 25 Nov 2026 11:04:09 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 0AC2E606A31E
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=cmss.chinamobile.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=cmss.chinamobile.com
+	dmarc=pass header.from=suse.com;
+	spf=pass smtp.mailfrom=suse.com;
+	dkim=pass header.d=suse.com header.i=@suse.com header.a=rsa-sha256 header.s=susede1 header.b="GYdVXU/n";
+	dkim=pass header.d=suse.com header.i=@suse.com header.a=rsa-sha256 header.s=susede1 header.b="GYdVXU/n";
+	arc=none smtp.remote-ip=195.135.223.130
+Received: from smtp-out1.suse.de (smtp-out1.suse.de [195.135.223.130])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
+	(No client certificate requested)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id A3D15606A323
+	for <dm-devel@lists.linux.dev>; Wed, 25 Nov 2026 11:36:38 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org A3D15606A323
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key, unprotected) header.d=cmss.chinamobile.com header.i=@cmss.chinamobile.com header.a=rsa-sha256 header.s=default header.b=w7TuWmIZ
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-	d=cmss.chinamobile.com; s=default; l=0;
-	h=from:subject:message-id:to:cc:mime-version;
-	bh=47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU=;
-	b=w7TuWmIZi9CEgr3hX7ejxjWTpnz5EjVSaZSyLxdk1dkcvgyPOAUImfSiCOvRWKzOsBoSjREZEp1az
-	 bAIszhVj4oJ6GXTy31b46dX4PUoYwTjATYZC1opVgdXCTohawZ8FYJpzYDYoJkB+CqWcTz3rbsIRM1
-	 oPeWtxk/0pqT41u8=
-X-RM-TagInfo: emlType=0                                       
-X-RM-SPAM-FLAG:00000000
-Received:from spf.mail.chinamobile.com (unknown[10.188.0.87])
-	by rmmx-syy-dmz-app02-12002 (RichMail) with SMTP id 2ee26b06c0a4f15-8e7c9;
-	Wed, 25 Nov 2026 19:04:06 +0800 (CST)
-X-RM-TRANSID:2ee26b06c0a4f15-8e7c9
-X-RM-TagInfo: emlType=0                                       
-X-RM-SPAM-FLAG:00000000
-Received:from localhost.localdomain (unknown[10.55.1.72])
-	by rmsmtp-syy-appsvr09-12009 (RichMail) with SMTP id 2ee96b06c0a3c87-442e4;
-	Wed, 25 Nov 2026 19:04:06 +0800 (CST)
-X-RM-TRANSID:2ee96b06c0a3c87-442e4
-From: tongzhiwei <tongzhiwei@cmss.chinamobile.com>
-To: Jens Axboe <axboe@kernel.dk>
-Cc: tongzhiwei@cmss.chinamobile.com,
-	linux-block@vger.kernel.org,
-	linux-kernel@vger.kernel.org,
-	dm-devel@lists.linux.dev,
-	syzkaller-bugs@googlegroups.com
-Subject: Re: [PATCH] block: fix divide by zero in queue_limit_discard_alignment()
-Date: Wed, 25 Nov 2026 19:03:51 +0800
-Message-ID: <20261125110353.366-1-tongzhiwei@cmss.chinamobile.com>
-X-Mailer: git-send-email 2.45.0.windows.1
-In-Reply-To: <20261120103040.610-1-tongzhiwei@cmss.chinamobile.com>
-References: <20261120103040.610-1-tongzhiwei@cmss.chinamobile.com>
+	dkim=pass (1024-bit key, unprotected) header.d=suse.com header.i=@suse.com header.a=rsa-sha256 header.s=susede1 header.b=GYdVXU/n;
+	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.a=rsa-sha256 header.s=susede1 header.b=GYdVXU/n
+Received: from imap1.dmz-prg2.suse.org (unknown [10.150.64.97])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
+	(No client certificate requested)
+	by smtp-out1.suse.de (Postfix) with ESMTPS id DE51B22113;
+	Wed, 25 Nov 2026 11:36:36 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
+	t=1795606596; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	 mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=sLmZBMAVmmaJw67QCxAYxx8WC+tzLZE8eqkkhiO5ocY=;
+	b=GYdVXU/ndjHFyNqB1YaDezxIj2SelFxr7WFMebEQed57res1bJLlNqMBb73FtW1BOuAJKO
+	zxOrKLiYtZZiIABI6ms375TG1sIpaXZwB6eWnUqqvnN7gfZYlDyYGQqgUwxxnlPMyY8Tr4
+	UswykJ84lNQnFK8Bl3V/8waFGwqRh6w=
+Authentication-Results: smtp-out1.suse.de;
+	none
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
+	t=1795606596; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
+	 mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=sLmZBMAVmmaJw67QCxAYxx8WC+tzLZE8eqkkhiO5ocY=;
+	b=GYdVXU/ndjHFyNqB1YaDezxIj2SelFxr7WFMebEQed57res1bJLlNqMBb73FtW1BOuAJKO
+	zxOrKLiYtZZiIABI6ms375TG1sIpaXZwB6eWnUqqvnN7gfZYlDyYGQqgUwxxnlPMyY8Tr4
+	UswykJ84lNQnFK8Bl3V/8waFGwqRh6w=
+Received: from imap1.dmz-prg2.suse.org (localhost [127.0.0.1])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
+	(No client certificate requested)
+	by imap1.dmz-prg2.suse.org (Postfix) with ESMTPS id 9D5C31339F;
+	Wed, 25 Nov 2026 11:36:36 +0000 (UTC)
+Received: from dovecot-director2.suse.de ([2a07:de40:b281:106:10:150:64:167])
+	by imap1.dmz-prg2.suse.org with ESMTPSA
+	id RWInHUTIBmteLwAAD6G6ig
+	(envelope-from <mwilck@suse.com>); Wed, 25 Nov 2026 11:36:36 +0000
+Message-ID: <89db7e4d1245afe989c69163fd940335ff8db9a6.camel@suse.com>
+Subject: Re: [PATCH 01/13] multipath-tools: multipathd.8.in: fix mandoc
+ WARNINGs
+From: Martin Wilck <mwilck@suse.com>
+To: Xose Vazquez Perez <xose.vazquez@gmail.com>, Benjamin Marzinski
+	 <bmarzins@redhat.com>
+Cc: Christophe Varoqui <christophe.varoqui@opensvc.com>, DM_DEVEL-ML
+	 <dm-devel@lists.linux.dev>
+Date: Wed, 25 Nov 2026 12:36:36 +0100
+In-Reply-To: <e35c05f4-e5d4-4394-b4a0-7222d3bb0753@gmail.com>
+References: <20261113125549.504780-1-xose.vazquez@gmail.com>
+	 <20261113125549.504780-2-xose.vazquez@gmail.com>
+	 <avt3vc307mk4FHZK@redhat.com>
+	 <ac29a29d-9932-495a-b75f-1fe4fe7948c7@gmail.com>
+	 <av80EsBawOfxfHXK@redhat.com>
+	 <e35c05f4-e5d4-4394-b4a0-7222d3bb0753@gmail.com>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+User-Agent: Evolution 3.62.1 
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Post: <mailto:dm-devel@lists.linux.dev>
@@ -72,14 +100,45 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 List-Owner: <mailto:dm-devel+owner@lists.linux.dev>
 Precedence: list
 MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
+X-Spamd-Result: default: False [-11.80 / 50.00];
+	SUSE_INTERNAL_BYPASS(-9.00)[];
+	BAYES_HAM(-3.00)[100.00%];
+	SUSPICIOUS_RECIPS(1.50)[];
+	NEURAL_HAM_LONG(-1.00)[-1.000];
+	NEURAL_HAM_SHORT(-0.20)[-1.000];
+	MIME_GOOD(-0.10)[text/plain];
+	TO_MATCH_ENVRCPT_ALL(0.00)[];
+	TO_DN_ALL(0.00)[];
+	URIBL_BLOCKED(0.00)[suse.com:email];
+	FREEMAIL_TO(0.00)[gmail.com,redhat.com];
+	DKIM_SIGNED(0.00)[suse.com:s=susede1];
+	ARC_NA(0.00)[];
+	FREEMAIL_ENVRCPT(0.00)[gmail.com];
+	RCPT_COUNT_THREE(0.00)[4];
+	MIME_TRACE(0.00)[0:+];
+	FROM_EQ_ENVFROM(0.00)[];
+	FROM_HAS_DN(0.00)[];
+	RCVD_TLS_ALL(0.00)[];
+	RCVD_COUNT_TWO(0.00)[2];
+	TAGGED_RCPT(0.00)[];
+	MID_RHS_MATCH_FROM(0.00)[];
+	RCVD_VIA_SMTP_AUTH(0.00)[];
+	DBL_BLOCKED_OPENRESOLVER(0.00)[imap1.dmz-prg2.suse.org:helo,suse.com:email]
+X-Spam-Score: -11.80
+X-Spam-Level: 
+X-Spam-Flag: NO
 
-Hi Christoph,
+On Wed, 2026-11-25 at 11:24 +0100, Xose Vazquez Perez wrote:
+> Restoring the previous layout, as I think it reads better.
 
-thanks for the review.  Please withdraw this patch.
+Thanks. I'll apply this as a fixup (with your authorship and s-o-b), as
+I have already applied your series to the "tip" branch.
 
-I do agree with the design to fix it on setup.
+Martin
 
-Sorry for the noise, and thanks for the quick review.
-
-
+--=20
+Dr. Martin Wilck <mwilck@suse.com>
+SUSE Software Solutions Germany GmbH, Frankenstr. 146, 90461 N=C3=BCrnberg,
+Germany
+Gesch=C3=A4ftsf=C3=BChrer: Stefan Gaiser, Jochen Jaser, Abhinav Puri (HRB
+36809,AG N=C3=BCrnberg)
