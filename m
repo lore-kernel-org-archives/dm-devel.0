@@ -1,44 +1,44 @@
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=100.103.45.18
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1795629997;
-	b=TehqoLbjOkKau5gikWiiMNJmXpQiFXwVJrMF7iRS9z9cP6mU9MOJ7KVV6mdARgNACrcp
-	 08GORUeUmHp8XK9f/9/JpT+xxGi7LTMTuGoaqk4UF8K5lqbEw1EDYS4lk/ZZnDcmo66BD
-	 Ro9EJ+KB3HpCQkDV+7RxcgvjtQQ4jpUtcHbyk6OYpsvFUJNzOP0uagGII+DmS3V5wfVSl
-	 Y6TN66ZXxjdzYGuWw4jdWSmS2IGbzziM8ICyBaOfne1bdgDFoZns5UPKIxSCFKRoC6rmL
-	 9HQ7nj39ApLBHaHbMxmZLGfd26NNsKwZOsfHGN+NuLSuM3j4Epc2O+wOdyfghx72Twg==
+	t=1795630011;
+	b=TI2epHSocd2FHSPSdGUk5NmbkzbAkP+z2KDGdknGmiJZ37sc8RsgJL2754+KyzPiJxQz
+	 6f7NyfVGxhH89JE2G7fTP81NCtiqNuxsFIGCtEDW+dG9q2Q5J8aoV7QNdtIDTH5jSk9+0
+	 7xPGLcOxO4EhCODXOf/J4ALXapGfWF7YQ728u1IuekL+yeYawCwnDNFS+ugeuJ8T1fW5/
+	 wFq7bbhutPjbDQU9JAImICWNJ+27vHrgGpXicFobUaOYIsMGWKSDxWgjd6KZwBUME3Z0V
+	 64upmn8w0mrxgmskWgkwr6GeCnUVLCK1bHLXgD+M3eA7xBTIkpuovDcUQYcbX4mzGsw==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1795629997;
+	a=rsa-sha256; c=relaxed/relaxed; t=1795630011;
 	h=Received:DKIM-Signature:From:To:Cc:Subject:Date:Message-ID:X-Mailer:
 	 In-Reply-To:References:MIME-Version:Content-Transfer-Encoding;
-	bh=cHcAa/C2aDJiaYitw3R3G9ckGSrrPYAAeiF+dTOf9H8=;
-	b=LzEskCA9zzwwRuC+DAlB7iPZjy1knRPzX3kedI0sg8F6hMOtbyKVQJSkwS4PB3qOcqpA
-	 gTz+M9uZFrM0A9MOx5qfv44MOdNivSoP+2aThTAbmADmlrtP1TDaEhIo3GEMyToMEju0j
-	 OQX9HiXMxZLauBHbuFZYY6WVp3FhX7O2FGeNKSmsSAk8XiYENTfXikmSUUoc45e8Lnh/1
-	 QQAUnBjfherRURNRA6/3uhj/VsIEvBLAHqYjmomOYe+ga9Ug6fyue/gpHVcQVaKKWWn5p
-	 sAW040vE00O4w7OpOpDRN13Jd3G7dObLoPc1IL37PBVSv/ljJmVd5umTy9Y2gy+p8Ig==
+	bh=nLyjKszxDxf0Z7d66Bl/V5iPNaKlz2X0D1ZETIU6Ae4=;
+	b=R5Bd4MKhY45NCUR86SSXg4fkVoDm05VSMyqnPY2uKE+Z/I05MCgvNBRS2mWGFVtzjFNV
+	 DJtAFB+0ACZEMzDzsBhJVJ5d4j7dk4seRimDWXgBb3+MGvZuRQzVhTfW3LQR4B+T+Hoic
+	 VTKY940j+2RCjrR3HxToJEhgpFyyQgJdQ1LxPCOJ8ednkyrSzyo/8K7DsyVLf39ypcQCL
+	 lWUmp8MzueHFHpW8py9OOgERivbsnXjL+DQ61JnXVK4Zg+g3NArWagYQMQt0od4YoT6Ia
+	 +wx6QLZzB9oSytQTIZ4vLuvcmTXZ2f7EGoJ3LaiRTV+hucLkLbx245A3cE69sWS7GmA==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=PQ53WAY4;
+	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=idouuzr4;
 	arc=none smtp.remote-ip=100.103.45.18
 Received: from smtp.kernel.org (quasi.space.kernel.org [100.103.45.18])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with UTF8SMTPS id C03EC606A321;
-	Wed, 25 Nov 2026 18:06:37 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with UTF8SMTPS id 735B3606A32D;
+	Wed, 25 Nov 2026 18:06:51 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=PQ53WAY4
-Received: by smtp.kernel.org (Postfix) with UTF8SMTPSA id B5E401F00AD3;
-	Wed, 25 Nov 2026 18:06:36 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=idouuzr4
+Received: by smtp.kernel.org (Postfix) with UTF8SMTPSA id 14DE11F000C0;
+	Wed, 25 Nov 2026 18:06:50 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
-	s=k20260515; t=1795629997;
-	bh=cHcAa/C2aDJiaYitw3R3G9ckGSrrPYAAeiF+dTOf9H8=;
+	s=k20260515; t=1795630010;
+	bh=nLyjKszxDxf0Z7d66Bl/V5iPNaKlz2X0D1ZETIU6Ae4=;
 	h=From:To:Cc:Subject:Date:In-Reply-To:References;
-	b=PQ53WAY4QItRazvn2GqJ8q5keDNCJBXteVpYurtL63teVWfa5UkQcbKeCwRVl/CvS
-	 n9ocu0DY3eNH6WRvIZJ7lsGknS1u1PzF7liMgtmriAF1m83PlJ6DSweW6D6FzlkXOA
-	 KidNRMv6pH9gmwNdLI6hjQrp2J+WFSqnbPogfnRHTrJX+42x0acqS7cDB1qoQqDF1p
-	 wHtUU/IiU/n8356bsJ9cy/jqKg2ZuBHEKFu0dxdJl5v9G7XlNgm3Us2U1Zarl7dlha
-	 bzPNgUO/81OuYv4bf2Lw9A27NRCkKlUB6aUNQghBGEcr+BtJmcQnmLNwqgpCHTtRB6
-	 yuDIqEIPy3CLA==
+	b=idouuzr42qJJppqU+HVZ7qQOSIwnfMVobURVyiJcWozqdHzNewtEazfWCO5KLg6dw
+	 7fDE17ZXkOu5Aoj5b6ssFeg3vBojNY1OlkfhJ1xkn53kzR9KA1YUosBe3lo+6XAfk7
+	 TM5yZqW3Tjvk05JTlRJ6YLRyLaX7x1bKCGkdP7Nbco8RlwrxXqVhKr75zn/AsPNsAj
+	 wZogvpsoX5c+WQduZL9WjZOSCC4Gi95C9D7/Td34NdsvG36jH7kZ/67ok3zrpVYgRE
+	 SyZX/r8qd5CvN5QuXMZGt0a0F57U41EplRNxNWYdYJn0sCJToM7OO6Xu/Cm0AGbKN5
+	 K9qXg4ROvT3AQ==
 From: Jarkko Sakkinen <jarkko@kernel.org>
 To: keyrings@vger.kernel.org
 Cc: Jarkko Sakkinen <jarkko@kernel.org>,
@@ -75,9 +75,9 @@ Cc: Jarkko Sakkinen <jarkko@kernel.org>,
 	"Serge E. Hallyn" <serge@hallyn.com>,
 	Shuah Khan <skhan@linuxfoundation.org>,
 	Sumit Garg <sumit.garg@kernel.org>
-Subject: [PATCH v3 2/9] KEYS: trusted: Allow ASN.1 TPM2 sealed data shorter than MIN_KEY_SIZE
-Date: Wed, 25 Nov 2026 20:06:08 +0200
-Message-ID: <20261125180616.1854753-3-jarkko@kernel.org>
+Subject: [PATCH v3 5/9] tpm: Add persistent hierarchies to tpm2_create_primary()
+Date: Wed, 25 Nov 2026 20:06:11 +0200
+Message-ID: <20261125180616.1854753-6-jarkko@kernel.org>
 X-Mailer: git-send-email 2.47.3
 In-Reply-To: <20261125180616.1854753-1-jarkko@kernel.org>
 References: <20261125180616.1854753-1-jarkko@kernel.org>
@@ -92,48 +92,290 @@ Precedence: list
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-tpm2_unseal_cmd() rejects unsealed payloads shorter than MIN_KEY_SIZE (32
-bytes) with -EFAULT even when loading an ASN.1 TPMKey (OID_TPMSealedData,
-2.23.133.10.1.5) blob.
+TPMKey files can specify a 0x40 MSO permanent handle as parent, requiring
+TPM2_CreatePrimary with the TCG H-2 NIST P-256 template [1].
 
-While kernel-generated trusted keys ("new <keylen>") and legacy old_format
-blobs are at least 32 bytes long, external TPM2 tools allow sealing any
-non-empty payload up to 128 bytes.
+Populate chip->null_ec_key_{x,y} in tpm2_parse_create_primary() only for
+TPM2_RH_NULL.
 
-Keep MIN_KEY_SIZE for legacy old_format blobs and accept 1..MAX_KEY_SIZE
-bytes for ASN.1 TPMKey sealed blobs.
+Verify the returned key name against the locally computed TPMT_PUBLIC
+digest, and flush the transient handle on validation failure.
+
+[1] https://www.hansenpartnership.com/draft-bottomley-tpm2-keys.html#section-3.1.8
 
 Signed-off-by: Jarkko Sakkinen <jarkko@kernel.org>
 ---
- security/keys/trusted-keys/trusted_tpm2.c | 6 ++++--
- 1 file changed, 4 insertions(+), 2 deletions(-)
+ drivers/char/tpm/tpm2-sessions.c | 136 ++++++++++++++++++-------------
+ 1 file changed, 80 insertions(+), 56 deletions(-)
 
-diff --git a/security/keys/trusted-keys/trusted_tpm2.c b/security/keys/trusted-keys/trusted_tpm2.c
-index 30188a0ec676..8c62342b2588 100644
---- a/security/keys/trusted-keys/trusted_tpm2.c
-+++ b/security/keys/trusted-keys/trusted_tpm2.c
-@@ -499,7 +499,7 @@ static int tpm2_unseal_cmd(struct tpm_chip *chip,
- 	struct trusted_key_tpm *private = options->private;
- 	struct tpm_header *head;
- 	struct tpm_buf *buf __free(kfree) = NULL;
--	u16 data_len;
-+	unsigned int data_len;
- 	int offset;
- 	u8 *data;
- 	int rc;
-@@ -559,9 +559,11 @@ static int tpm2_unseal_cmd(struct tpm_chip *chip,
- 	rc = tpm_buf_check_hmac_response(chip, buf, rc);
- 
- 	if (!rc) {
-+		unsigned int min_len = payload->old_format ? MIN_KEY_SIZE : 1;
+diff --git a/drivers/char/tpm/tpm2-sessions.c b/drivers/char/tpm/tpm2-sessions.c
+index b3b4f7a89d9d..23f086de1f5d 100644
+--- a/drivers/char/tpm/tpm2-sessions.c
++++ b/drivers/char/tpm/tpm2-sessions.c
+@@ -1118,10 +1118,11 @@ int tpm2_sessions_init(struct tpm_chip *chip)
+ 	return rc;
+ }
+ #endif /* CONFIG_TCG_TPM2_HMAC */
 +
- 		data_len = be16_to_cpup(
- 			(__be16 *)&buf->data[TPM_HEADER_SIZE + 4]);
--		if (data_len < MIN_KEY_SIZE ||  data_len > MAX_KEY_SIZE)
-+		if (data_len < min_len || data_len > MAX_KEY_SIZE)
- 			return -EFAULT;
+ /*
+- * A mask containing the object attributes for the kernel held null primary key
+- * used in HMAC encryption. For more information on specific attributes look up
+- * to "8.3 TPMA_OBJECT (Object Attributes)".
++ * A mask containing the object attributes for the TCG mandated H-2 ECC P-256
++ * primary storage key template. For more information on specific attributes
++ * look up "8.3 TPMA_OBJECT (Object Attributes)".
+  */
+ #define TPM2_OA_NULL_KEY ( \
+ 	TPM2_OA_NO_DA | \
+@@ -1151,17 +1152,23 @@ static int tpm2_parse_create_primary(struct tpm_chip *chip, struct tpm_buf *buf,
+ {
+ 	struct tpm_header *head = (struct tpm_header *)buf->data;
+ 	off_t offset_r = TPM_HEADER_SIZE, offset_t;
+-	u16 len = TPM_HEADER_SIZE;
++	u8 resp_name[SHA256_DIGEST_SIZE + 2];
+ 	u32 total_len = be32_to_cpu(head->length);
+ 	u32 val, param_len, keyhandle;
++#ifdef CONFIG_TCG_TPM2_HMAC
++	const u8 *ec_x, *ec_y;
++#endif
++	u16 len;
  
- 		if (tpm_buf_length(buf) < TPM_HEADER_SIZE + 6 + data_len)
+ 	keyhandle = tpm_buf_read_u32(buf, &offset_r);
+-	if (handle)
+-		*handle = keyhandle;
+-	else
+-		tpm2_flush_context(chip, keyhandle);
++	if (buf->flags & TPM_BUF_INVALID)
++		return -EINVAL;
+ 
+ 	param_len = tpm_buf_read_u32(buf, &offset_r);
++	if ((buf->flags & TPM_BUF_INVALID) ||
++	    param_len > total_len - TPM_HEADER_SIZE - 8)
++		goto err;
++
+ 	/*
+ 	 * param_len doesn't include the header, but all the other
+ 	 * lengths and offsets do, so add it to parm len to make
+@@ -1169,146 +1176,163 @@ static int tpm2_parse_create_primary(struct tpm_chip *chip, struct tpm_buf *buf,
+ 	 */
+ 	param_len += TPM_HEADER_SIZE;
+ 
+-	if (param_len + 8 > total_len)
+-		return -EINVAL;
+ 	len = tpm_buf_read_u16(buf, &offset_r);
+ 	offset_t = offset_r;
+-	if (offset_r + len > tpm_buf_length(buf))
+-		return -EINVAL;
+-	if (name) {
+-		/*
+-		 * now we have the public area, compute the name of
+-		 * the object
+-		 */
+-		put_unaligned_be16(TPM_ALG_SHA256, name);
+-		sha256(&buf->data[offset_r], len, name + 2);
+-	}
++	offset_r += len;
++	if ((buf->flags & TPM_BUF_INVALID) || offset_r > param_len)
++		goto err;
++
++	/*
++	 * Now we have the public area, compute the name of the object.
++	 */
++	put_unaligned_be16(TPM_ALG_SHA256, resp_name);
++	sha256(&buf->data[offset_t], len, resp_name + 2);
+ 
+ 	/* validate the public key */
+ 	val = tpm_buf_read_u16(buf, &offset_t);
+ 
+ 	/* key type (must be what we asked for) */
+ 	if (val != TPM_ALG_ECC)
+-		return -EINVAL;
++		goto err;
+ 	val = tpm_buf_read_u16(buf, &offset_t);
+ 
+ 	/* name algorithm */
+ 	if (val != TPM_ALG_SHA256)
+-		return -EINVAL;
++		goto err;
+ 	val = tpm_buf_read_u32(buf, &offset_t);
+ 
+ 	/* object properties */
+ 	if (val != TPM2_OA_NULL_KEY)
+-		return -EINVAL;
++		goto err;
+ 
+ 	/* auth policy (empty) */
+ 	val = tpm_buf_read_u16(buf, &offset_t);
+ 	if (val != 0)
+-		return -EINVAL;
++		goto err;
+ 
+ 	/* symmetric key parameters */
+ 	val = tpm_buf_read_u16(buf, &offset_t);
+ 	if (val != TPM_ALG_AES)
+-		return -EINVAL;
++		goto err;
+ 
+ 	/* symmetric key length */
+ 	val = tpm_buf_read_u16(buf, &offset_t);
+ 	if (val != AES_KEY_BITS)
+-		return -EINVAL;
++		goto err;
+ 
+ 	/* symmetric encryption scheme */
+ 	val = tpm_buf_read_u16(buf, &offset_t);
+ 	if (val != TPM_ALG_CFB)
+-		return -EINVAL;
++		goto err;
+ 
+ 	/* signing scheme */
+ 	val = tpm_buf_read_u16(buf, &offset_t);
+ 	if (val != TPM_ALG_NULL)
+-		return -EINVAL;
++		goto err;
+ 
+ 	/* ECC Curve */
+ 	val = tpm_buf_read_u16(buf, &offset_t);
+ 	if (val != TPM2_ECC_NIST_P256)
+-		return -EINVAL;
++		goto err;
+ 
+ 	/* KDF Scheme */
+ 	val = tpm_buf_read_u16(buf, &offset_t);
+ 	if (val != TPM_ALG_NULL)
+-		return -EINVAL;
++		goto err;
+ 
+ 	/* extract public key (x and y points) */
+ 	val = tpm_buf_read_u16(buf, &offset_t);
+-	if (val != EC_PT_SZ)
+-		return -EINVAL;
++	if ((buf->flags & TPM_BUF_INVALID) || val != EC_PT_SZ ||
++	    offset_t + val > offset_r)
++		goto err;
+ #ifdef CONFIG_TCG_TPM2_HMAC
+-	memcpy(chip->null_ec_key_x, &buf->data[offset_t], val);
++	ec_x = &buf->data[offset_t];
+ #endif
+ 	offset_t += val;
+ 	val = tpm_buf_read_u16(buf, &offset_t);
+-	if (val != EC_PT_SZ)
+-		return -EINVAL;
++	if ((buf->flags & TPM_BUF_INVALID) || val != EC_PT_SZ ||
++	    offset_t + val > offset_r)
++		goto err;
+ #ifdef CONFIG_TCG_TPM2_HMAC
+-	memcpy(chip->null_ec_key_y, &buf->data[offset_t], val);
++	ec_y = &buf->data[offset_t];
+ #endif
+ 	offset_t += val;
+ 
+-	/* original length of the whole TPM2B */
+-	offset_r += len;
+-
+ 	/* should have exactly consumed the TPM2B public structure */
+ 	if (offset_t != offset_r)
+-		return -EINVAL;
+-	if (offset_r > param_len)
+-		return -EINVAL;
++		goto err;
+ 
+ 	/* creation data (skip) */
+ 	len = tpm_buf_read_u16(buf, &offset_r);
+ 	offset_r += len;
+ 	if (offset_r > param_len)
+-		return -EINVAL;
++		goto err;
+ 
+ 	/* creation digest (must be sha256) */
+ 	len = tpm_buf_read_u16(buf, &offset_r);
+ 	offset_r += len;
+ 	if (len != SHA256_DIGEST_SIZE || offset_r > param_len)
+-		return -EINVAL;
++		goto err;
+ 
+ 	/* TPMT_TK_CREATION follows */
+ 	/* tag, must be TPM_ST_CREATION (0x8021) */
+ 	val = tpm_buf_read_u16(buf, &offset_r);
+ 	if (val != TPM2_ST_CREATION || offset_r > param_len)
+-		return -EINVAL;
++		goto err;
+ 
+ 	/* hierarchy */
+ 	val = tpm_buf_read_u32(buf, &offset_r);
+ 	if (val != hierarchy || offset_r > param_len)
+-		return -EINVAL;
++		goto err;
+ 
+ 	/* the ticket digest HMAC (might not be sha256) */
+ 	len = tpm_buf_read_u16(buf, &offset_r);
+ 	offset_r += len;
+ 	if (offset_r > param_len)
+-		return -EINVAL;
++		goto err;
+ 
+ 	/*
+ 	 * finally we have the name, which is a sha256 digest plus a 2
+ 	 * byte algorithm type
+ 	 */
+ 	len = tpm_buf_read_u16(buf, &offset_r);
+-	if (offset_r + len != param_len + 8)
+-		return -EINVAL;
+-	if (len != SHA256_DIGEST_SIZE + 2)
+-		return -EINVAL;
++	if ((buf->flags & TPM_BUF_INVALID) ||
++	    offset_r + len != param_len + 8 ||
++	    len != SHA256_DIGEST_SIZE + 2)
++		goto err;
++
++	if (memcmp(resp_name, &buf->data[offset_r], sizeof(resp_name)) != 0) {
++		dev_err(&chip->dev, "primary key name comparison failed\n");
++		goto err;
++	}
+ 
+ #ifdef CONFIG_TCG_TPM2_HMAC
+-	if (memcmp(chip->null_key_name, &buf->data[offset_r],
+-		   SHA256_DIGEST_SIZE + 2) != 0) {
+-		dev_err(&chip->dev, "NULL Seed name comparison failed\n");
+-		return -EINVAL;
++	if (hierarchy == TPM2_RH_NULL) {
++		if (name == chip->null_key_name) {
++			memcpy(chip->null_ec_key_x, ec_x, EC_PT_SZ);
++			memcpy(chip->null_ec_key_y, ec_y, EC_PT_SZ);
++		} else if (memcmp(chip->null_key_name, resp_name,
++				  sizeof(resp_name)) != 0) {
++			dev_err(&chip->dev,
++				"NULL Seed name comparison failed\n");
++			goto err;
++		}
+ 	}
+ #endif
+ 
++	if (name)
++		memcpy(name, resp_name, sizeof(resp_name));
++
++	if (handle)
++		*handle = keyhandle;
++	else
++		tpm2_flush_context(chip, keyhandle);
++
+ 	return 0;
++
++err:
++	tpm2_flush_context(chip, keyhandle);
++	return -EINVAL;
+ }
+ 
+ /**
+@@ -1420,7 +1444,7 @@ int tpm2_create_primary(struct tpm_chip *chip, u32 hierarchy, u32 *handle,
+ 	tpm_buf_append_u32(buf, 0);
+ 
+ 	rc = tpm_transmit_cmd(chip, buf, 0,
+-			      "attempting to create NULL primary");
++			      "attempting to create primary key");
+ 
+ 	if (rc == TPM2_RC_SUCCESS)
+ 		rc = tpm2_parse_create_primary(chip, buf, handle, hierarchy,
 -- 
 2.47.3
 
