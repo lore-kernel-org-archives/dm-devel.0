@@ -1,69 +1,94 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=100.103.45.18
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.210.171
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1795630586;
-	b=2b5IWSe6amoCGunvUYPvwzUa9GcoUFGbgQJo6C7XxN2bzS0Qc4nno4CwW6Uz2VquBgD3
-	 jsPkuO8mCB7CPk5yiL42q6kjieoM0NozN8lHWRd+zNi6mThwCgNXSpVTgEApSNkFqBy+W
-	 3Slie4nfsPlwD3lut1gF4EJKlMPdZvZ/qXet5OuzAIs+xzGkzpttzj+wTHG2XdFnerx0d
-	 r2w+Z4PJczAt1W+YXIXkqzHftQmzBEew3vIYwuBwAuhxBR1Q8Qg8qtN9AlzJ8z7PmwCAF
-	 72z0TmAWYV4Er+1VNtwLeZEVKhvzDP9GWBFxCmJuWOl/1p665DkkgKI7QrYOxHcCNZw==
+	t=1795630605;
+	b=3avCAlpqegGJ4/Q/LpCEz70JyJ1NIRjotHxAkL8GDpfgo/x+YKe7H2+dbyciK7h/Qc03
+	 8BWpjwEM8QqBjkqciv3KCsNZCbrPpnJmFbR27AifPBAO2K6jSTyHFUt8p255Up6W0uZsM
+	 Nkh6OSTAqbz35JrzoVJdcNESkQdSfj1FFT8tLF++Ro7Daz8qeE8ballL7DV4Z4hhQJEaB
+	 jsCN6xP/I8lBjg+G++D8LMLACv04GFcmx1WBTi1HVNNf8Ok2HuQ+YIL4iyr3QAIzu5/T9
+	 cNnICjXiN7ZjnAMfggGWBHaeyJr+9p5FMTayTyb42N4Ntv80P4fh3eGIEYXewDJpNnQ==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1795630586;
-	h=Received:DKIM-Signature:Message-ID:From:Subject:Reply-To:To:Cc:
-	 In-Reply-To:References:Content-Type:Content-Transfer-Encoding:Date;
-	bh=ItE++LU8TqRI5uK7Gs6LAsm2atS10aLNL14Kugvc9Uw=;
-	b=h4kgIOA7rL4z2pA1i+onQQzk3u+wfEvHmH8XBZ3ZALydxZF0DSIsL9qPh0MV2QR6qa/c
-	 TOHBjG1eADEg9qBXrEJHRX7f4Xm7lZ2eQ8UUCkbu2fnFLmv+hmglmEO5cbYBeeWPig5XI
-	 +PBq88K0o7nnWGKVZPTPAuBuQU43+NA7y4o5oil3lYIs0PI79E6zP1B5mrY7r5Jv2hok2
-	 Bgl/T96rrZfYC/7l+dtS7vlHhXozr7sPT0hK1xZ3shPkAwekCEUzkwJSc49snNrvDzz/r
-	 OdvyyTRUDC5rYR0/oZBCFWKzoLG9FrtTYex6tZNjJvkO32fEuAfq3aweRLQy40oWOHQ==
+	a=rsa-sha256; c=relaxed/relaxed; t=1795630605;
+	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
+	 X-Gm-Message-State:X-Gm-Gg:X-Received:Received:From:To:Cc:Subject:
+	 Date:Message-ID:X-Mailer:MIME-Version:Content-Transfer-Encoding;
+	bh=xJl3VeU28yFIf7u8OboR3R/WMzTEeOW8WHDyp56+HdQ=;
+	b=s3U3xTGtyPglbXXAzEJ1zYDNggEg+Rh3wfmIifymQzokDDj/7BMLdKLKbT6aW1sb7poG
+	 vL7R2LTQl7MQQIEzGMT+nKtWTxMZ9P33awyW3exXnLD83wki/7siuRswsY1+9CUNOoMeu
+	 bPhgG627SYcGEstHz/UO2qSPQ6/TZc2rAhqxkj2mqRwI+wZIexQpzSgmG8wbrwiSvLzQS
+	 xGxQu9IoSXKzSw7I/t7ux0GR0pbDMtWrFZVOSjwrt1JQeLf1pKudCwcDX7rbBWcmZldLm
+	 bClCea+HQCe+pRCfj7cL4dta9EZXMz0DbV53IalLRdtqikxQI6LVmyjOK/CKXMt8xVg==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=nJ6Bjuz3;
-	arc=none smtp.remote-ip=100.103.45.18
-Received: from smtp.kernel.org (quasi.space.kernel.org [100.103.45.18])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature ECDSA (prime256v1))
+	dmarc=pass header.from=gmail.com;
+	spf=pass smtp.mailfrom=gmail.com;
+	dkim=pass header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=S+wlp2hT;
+	arc=none smtp.remote-ip=209.85.210.171
+Received: from mail-pf1-f171.google.com (mail-pf1-f171.google.com [209.85.210.171])
+	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
+	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 49D5E606A337;
-	Wed, 25 Nov 2026 18:16:26 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 575FB606A32C
+	for <dm-devel@lists.linux.dev>; Wed, 25 Nov 2026 18:16:45 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 575FB606A32C
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=nJ6Bjuz3
-Received: by smtp.kernel.org (Postfix) with ESMTPSA id 6F90A1F000C0;
-	Wed, 25 Nov 2026 18:16:24 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
-	s=k20260515; t=1795630585;
-	bh=ItE++LU8TqRI5uK7Gs6LAsm2atS10aLNL14Kugvc9Uw=;
-	h=From:Subject:Reply-To:To:Cc:In-Reply-To:References:Date;
-	b=nJ6Bjuz3fmmoHjdiLDCMLyP1UOstkuqTbgO8ivNdvSKr9k78qx2vRf0hA05DS70jk
-	 p9RzNOIg3GbFM8BFfZLo1xur4Zu+1ho9gIfDHjEDvX4aBVPTLVWnCn3HETEDHRUrYA
-	 I6fxzfOrOWKy5IjbJxpmELKaYW/50kVHCDqOryiVLF5gGXyQ2amixbI2HWMOSuUx5q
-	 oOwhayZFSAsplJHdEF2/NuVZpN4ClFX3GjWSMQzs5tPeOKrvBlDiSVEcDccg+bIz8z
-	 L+chIqaYI0ceCWqH0B4X9HAlyTH1GI/NjcYpEutzTYVCBJrxch10D3P//R+VaY5+bW
-	 1ifNxyL9uus0w==
-Message-ID: <sashiko-outbox-233944@kernel.org>
-From: sashiko-bot@kernel.org
-Subject: Re: [PATCH v3 8/9] KEYS: trusted: Factor out TPM2 blob loading
-Reply-To: sashiko-reviews@lists.linux.dev
-To: "Jarkko Sakkinen" <jarkko@kernel.org>, keyrings@vger.kernel.org
-Cc: dm-devel@lists.linux.dev, linux-crypto@vger.kernel.org, linux-security-module@vger.kernel.org, "Ahmad
- Fatoum" <a.fatoum@pengutronix.de>, "Alasdair Kergon" <agk@redhat.com>, "Andrew
- Morton" <akpm@linux-foundation.org>, "Benjamin Marzinski" <bmarzins@redhat.com>, "David
- Gstir" <david@sigma-star.at>, "David Howells" <dhowells@redhat.com>, "David
- Laight" <david.laight.linux@gmail.com>, "David S. Miller" <davem@davemloft.net>, "David
- Woodhouse" <dwmw2@infradead.org>, "Eric Biggers" <ebiggers@kernel.org>, "Herbert
- Xu" <herbert@gondor.apana.org.au>, "Ignat Korchagin" <ignat@linux.win>, "James
- Bottomley" <James.Bottomley@HansenPartnership.com>, "James Morris" <jmorris@namei.org>, "James
- Prestwood" <prestwoj@gmail.com>, "Jason Gunthorpe" <jgg@ziepe.ca>, "Jonathan
- Corbet" <corbet@lwn.net>, "Lukas Wunner" <lukas@wunner.de>, "Mike Snitzer" <snitzer@kernel.org>, "Mikulas
- Patocka" <mpatocka@redhat.com>, "Mimi Zohar" <zohar@linux.ibm.com>, "Paul
- Moore" <paul@paul-moore.com>, "Peter Huewe" <peterhuewe@gmx.de>, "Randy
- Dunlap" <rdunlap@infradead.org>, "Serge E. Hallyn" <serge@hallyn.com>, "Shuah
- Khan" <skhan@linuxfoundation.org>, "Sumit Garg" <sumit.garg@kernel.org>
-In-Reply-To: <20261125180616.1854753-9-jarkko@kernel.org>
-References: <20261125180616.1854753-1-jarkko@kernel.org>
- <20261125180616.1854753-9-jarkko@kernel.org>
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: quoted-printable
-Date: Wed, 25 Nov 2026 18:16:23 +0000
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=S+wlp2hT
+Received: by mail-pf1-f171.google.com with SMTP id d2e1a72fcca58-8b68e59ab33so4455785b3a.2
+        for <dm-devel@lists.linux.dev>; Wed, 25 Nov 2026 10:16:45 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=gmail.com; s=20260707; t=1795630605; x=1796235405; darn=lists.linux.dev;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:from:to:cc:subject:date:message-id:reply-to:content-type;
+        bh=xJl3VeU28yFIf7u8OboR3R/WMzTEeOW8WHDyp56+HdQ=;
+        b=S+wlp2hTt05s/xYPfgLK3JxBxvrL+ccPVnB994AmpfTPglOG0ihadEnReXj7buH6yY
+         dR71CDCbbkGmM8vFTrKhYqtKEAAAO2p1HZx8XMaIjCX26bTqoOfeQ30/sLniz90tL+oU
+         goLH/PbDW14ubHjrZ4E3IxecQQ5x1mbqCKggrXGpspjRvyRSv4e9tGZp7FYYuy3XKGJ/
+         ZvFnFQ3pzeIW0LTLzaJ2xnLmavMJzHx1mNIMBOd1Wt9F5RnCV3uauCJR6L8PZvAhNRyy
+         uM/rGTyGYjp83FgXsUCyy7er2gqWG8+bpUoJIIjPCs9GkWCxDfX6gR6kFTYCoCPOiJav
+         pevw==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20260707; t=1795630605; x=1796235405;
+        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
+         :to:from:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
+         :message-id:reply-to:content-type;
+        bh=xJl3VeU28yFIf7u8OboR3R/WMzTEeOW8WHDyp56+HdQ=;
+        b=0SIsFiOqfPZAr9Hk+3z1JgbLE7lboyyPRse3ZDZWidSoVgxlBgHBIcaMb9O4j65qSs
+         thcuR+qK0+RUT9WeXtmPqF/GPxhZHqa5QvSLnf6LuQ7xBisYAEXYfJrRR4HlXchvtVX3
+         Smq9wN/n4d9OoRjeZnvqTVJYAW6LOK6DeKK/KoJtn2jbY6eAq5CkwV95b4i/3m6eNwZM
+         lSqjV7wTDUxm2LJRMrWuVAS5ZCmYtslqiYde69H3oD3Su+dwlx4+X6yLYm7m/dEO7e4j
+         UpFid13I/tnJVwODtWmo2tNAKR3gbfNN9KIhSQXDIvuTz5F11sPPno8xCRh/h1HTFKXD
+         /EBQ==
+X-Gm-Message-State: APuU4Z/sdweECogUsfwb7DOZl9kRD8txxBHZhRqDExt4jZJN4Kc1eyAS
+	6q3/O4ZtEiJ/3N+Xix7bM9ECCPN5lk/FsseMolJ/FL6iwE1SFEmfCm/uRjWxHSAV
+X-Gm-Gg: AZFdTZdLAr2wB00qAbSwZTlhN9Yz692xMGFAVSFsCiz+VWxobF1a2eDBwkWr8I1Lf5C
+	Z7QM1V5uewG4fIY9halvcJXvVTZaxnTNvxIUeip+/i5zND3iTWzSAFmKolrh1rQHdFPWf3jjBUl
+	9BQ+nUq7hqwn7vAXvR7UeG8IrsPfCQ/n0Ln1fWTkCsDBLoZ1McLnyPTNelk96HBFfx31A8QDlug
+	ocCm+uFcNSlPHfRd7ZjuylpLJCJTBoyCjivGZzVK/I9ho/VF3XNk8UC3Ek5AImRBqH5bRoJ0vdU
+	reK80HMa/XPvyGyqw78X8w7iocU5HrVTHXUtapDfYLFoXFy+7kwVd4DbDtnKw0aNZxFN6E4K7r2
+	xGEciK689U1pOdUYoc09pMTsN961Vdi56QUzw1E9Xxkae735hwm0u7ge/Rtn/ymxyU2n4LdZ+PT
+	EauSjIa4pQpJh4/ZhTq6yWz0UcoPajW+AIND3TDgSnb4u0nXbbrJJQ8eMtbYdRHwia1xHPJVAD6
+	egAjD6+Y4PSngsuTmVkp5WBWlwi/U9rZVrcimhPjD5ZtYgOmZ4BLn7ZdyXQLoVucXFP6OXo5lkU
+	UTLhRYUw1kUJvLxCloNg9TvaKCGwN1HRnpP4u15jtf/ycscxtCSkMSQuereTGUDuxsRfRVLnGL+
+	et+pFB4vtyrqWCt99fLTejsCeAvqAk/sq4mYRTghicFmhsnseBw5PM9osld7P3UoGrXtQq96PpH
+	Y=
+X-Received: by 2002:a05:6a21:3b8d:b0:3f7:7e3c:af64 with SMTP id adf61e73a8af0-4014c350872mr21282532637.43.1795630604435;
+        Wed, 25 Nov 2026 10:16:44 -0800 (PST)
+Received: from fedora (n49-177-87-40.rdl1.qld.optusnet.com.au. [49.177.87.40])
+        by smtp.gmail.com with ESMTPSA id d2e1a72fcca58-8cbe173453dsm6163395b3a.25.2026.11.25.10.16.40
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Wed, 25 Nov 2026 10:16:43 -0800 (PST)
+From: Ronnie Sahlberg <ronniesahlberg@gmail.com>
+To: dm-devel@lists.linux.dev
+Cc: agk@redhat.com,
+	snitzer@kernel.org,
+	mpatocka@redhat.com,
+	bmarzins@redhat.com,
+	Ronnie Sahlberg <ronniesahlberg@gmail.com>,
+	stable@vger.kernel.org
+Subject: [PATCH] dm era: stop the worker before closing the metadata
+Date: Thu, 26 Nov 2026 04:16:27 +1000
+Message-ID: <20261125181627.625466-1-ronniesahlberg@gmail.com>
+X-Mailer: git-send-email 2.56.0
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Post: <mailto:dm-devel@lists.linux.dev>
@@ -72,87 +97,69 @@ List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 List-Owner: <mailto:dm-devel+owner@lists.linux.dev>
 Precedence: list
+MIME-Version: 1.0
+Content-Transfer-Encoding: 8bit
 
-Thank you for your contribution! Sashiko AI review found 1 potential
-issue to consider:
-- [Low] KEYS: trusted: changelog omits payload->private and
-  tpm2_load_cmd() check
---
+era_destroy() closes the metadata and then destroys the workqueue.
+destroy_workqueue() drains the queue first, so a worker that is still
+queued or running at that point uses the metadata after it was freed.
 
-commit 94f02a37d277c89d23fb05c1b5c6ea51d598832f
-Author: Jarkko Sakkinen <jarkko@kernel.org>
+The worker is only stopped by postsuspend, and there are two ways to
+get to era_destroy() with it still started:
 
-> KEYS: trusted: Factor out TPM2 blob loading
->
-> Factor out TPM2 blob loading:
->
-> 1. tpm2_key_decode() from trusted_key_options.
-> 2. tpm2_load_blob() and tpm2_buf_append_key_auth() from tpm2_load_cmd()
->    and tpm2_unseal_cmd().
->
-> Signed-off-by: Jarkko Sakkinen <jarkko@kernel.org>
+ - It is started by preresume before the era rollover, and stays
+   started if the rollover fails.  The device is then still suspended,
+   so postsuspend is not called again before the table is destroyed.
 
-> diff --git a/include/keys/trusted-type.h b/include/keys/trusted-type.h
-> index 3db61b57cf73d..790ffabb0d184 100644
-> --- a/include/keys/trusted-type.h
-> +++ b/include/keys/trusted-type.h
-> @@ -33,6 +33,7 @@ struct trusted_key_payload {
->  	unsigned int blob_len;
->  	unsigned char migratable;
->  	unsigned char old_format;
-> +	void *private;
->  	unsigned char key[MAX_KEY_SIZE + 1];
->  	unsigned char blob[MAX_BLOB_SIZE];
->  };
-> diff --git a/security/keys/trusted-keys/trusted_core.c b/security/keys/tr=
-usted-keys/trusted_core.c
-> index 3721980ed83af..b8f980da606d1 100644
-> --- a/security/keys/trusted-keys/trusted_core.c
-> +++ b/security/keys/trusted-keys/trusted_core.c
-> @@ -149,6 +149,14 @@ static struct trusted_key_payload *trusted_payload_a=
-lloc(struct key *key)
->  	return p;
->  }
-> =20
-> +static void trusted_payload_free(struct trusted_key_payload *p)
-> +{
-> +	if (!p)
-> +		return;
-> +	kfree_sensitive(p->private);
-> +	kfree_sensitive(p);
-> +}
-> +
+ - It is started from the constructor on, since era->suspended is
+   initially zero.  A status request for an inactive table runs it, and
+   an inactive table is destroyed without ever being suspended:
 
-[ ... ]
+     dmsetup load era --table "..."
+     dmsetup status --inactive era
+     dmsetup clear era
 
-> diff --git a/security/keys/trusted-keys/trusted_tpm2.c b/security/keys/tr=
-usted-keys/trusted_tpm2.c
-> index 0a81608844ff6..231062fd17b6b 100644
-> --- a/security/keys/trusted-keys/trusted_tpm2.c
-> +++ b/security/keys/trusted-keys/trusted_tpm2.c
+In both cases the worker can be busy digesting archived writesets,
+requeueing itself after every step, when the table is destroyed.
 
-[ ... ]
+Stop the worker, which also stops it from requeueing itself, and destroy
+the workqueue before closing the metadata.
 
-> @@ -527,6 +595,9 @@ static int tpm2_load_cmd(struct tpm_chip *chip,
->  	if (private_len + 2 + public_len + 2 > blob_len)
->  		return -E2BIG;
-> =20
-> +	if (public_len < 8)
-> +		return -EINVAL;
-> +
->  	pub =3D blob + 2 + private_len + 2;
->  	/* key attributes are always at offset 4 */
->  	attrs =3D get_unaligned_be32(pub + 4);
+Fixes: eec40579d848 ("dm: add era target")
+Cc: stable@vger.kernel.org
+Signed-off-by: Ronnie Sahlberg <ronniesahlberg@gmail.com>
+---
+An AI coding assistant (Claude) was used to review this patch and to
+help write the commit message.
 
-[Severity: Low]
-This isn't a bug, but the commit message only mentions factoring out
-tpm2_key_decode(), tpm2_load_blob(), and tpm2_buf_append_key_auth(),
-without explaining why this refactoring is needed (to prepare for
-asymmetric key support in the following patch).  It also omits adding
-payload->private and trusted_payload_free() in the core trusted keys code,
-as well as the new public_len < 8 bounds check before reading pub + 4 in
-tpm2_load_cmd().
+ drivers/md/dm-era-target.c | 9 ++++++---
+ 1 file changed, 6 insertions(+), 3 deletions(-)
 
---=20
-Sashiko AI review =C2=B7 https://sashiko.dev/#/patchset/20261125180616.1854=
-753-1-jarkko@kernel.org?part=3D8
+diff --git a/drivers/md/dm-era-target.c b/drivers/md/dm-era-target.c
+index ea499adca4ce..8b8b8b3dfa19 100644
+--- a/drivers/md/dm-era-target.c
++++ b/drivers/md/dm-era-target.c
+@@ -1438,12 +1438,15 @@ static void stop_worker(struct era *era)
+  */
+ static void era_destroy(struct era *era)
+ {
++	/* The worker uses the metadata, and may still be digesting. */
++	if (era->wq) {
++		stop_worker(era);
++		destroy_workqueue(era->wq);
++	}
++
+ 	if (era->md)
+ 		metadata_close(era->md);
+ 
+-	if (era->wq)
+-		destroy_workqueue(era->wq);
+-
+ 	if (era->origin_dev)
+ 		dm_put_device(era->ti, era->origin_dev);
+ 
+
+base-commit: 8d7fe9885c62fc9a95bf55d9db244d9672a8aadc
+-- 
+2.56.0
+
