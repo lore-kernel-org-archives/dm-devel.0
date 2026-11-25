@@ -1,94 +1,69 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.210.171
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=100.103.45.18
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1795630605;
-	b=3avCAlpqegGJ4/Q/LpCEz70JyJ1NIRjotHxAkL8GDpfgo/x+YKe7H2+dbyciK7h/Qc03
-	 8BWpjwEM8QqBjkqciv3KCsNZCbrPpnJmFbR27AifPBAO2K6jSTyHFUt8p255Up6W0uZsM
-	 Nkh6OSTAqbz35JrzoVJdcNESkQdSfj1FFT8tLF++Ro7Daz8qeE8ballL7DV4Z4hhQJEaB
-	 jsCN6xP/I8lBjg+G++D8LMLACv04GFcmx1WBTi1HVNNf8Ok2HuQ+YIL4iyr3QAIzu5/T9
-	 cNnICjXiN7ZjnAMfggGWBHaeyJr+9p5FMTayTyb42N4Ntv80P4fh3eGIEYXewDJpNnQ==
+	t=1795630971;
+	b=SwQsT+LiAtAPv6s2XYhX2ch3Qqq5/q3fG2ab+n0OJuxXhkG81jaGH6b0npNagrY0TyR+
+	 2O47DT4dtUx1I3DoMssXjLK4CT4aDSEhjundjC4fiR0wWeELcPkxwGeIm8TpCKJVupfTX
+	 WbsaUv86xJ16vxU4z6NkBMCk4ZkoNjDU5JstF+bFhxrI5nzqArFMfWT4GfEr3yMmekwsH
+	 zzY94nnQpxQxEY1x4i/WwAU0qhLrvgt9UET+f5H8PL698JA06HYXfjCcDmYbAFYCmWypF
+	 6dTwEm5s4wd4KoQGsVY5rZIpGhMA4vUpuDt+5nvSAGeDZvz2bH+yp1J+5ThLKDG0c4w==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1795630605;
-	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
-	 X-Gm-Message-State:X-Gm-Gg:X-Received:Received:From:To:Cc:Subject:
-	 Date:Message-ID:X-Mailer:MIME-Version:Content-Transfer-Encoding;
-	bh=xJl3VeU28yFIf7u8OboR3R/WMzTEeOW8WHDyp56+HdQ=;
-	b=s3U3xTGtyPglbXXAzEJ1zYDNggEg+Rh3wfmIifymQzokDDj/7BMLdKLKbT6aW1sb7poG
-	 vL7R2LTQl7MQQIEzGMT+nKtWTxMZ9P33awyW3exXnLD83wki/7siuRswsY1+9CUNOoMeu
-	 bPhgG627SYcGEstHz/UO2qSPQ6/TZc2rAhqxkj2mqRwI+wZIexQpzSgmG8wbrwiSvLzQS
-	 xGxQu9IoSXKzSw7I/t7ux0GR0pbDMtWrFZVOSjwrt1JQeLf1pKudCwcDX7rbBWcmZldLm
-	 bClCea+HQCe+pRCfj7cL4dta9EZXMz0DbV53IalLRdtqikxQI6LVmyjOK/CKXMt8xVg==
+	a=rsa-sha256; c=relaxed/relaxed; t=1795630971;
+	h=Received:DKIM-Signature:Message-ID:From:Subject:Reply-To:To:Cc:
+	 In-Reply-To:References:Content-Type:Content-Transfer-Encoding:Date;
+	bh=wn7BSSA8/p+YXYHhitmjH8m+fQEFTnO81AlhTtuLU5Y=;
+	b=BF2/CaQtXxtfv+m1rwtjST6ehcJuV+WkLyKFGunz8SuQjDwdc/1lIN+Wb07WN0JBnrfP
+	 FpxagvUG4JaTi/T7rdKq4iSi70f0lwa8Fpic4VSART0XaAFQmHp3HKsIOT0WQ9/w/y9tA
+	 WHD26bh6+CoL8WmqaALoJTBl9RKjmNnTX95COap71eLAI/1UukKEc59mVqgOexGm1b1fl
+	 Drx5qYE6t30gWfNXpi6EBVaEArdG4/uxxfQNtHGohGq9qkb1zn07pFNobRhNEAjm70sle
+	 BKFoa+o5UXm5MDJigSRUksplE4Q4eqX6QJlu92OdbSu5tT3VfgEQcQ6a5MjVL8YzrHw==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dmarc=pass header.from=gmail.com;
-	spf=pass smtp.mailfrom=gmail.com;
-	dkim=pass header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=S+wlp2hT;
-	arc=none smtp.remote-ip=209.85.210.171
-Received: from mail-pf1-f171.google.com (mail-pf1-f171.google.com [209.85.210.171])
-	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
-	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
+	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b="kNi/gIg9";
+	arc=none smtp.remote-ip=100.103.45.18
+Received: from smtp.kernel.org (quasi.space.kernel.org [100.103.45.18])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature ECDSA (prime256v1))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 575FB606A32C
-	for <dm-devel@lists.linux.dev>; Wed, 25 Nov 2026 18:16:45 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 575FB606A32C
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id BFBF5606A323;
+	Wed, 25 Nov 2026 18:22:51 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=S+wlp2hT
-Received: by mail-pf1-f171.google.com with SMTP id d2e1a72fcca58-8b68e59ab33so4455785b3a.2
-        for <dm-devel@lists.linux.dev>; Wed, 25 Nov 2026 10:16:45 -0800 (PST)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20260707; t=1795630605; x=1796235405; darn=lists.linux.dev;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:from:to:cc:subject:date:message-id:reply-to:content-type;
-        bh=xJl3VeU28yFIf7u8OboR3R/WMzTEeOW8WHDyp56+HdQ=;
-        b=S+wlp2hTt05s/xYPfgLK3JxBxvrL+ccPVnB994AmpfTPglOG0ihadEnReXj7buH6yY
-         dR71CDCbbkGmM8vFTrKhYqtKEAAAO2p1HZx8XMaIjCX26bTqoOfeQ30/sLniz90tL+oU
-         goLH/PbDW14ubHjrZ4E3IxecQQ5x1mbqCKggrXGpspjRvyRSv4e9tGZp7FYYuy3XKGJ/
-         ZvFnFQ3pzeIW0LTLzaJ2xnLmavMJzHx1mNIMBOd1Wt9F5RnCV3uauCJR6L8PZvAhNRyy
-         uM/rGTyGYjp83FgXsUCyy7er2gqWG8+bpUoJIIjPCs9GkWCxDfX6gR6kFTYCoCPOiJav
-         pevw==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1795630605; x=1796235405;
-        h=content-transfer-encoding:mime-version:message-id:date:subject:cc
-         :to:from:x-gm-gg:x-gm-message-state:from:to:cc:subject:date
-         :message-id:reply-to:content-type;
-        bh=xJl3VeU28yFIf7u8OboR3R/WMzTEeOW8WHDyp56+HdQ=;
-        b=0SIsFiOqfPZAr9Hk+3z1JgbLE7lboyyPRse3ZDZWidSoVgxlBgHBIcaMb9O4j65qSs
-         thcuR+qK0+RUT9WeXtmPqF/GPxhZHqa5QvSLnf6LuQ7xBisYAEXYfJrRR4HlXchvtVX3
-         Smq9wN/n4d9OoRjeZnvqTVJYAW6LOK6DeKK/KoJtn2jbY6eAq5CkwV95b4i/3m6eNwZM
-         lSqjV7wTDUxm2LJRMrWuVAS5ZCmYtslqiYde69H3oD3Su+dwlx4+X6yLYm7m/dEO7e4j
-         UpFid13I/tnJVwODtWmo2tNAKR3gbfNN9KIhSQXDIvuTz5F11sPPno8xCRh/h1HTFKXD
-         /EBQ==
-X-Gm-Message-State: APuU4Z/sdweECogUsfwb7DOZl9kRD8txxBHZhRqDExt4jZJN4Kc1eyAS
-	6q3/O4ZtEiJ/3N+Xix7bM9ECCPN5lk/FsseMolJ/FL6iwE1SFEmfCm/uRjWxHSAV
-X-Gm-Gg: AZFdTZdLAr2wB00qAbSwZTlhN9Yz692xMGFAVSFsCiz+VWxobF1a2eDBwkWr8I1Lf5C
-	Z7QM1V5uewG4fIY9halvcJXvVTZaxnTNvxIUeip+/i5zND3iTWzSAFmKolrh1rQHdFPWf3jjBUl
-	9BQ+nUq7hqwn7vAXvR7UeG8IrsPfCQ/n0Ln1fWTkCsDBLoZ1McLnyPTNelk96HBFfx31A8QDlug
-	ocCm+uFcNSlPHfRd7ZjuylpLJCJTBoyCjivGZzVK/I9ho/VF3XNk8UC3Ek5AImRBqH5bRoJ0vdU
-	reK80HMa/XPvyGyqw78X8w7iocU5HrVTHXUtapDfYLFoXFy+7kwVd4DbDtnKw0aNZxFN6E4K7r2
-	xGEciK689U1pOdUYoc09pMTsN961Vdi56QUzw1E9Xxkae735hwm0u7ge/Rtn/ymxyU2n4LdZ+PT
-	EauSjIa4pQpJh4/ZhTq6yWz0UcoPajW+AIND3TDgSnb4u0nXbbrJJQ8eMtbYdRHwia1xHPJVAD6
-	egAjD6+Y4PSngsuTmVkp5WBWlwi/U9rZVrcimhPjD5ZtYgOmZ4BLn7ZdyXQLoVucXFP6OXo5lkU
-	UTLhRYUw1kUJvLxCloNg9TvaKCGwN1HRnpP4u15jtf/ycscxtCSkMSQuereTGUDuxsRfRVLnGL+
-	et+pFB4vtyrqWCt99fLTejsCeAvqAk/sq4mYRTghicFmhsnseBw5PM9osld7P3UoGrXtQq96PpH
-	Y=
-X-Received: by 2002:a05:6a21:3b8d:b0:3f7:7e3c:af64 with SMTP id adf61e73a8af0-4014c350872mr21282532637.43.1795630604435;
-        Wed, 25 Nov 2026 10:16:44 -0800 (PST)
-Received: from fedora (n49-177-87-40.rdl1.qld.optusnet.com.au. [49.177.87.40])
-        by smtp.gmail.com with ESMTPSA id d2e1a72fcca58-8cbe173453dsm6163395b3a.25.2026.11.25.10.16.40
-        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Wed, 25 Nov 2026 10:16:43 -0800 (PST)
-From: Ronnie Sahlberg <ronniesahlberg@gmail.com>
-To: dm-devel@lists.linux.dev
-Cc: agk@redhat.com,
-	snitzer@kernel.org,
-	mpatocka@redhat.com,
-	bmarzins@redhat.com,
-	Ronnie Sahlberg <ronniesahlberg@gmail.com>,
-	stable@vger.kernel.org
-Subject: [PATCH] dm era: stop the worker before closing the metadata
-Date: Thu, 26 Nov 2026 04:16:27 +1000
-Message-ID: <20261125181627.625466-1-ronniesahlberg@gmail.com>
-X-Mailer: git-send-email 2.56.0
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=kNi/gIg9
+Received: by smtp.kernel.org (Postfix) with ESMTPSA id 21DB31F000C0;
+	Wed, 25 Nov 2026 18:22:50 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
+	s=k20260515; t=1795630971;
+	bh=wn7BSSA8/p+YXYHhitmjH8m+fQEFTnO81AlhTtuLU5Y=;
+	h=From:Subject:Reply-To:To:Cc:In-Reply-To:References:Date;
+	b=kNi/gIg9IdtW8Te0fr8ZxQI/q/CRQ5IoPixdgYLm9zyL9CRDd58oRoO19uHG2iVrZ
+	 Ic55oO80pUPZLa2VgxQjCpSBDe6dSwu3L0YN6z9tIxxwlQm1S9XjCfV03xXnq46oZa
+	 jtiebGDzj3WLaNs2QkZ2UCJGXnfSWSpmHX2d0B4IiPyTt5qfGX7ab+GKZ2czJvhV4y
+	 XwFtgGqyZ2b/vuHcsZE/qABbuz+S/1UU+g/gnjHdX9H3inGj5XA9EMsilYbdzJQIyv
+	 PTMvqWUM4pExss83vnU6S+KWl/tVcuXiKklU0WgJ0JS90viHzVQmcsK7xXkUsswQKQ
+	 cG9DuhJBrfsyw==
+Message-ID: <sashiko-outbox-233977@kernel.org>
+From: sashiko-bot@kernel.org
+Subject: Re: [PATCH v3 1/9] KEYS: Factor out opt-in KEYCTL_PKEY
+Reply-To: sashiko-reviews@lists.linux.dev
+To: "Jarkko Sakkinen" <jarkko@kernel.org>, keyrings@vger.kernel.org
+Cc: dm-devel@lists.linux.dev, linux-crypto@vger.kernel.org, linux-security-module@vger.kernel.org, "Ahmad
+ Fatoum" <a.fatoum@pengutronix.de>, "Alasdair Kergon" <agk@redhat.com>, "Andrew
+ Morton" <akpm@linux-foundation.org>, "Benjamin Marzinski" <bmarzins@redhat.com>, "David
+ Gstir" <david@sigma-star.at>, "David Howells" <dhowells@redhat.com>, "David
+ Laight" <david.laight.linux@gmail.com>, "David S. Miller" <davem@davemloft.net>, "David
+ Woodhouse" <dwmw2@infradead.org>, "Eric Biggers" <ebiggers@kernel.org>, "Herbert
+ Xu" <herbert@gondor.apana.org.au>, "Ignat Korchagin" <ignat@linux.win>, "James
+ Bottomley" <James.Bottomley@HansenPartnership.com>, "James Morris" <jmorris@namei.org>, "James
+ Prestwood" <prestwoj@gmail.com>, "Jason Gunthorpe" <jgg@ziepe.ca>, "Jonathan
+ Corbet" <corbet@lwn.net>, "Lukas Wunner" <lukas@wunner.de>, "Mike Snitzer" <snitzer@kernel.org>, "Mikulas
+ Patocka" <mpatocka@redhat.com>, "Mimi Zohar" <zohar@linux.ibm.com>, "Paul
+ Moore" <paul@paul-moore.com>, "Peter Huewe" <peterhuewe@gmx.de>, "Randy
+ Dunlap" <rdunlap@infradead.org>, "Serge E. Hallyn" <serge@hallyn.com>, "Shuah
+ Khan" <skhan@linuxfoundation.org>, "Sumit Garg" <sumit.garg@kernel.org>
+In-Reply-To: <20261125180616.1854753-2-jarkko@kernel.org>
+References: <20261125180616.1854753-1-jarkko@kernel.org>
+ <20261125180616.1854753-2-jarkko@kernel.org>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+Date: Wed, 25 Nov 2026 18:22:49 +0000
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Post: <mailto:dm-devel@lists.linux.dev>
@@ -97,69 +72,78 @@ List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 List-Owner: <mailto:dm-devel+owner@lists.linux.dev>
 Precedence: list
-MIME-Version: 1.0
-Content-Transfer-Encoding: 8bit
 
-era_destroy() closes the metadata and then destroys the workqueue.
-destroy_workqueue() drains the queue first, so a worker that is still
-queued or running at that point uses the metadata after it was freed.
+Thank you for your contribution! Sashiko AI review found 1 potential
+issue to consider:
+- [Medium] keys: TURRIS_SIGNING_KEY Kconfig options still depend on
+  ASYMMETRIC_KEY_TYPE
+--
 
-The worker is only stopped by postsuspend, and there are two ways to
-get to era_destroy() with it still started:
+commit f2c536390b5f9f7464b1b59aadb07824b873665b
+Author: Jarkko Sakkinen <jarkko@kernel.org>
 
- - It is started by preresume before the era rollover, and stays
-   started if the rollover fails.  The device is then still suspended,
-   so postsuspend is not called again before the table is destroyed.
+KEYS: Factor out opt-in KEYCTL_PKEY
 
- - It is started from the constructor on, since era->suspended is
-   initially zero.  A status request for an inactive table runs it, and
-   an inactive table is destroyed without ever being suspended:
+This commit separates CONFIG_KEYCTL_PKEY from CONFIG_ASYMMETRIC_KEY_TYPE
+as an off-by-default option controlling compilation of keyctl_pkey.o.
 
-     dmsetup load era --table "..."
-     dmsetup status --inactive era
-     dmsetup clear era
+> diff --git a/security/keys/Kconfig b/security/keys/Kconfig
+> index 3f64d60d0f8a6..75cc4043ca642 100644
+> --- a/security/keys/Kconfig
+> +++ b/security/keys/Kconfig
+> @@ -22,6 +22,15 @@ menuconfig KEYS
+> =20
+>  if KEYS
+> =20
+> +config KEYCTL_PKEY
+> +	bool "Public-key operations on retained keys"
+> +	help
+> +	  This option provides support for querying, encrypting, decrypting,
+> +	  signing, and verifying signatures via keyctl using public or
+> +	  asymmetric keys retained in the kernel.
+> +
+> +	  If you are unsure as to whether this is required, answer N.
+> +
+>  config KEYS_REQUEST_CACHE
+>  	bool "Enable temporary caching of the last request_key() result"
+>  	help
+> diff --git a/security/keys/Makefile b/security/keys/Makefile
+> index 5f40807f05b3d..aafd28f7ee2fe 100644
+> --- a/security/keys/Makefile
+> +++ b/security/keys/Makefile
+> @@ -22,7 +22,7 @@ obj-$(CONFIG_PROC_FS) +=3D proc.o
+>  obj-$(CONFIG_SYSCTL) +=3D sysctl.o
+>  obj-$(CONFIG_PERSISTENT_KEYRINGS) +=3D persistent.o
+>  obj-$(CONFIG_KEY_DH_OPERATIONS) +=3D dh.o
+> -obj-$(CONFIG_ASYMMETRIC_KEY_TYPE) +=3D keyctl_pkey.o
+> +obj-$(CONFIG_KEYCTL_PKEY) +=3D keyctl_pkey.o
 
-In both cases the worker can be busy digesting archived writesets,
-requeueing itself after every step, when the table is destroyed.
+[Severity: Medium]
+Should TURRIS_SIGNING_KEY, TURRIS_OMNIA_MCU_KEYCTL and
+TURRIS_MOX_RWTM_KEYCTL be updated to depend on KEYCTL_PKEY instead of
+ASYMMETRIC_KEY_TYPE?
 
-Stop the worker, which also stops it from requeueing itself, and destroy
-the workqueue before closing the metadata.
+turris_signing_key_type implements .asym_query and .asym_eds_op for
+keyctl_pkey.c without using crypto/asymmetric_keys:
 
-Fixes: eec40579d848 ("dm: add era target")
-Cc: stable@vger.kernel.org
-Signed-off-by: Ronnie Sahlberg <ronniesahlberg@gmail.com>
----
-An AI coding assistant (Claude) was used to review this patch and to
-help write the commit message.
+drivers/platform/cznic/Kconfig:
+config TURRIS_OMNIA_MCU_KEYCTL
+	bool "Turris Omnia MCU ECDSA message signing"
+	default y
+	depends on KEYS
+	depends on ASYMMETRIC_KEY_TYPE
+...
+config TURRIS_SIGNING_KEY
+	tristate
+	depends on KEYS
+	depends on ASYMMETRIC_KEY_TYPE
 
- drivers/md/dm-era-target.c | 9 ++++++---
- 1 file changed, 6 insertions(+), 3 deletions(-)
+With CONFIG_ASYMMETRIC_KEY_TYPE=3Dy and CONFIG_KEYCTL_PKEY=3Dn (the new
+default), those drivers still default to y and register hardware signing
+keys whose KEYCTL_PKEY_QUERY and KEYCTL_PKEY_SIGN calls now fail with
+-EOPNOTSUPP.  Conversely, CONFIG_KEYCTL_PKEY=3Dy with
+CONFIG_ASYMMETRIC_KEY_TYPE=3Dn cannot enable them at all.
 
-diff --git a/drivers/md/dm-era-target.c b/drivers/md/dm-era-target.c
-index ea499adca4ce..8b8b8b3dfa19 100644
---- a/drivers/md/dm-era-target.c
-+++ b/drivers/md/dm-era-target.c
-@@ -1438,12 +1438,15 @@ static void stop_worker(struct era *era)
-  */
- static void era_destroy(struct era *era)
- {
-+	/* The worker uses the metadata, and may still be digesting. */
-+	if (era->wq) {
-+		stop_worker(era);
-+		destroy_workqueue(era->wq);
-+	}
-+
- 	if (era->md)
- 		metadata_close(era->md);
- 
--	if (era->wq)
--		destroy_workqueue(era->wq);
--
- 	if (era->origin_dev)
- 		dm_put_device(era->ti, era->origin_dev);
- 
-
-base-commit: 8d7fe9885c62fc9a95bf55d9db244d9672a8aadc
--- 
-2.56.0
-
+--=20
+Sashiko AI review =C2=B7 https://sashiko.dev/#/patchset/20261125180616.1854=
+753-1-jarkko@kernel.org?part=3D1
