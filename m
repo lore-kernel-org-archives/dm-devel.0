@@ -1,85 +1,85 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.128.46
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=209.85.128.47
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1795597778;
-	b=xgwulRH59JEf5kc3LW4xJy2vhltW0qETglmwxx0l1845AJnJYrhBLNaRRCNBfmsKxTzK
-	 Awj3LAFiKch4MijXIPUF2t9SNB3aPRRVzI2yuMVtyYs1g5gtMHDz0lZENoRBU+WOHgofe
-	 EpNdz/KMx4tIAow4YpxXwIOKrXiA6VQd+IN01FxCcfGkgGQzS9e9Fwe6VciGzkLGh9G4E
-	 oJtkr6TVjYofo1nv5c1qxr8kuaR8ddata2rbVeGZODw8ewEN7JzZTXFXgNKOJ6x7beQuR
-	 +PTs7S61IjgLFEH9i/eJqAjD601Y5aOAVrQ9J0peAoGqOuMkSRBMSC32VU9CJHrj+cA==
+	t=1795598367;
+	b=ZV4PEc63QiCDQlEmxAj1XjCFI4HM/GK8nt8vv78GAPyqHI/4OVV50h+s3Vr2Aod5jA3s
+	 LukDaySiMuTw9ALClb3zziGPUBb4gGCqhGz82axfXzowkDZr044qM+ffC19aWI6lofnh7
+	 c7r1n6koacWvuk1qAo8hgkJYOVr6BXYBSuEE7EV25xp5CJeUil3vWKEZQp9+DKnM0JjRB
+	 1oFHj3SzAq52rbgzTFvsJShfw69fElHa1DrUqIbFY11jeNJYC6NlQG+RRf3aGepSii97r
+	 J6k9+QIZFM3NsqVLVRR90xhshoYeZoGq096NMjsKe7IgJKVbLioGcGUuBUH/qJJBO1A==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1795597778;
+	a=rsa-sha256; c=relaxed/relaxed; t=1795598367;
 	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
 	 X-Forwarded-Encrypted:X-Gm-Message-State:X-Gm-Gg:X-Received:Received:
 	 Date:From:To:Cc:Subject:Message-ID:In-Reply-To:References:X-Mailer:
 	 MIME-Version:Content-Type:Content-Transfer-Encoding;
-	bh=qm/FI2mE1ewe632JTFSK32XwvOS0GNyWzPRE758QoDs=;
-	b=MSx0L+h7YQ7J1c4Ur10umVoZ8IFuUSg/i4dmD7bwpiJYwh31Qyvtc2UJOsZ68VkazuSR
-	 TWIIUhoElZ3IQv0WNSiDtQKVBFdfC3V4cLV5hFTDacIXJteNOAk9HJIVQBw/hbKrqqlYE
-	 MYvMvYX6gSm/udLhB41li/ud6UvAK5URUXnGtTVleAjlwhmpBGjmRWEGa6/nZJujP6VP7
-	 jeIiSjUfYa2Goh0ez5aPCgVWvzGR87FbEl1IyE6gAhqcQB7qFXsnKkNmH6RYwrVmnxhQm
-	 mznrkeRUcskT1dcUUGFAVx2IL0wS2o37/A/2cN0xYlZVNRr03dJGerA77HOZIU4HSSg==
+	bh=HM/80FJuhfrnMxC/IfbUvOR9owLp0+IkW3x6Etq4fS4=;
+	b=pKYOaO1Dkp8TLJ7lV3x+EMF5cWUEYlasRiUS0cx3Xz0MCwU16JVIiXjEWS5HEYCoblmY
+	 nQoEYrL7u90dfWe9RReEMC7slLGLE17msBObJjgUgjfRvAZ9FzNZiIfxMVuS51y3Llb/T
+	 ZzAOybgPtDbZFaJ2m5WN5ImdklKGdwXzm/bvwrWlBojEM4HdNy/yNtL5TRE1uJKNNNdbB
+	 YE8BqyKoyTt2OJ4bDc8qemkNZC1CPtm2OCChaVKQ0XrFiqA+ZkK4XCw/xO+uGkEuXbU0J
+	 NvxerlJVx5dhpWd7+6Uh54M0PSINwS4IbVSx5wBLk/+mN+1waSbNcToBcwlMwbPrEdQ==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
 	dmarc=pass header.from=gmail.com;
 	spf=pass smtp.mailfrom=gmail.com;
-	dkim=pass header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=Mi1d0ALa;
-	arc=none smtp.remote-ip=209.85.128.46
-Received: from mail-wm1-f46.google.com (mail-wm1-f46.google.com [209.85.128.46])
+	dkim=pass header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=mmfIoIRQ;
+	arc=none smtp.remote-ip=209.85.128.47
+Received: from mail-wm1-f47.google.com (mail-wm1-f47.google.com [209.85.128.47])
 	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 23109606A32A
-	for <dm-devel@lists.linux.dev>; Wed, 25 Nov 2026 09:09:38 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 23109606A32A
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 1431D606A695
+	for <dm-devel@lists.linux.dev>; Wed, 25 Nov 2026 09:19:24 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 1431D606A695
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=Mi1d0ALa
-Received: by mail-wm1-f46.google.com with SMTP id 5b1f17b1804b1-4a3517554f7so50252915e9.2
-        for <dm-devel@lists.linux.dev>; Wed, 25 Nov 2026 01:09:37 -0800 (PST)
+	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=mmfIoIRQ
+Received: by mail-wm1-f47.google.com with SMTP id 5b1f17b1804b1-4bb6886d30aso52418665e9.3
+        for <dm-devel@lists.linux.dev>; Wed, 25 Nov 2026 01:19:24 -0800 (PST)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20260707; t=1795597776; x=1796202576; darn=lists.linux.dev;
+        d=gmail.com; s=20260707; t=1795598363; x=1796203163; darn=lists.linux.dev;
         h=content-transfer-encoding:content-type:mime-version:references
          :in-reply-to:message-id:subject:cc:to:from:date:from:to:cc:subject
          :date:message-id:reply-to:content-type;
-        bh=qm/FI2mE1ewe632JTFSK32XwvOS0GNyWzPRE758QoDs=;
-        b=Mi1d0ALa9LRcFZGq/KCvGwQ/Krt690DUOEeGnYKbSFNQfAKCnu8wQOk6DuFCG4jMgs
-         QV4fjyb5PbPlP1FM2WzRneKYL/iphAFkVekWMLIEFV/JaXG1vL6aO4WdwaYyGAbJqUKK
-         i7D7BnwIkStZ1SUwujdNqpVvaZGRtkoNOwcVkPqE2B5PWKyPCDXcgOyLix12tlzlfyLb
-         ODOP0AmMLg/cbyhqJPyckXg+dlzYkMGpW5AxCfCWHntgRrMM2K2AVDwaMcHeAQAJv4Jn
-         NyAbDewJzFmbZOu8HYg2DqLSILp4LeKJlCGAPvEj0qcFhroAnNGLGwITo6ar+NTzoUqn
-         SV4g==
+        bh=HM/80FJuhfrnMxC/IfbUvOR9owLp0+IkW3x6Etq4fS4=;
+        b=mmfIoIRQKjlw3uPfcQYAAibRLtMM6umHnKY58AvEUTClUI8spjyTJ2h1JQfIaLVsG7
+         d3p/LY1C9e9H0QmyU0+NKpUzb0E+tZ7tw9z1wTIYKetEGLR/08U/9JqDOEFQi+kuWQFA
+         rkIQddQioJDHhj3AbbTfQoDv/7kLyNQpLUJJoBzX3hGdMYBWjsTkjE8Y/L4QFuR/XSYT
+         LOWwInu5WNLZPZE9l8JXtgFIuIWrEWrWZHfqq1QznHCg+Qh1whRywgxYNgR+e+uRnPjW
+         nEKxQ3kchpnpPBrlXXJDN1uV3j+fNcqdYYeIEfjWJWV7e+KN3k587OK9u0v+ZkPzWnZJ
+         Pc1g==
 X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1795597776; x=1796202576;
+        d=1e100.net; s=20260707; t=1795598363; x=1796203163;
         h=content-transfer-encoding:content-type:mime-version:references
          :in-reply-to:message-id:subject:cc:to:from:date:x-gm-gg
          :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
          :content-type;
-        bh=qm/FI2mE1ewe632JTFSK32XwvOS0GNyWzPRE758QoDs=;
-        b=JqR6baPe7VTsqmI6wnvFxUs+xzpJgF++Pjtu1KyAzDXN1FtrRSynW1KCzyxEzPTPnE
-         vO74V6iWHHJ/NThP+UpXx+GbRfFqSywbVFZqQKo9g7sxfpeUTsngX1FvYUjYWmCdmajB
-         wkJezqVQMrrsp76U2ANmSCZV0aMvCKNgBpHhtat6fM/EQv6WFdJccbvYU3FkbgLxgdx8
-         EPlISza9JcsC6oDWIcZkxacjwtTMiuDRqW2+AL6u4SKjWeBx0XKj25Xzy6PU8u5PZCiF
-         H4a8tQkU8KNag+wsfcOCj15b9GB58uNAYkkKepTyH3BXePWwq6DzML4bma66qOXwhUYJ
-         IPIQ==
-X-Forwarded-Encrypted: i=1; AL+hErHpI9Kg/vm9WqHUrSjgjUfGdSIGnwTESOTCShMFj38yiuRYQU58Gz6VubNFCDC/Ek7+rLGXBcty1g==@lists.linux.dev
-X-Gm-Message-State: APuU4Z/+0kqixLJ43AexEhkuCLZvOsYXlbVq1iau4+wPY/x5PS7/QXPm
-	LFwG6u6AqSda7WAY1MXfiFrFaUwizdtWXgWPcv8MjVLs0xew/B3kYhUp
-X-Gm-Gg: AZFdTZcB92+NUmNBzX8pKs32HO6VkuzDD/HonqrUN6bInai0kwu00sa0JTQoaCHsvcv
-	kkzRfCVQeeZRTkHdz1rGkP8D3/Hu1O+OhmFw4ZM2LiteIcMXk3Ex1HjlB5KOk5pBKcl5OIX3NEY
-	MBlc8XtjorJh4PjEIbkuefrD3Xpw0CGR++OHXoh2+MnEEZeyxluMrkBgPyOwFTVktEYB1U3Bxs6
-	ZcLDxEZv0HVJqbs6UiTeZcsqQR0EyppvDi+DyWoz7qemms2DiuP0xtmWkrp7q9PJs25GKgTSmAc
-	3Rcv9x/T9iJUOu23gh1kcIxwuqbSlrNCS4vKB7vH5t6YlKyL3Ctq8tRoJPji1yaQtylDL0Cecaq
-	pXmkMQxLlhmb1+6iBbN5OA0bOUt+OeX6yGpzd/Gy6KWzF11OH9UlRALgiI10tZk4Yxf78UOrIvS
-	ir1LXLB/yfaSc0UMYiy1T87rbXwG/oA58+ZLjT6LSG07bQW6vCIFHJEah41PLw8TYH6IgUS5JUO
-	RgwPgxcs81zd1lDL74pL5iebDdctoZVnxTRvWw7IWyrXPVGB8/oLpEQlMoe5R/kXUl9PTbIP8hY
-	EVCEM9Is3kJB7PF9g3c+WpOg3pMaTgANb9qioZUkADbWdGBacE9pqYr92hqdn+hmDw==
-X-Received: by 2002:a05:600c:3509:b0:4bb:76f6:d23a with SMTP id 5b1f17b1804b1-4bb88814d16mr374824975e9.21.1795597776397;
-        Wed, 25 Nov 2026 01:09:36 -0800 (PST)
+        bh=HM/80FJuhfrnMxC/IfbUvOR9owLp0+IkW3x6Etq4fS4=;
+        b=GMEkpSs2p9UwlTDFZaO+eF1mh+B5gKw6lOnAXBLWDD7oh4omeJ5eJq9sdbrbG2+rQJ
+         t9go7SxV2vHcS5GnQ27u/oanBM07EFAr7QsYQ2R0lby/cuCoCOCzYFo9a0ct+vR1kea1
+         bGFSsZpmUaZRD0/+VkIBuGfQxdvafVO85FZin0KS4UtHKZehYmmQYEg2E0jV7qDJfWU3
+         WhrErhiIE2aQuOm7hwxSVbCsWfbBl6v9HpL+QaHvzEkzwx+9TUu1g0FWxyOUCeptbesO
+         2ccfEaXbfaQvZS7v2aNyb4pS8eVhXLojnY0q4IgHwcOhToJCTZBNZVdYbZBg824FVxQy
+         xkCA==
+X-Forwarded-Encrypted: i=1; AL+hErFoG4aX95zw5nf45B52zU5qpq9nAe5ut036BsjdzdZVgB6muiuT1FG1b+i22Wkyhxg6hVN3OoWfew==@lists.linux.dev
+X-Gm-Message-State: APuU4Z/K+6HQGGLyLRl6m04JC1rlR9vkm3cCDYNkmo4co+uBgK23MQpW
+	bB915gItwHcdHIoBUd1F+BY7+dyyrxsikXLYQwEdNcQu0uIyiE99SABZ
+X-Gm-Gg: AZFdTZek1qoUdoS8YMm9uMVDA/Vla44D8fXyF87lW3yMSdVF8MB+Dcp4O+haT92Oeup
+	xXhK77onHwapPQhfSKNh/F31wkZza1zrH9CBO3Z2zjObif08CNvEvKEglgvDlOSxhZuCFcUOian
+	l4xqZPmJmPcCdNMJ59gUIOo9Fv/tVAiqPyPkliq39Qvb2+991fk3EX7GHpiz9U3k8BgEozXJ/NT
+	eNDB3fhSTuWmA0YyTdp5eIUjB/IoCCb/rVjPRXtpAoBvpOBiFgO303NqRf6wTTyIC+VzVs3m32E
+	I3uOgZUPd3O/fkVnrkOW0q9DXOmU4DJFQSQ4B4Flb25dF5bnywm3PQTeNArXeq7cBVb2yKX9k2H
+	3BkRDa4RJF5aXxdtXjeVJR8rO4sPSMQjZkyarx2PdGrMV6Oy9ibsawrwyC48oNdJGExzLDLKdGi
+	DKvOAG6PIt7u1OdTdvFWsLiRz2+JSlkacK8K01KlLJt9fuBKZaTQz1zoZSmPDTEaN1ixjUnHd5i
+	P2zh5wWl33aOw2N8a6N8OQEx9RgSxeGugX3V9pDFJUN8PbhlgPMm9oawKy+K0KbaV2+SMGH/1lo
+	D1nhTL+5D43wz14yFrPNQAAhI40Jf0CbPbTxVT+xp7eVnTD/F+OTMV3PYkyJnK5xTA==
+X-Received: by 2002:a05:600d:8449:b0:4bb:8e95:8ce1 with SMTP id 5b1f17b1804b1-4bb8e958ce4mr235915585e9.23.1795598363338;
+        Wed, 25 Nov 2026 01:19:23 -0800 (PST)
 Received: from pumpkin (82-69-66-36.dsl.in-addr.zen.co.uk. [82.69.66.36])
-        by smtp.gmail.com with ESMTPSA id 5b1f17b1804b1-4bb853b216esm558503985e9.12.2026.11.25.01.09.35
+        by smtp.gmail.com with ESMTPSA id 5b1f17b1804b1-4bb884b39b6sm461330575e9.12.2026.11.25.01.19.22
         (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
-        Wed, 25 Nov 2026 01:09:36 -0800 (PST)
-Date: Wed, 25 Nov 2026 09:09:30 +0000
+        Wed, 25 Nov 2026 01:19:23 -0800 (PST)
+Date: Wed, 25 Nov 2026 09:19:21 +0000
 From: David Laight <david.laight.linux@gmail.com>
 To: Jarkko Sakkinen <jarkko@kernel.org>
 Cc: keyrings@vger.kernel.org, dm-devel@lists.linux.dev,
@@ -100,12 +100,12 @@ Cc: keyrings@vger.kernel.org, dm-devel@lists.linux.dev,
  <peterhuewe@gmx.de>, Randy Dunlap <rdunlap@infradead.org>, "Serge E.
  Hallyn" <serge@hallyn.com>, Shuah Khan <skhan@linuxfoundation.org>, Sumit
  Garg <sumit.garg@kernel.org>
-Subject: Re: [PATCH v2 1/9] KEYS: trusted: Allow ASN.1 TPM2 sealed data
- shorter than MIN_KEY_SIZE
-Message-ID: <20261125090930.698d8f1b@pumpkin>
-In-Reply-To: <20261124194043.1651679-2-jarkko@kernel.org>
+Subject: Re: [PATCH v2 2/9] lib/asn1_encoder: Add
+ asn1_encode_integer_bytes()
+Message-ID: <20261125091921.4bf40279@pumpkin>
+In-Reply-To: <20261124194043.1651679-3-jarkko@kernel.org>
 References: <20261124194043.1651679-1-jarkko@kernel.org>
-	<20261124194043.1651679-2-jarkko@kernel.org>
+	<20261124194043.1651679-3-jarkko@kernel.org>
 X-Mailer: Claws Mail 4.1.1 (GTK 3.24.38; arm-unknown-linux-gnueabihf)
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
@@ -119,47 +119,111 @@ MIME-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
 
-On Tue, 24 Nov 2026 21:40:35 +0200
+On Tue, 24 Nov 2026 21:40:36 +0200
 Jarkko Sakkinen <jarkko@kernel.org> wrote:
 
-> tpm2_unseal_cmd() rejects unsealed payloads shorter than MIN_KEY_SIZE (32
-> bytes) with -EFAULT even when loading an ASN.1 TPMKey (OID_TPMSealedData,
-> 2.23.133.10.1.5) blob.
-> 
-> While kernel-generated trusted keys ("new <keylen>") and legacy old_format
-> blobs are at least 32 bytes long, external TPM2 tools allow sealing any
-> non-empty payload up to 128 bytes.
-> 
-> Keep MIN_KEY_SIZE for legacy old_format blobs and accept 1..MAX_KEY_SIZE
-> bytes for ASN.1 TPMKey sealed blobs.
-> 
-> Signed-off-by: Jarkko Sakkinen <jarkko@kernel.org>
-> ---
->  security/keys/trusted-keys/trusted_tpm2.c | 4 +++-
->  1 file changed, 3 insertions(+), 1 deletion(-)
-> 
-> diff --git a/security/keys/trusted-keys/trusted_tpm2.c b/security/keys/trusted-keys/trusted_tpm2.c
-> index 30188a0ec676..d7336f25b514 100644
-> --- a/security/keys/trusted-keys/trusted_tpm2.c
-> +++ b/security/keys/trusted-keys/trusted_tpm2.c
-> @@ -559,9 +559,11 @@ static int tpm2_unseal_cmd(struct tpm_chip *chip,
->  	rc = tpm_buf_check_hmac_response(chip, buf, rc);
->  
->  	if (!rc) {
-> +		u16 min_len = payload->old_format ? MIN_KEY_SIZE : 1;
+> Add a helper encoding a positive integer from a byte array in big-endian
+> format.
 
-There is no point using u16, just use unsigned int.
-
-The same goes for data_len.
+Interesting...
+You allow for integer values longer than 127 bytes but don't allow for the
+much more common likelyhood of the encoding being 'implicit'.
 
 David
 
-> +
->  		data_len = be16_to_cpup(
->  			(__be16 *)&buf->data[TPM_HEADER_SIZE + 4]);
-> -		if (data_len < MIN_KEY_SIZE ||  data_len > MAX_KEY_SIZE)
-> +		if (data_len < min_len || data_len > MAX_KEY_SIZE)
->  			return -EFAULT;
+> 
+> Signed-off-by: Jarkko Sakkinen <jarkko@kernel.org>
+> ---
+>  include/linux/asn1_encoder.h |  3 ++
+>  lib/asn1_encoder.c           | 56 ++++++++++++++++++++++++++++++++++++
+>  2 files changed, 59 insertions(+)
+> 
+> diff --git a/include/linux/asn1_encoder.h b/include/linux/asn1_encoder.h
+> index d17484dffb74..e206bd425854 100644
+> --- a/include/linux/asn1_encoder.h
+> +++ b/include/linux/asn1_encoder.h
+> @@ -12,6 +12,9 @@ unsigned char *
+>  asn1_encode_integer(unsigned char *data, const unsigned char *end_data,
+>  		    s64 integer);
+>  unsigned char *
+> +asn1_encode_integer_bytes(unsigned char *data, const unsigned char *end_data,
+> +			  const unsigned char *integer, u32 integer_len);
+> +unsigned char *
+>  asn1_encode_oid(unsigned char *data, const unsigned char *end_data,
+>  		u32 oid[], int oid_len);
+>  unsigned char *
+> diff --git a/lib/asn1_encoder.c b/lib/asn1_encoder.c
+> index 92f35aae13b1..8fea70dc0846 100644
+> --- a/lib/asn1_encoder.c
+> +++ b/lib/asn1_encoder.c
+> @@ -10,6 +10,8 @@
+>  #include <linux/string.h>
+>  #include <linux/module.h>
 >  
->  		if (tpm_buf_length(buf) < TPM_HEADER_SIZE + 6 + data_len)
+> +static int asn1_encode_length(unsigned char **data, int *data_len, int len);
+> +
+>  /**
+>   * asn1_encode_integer() - encode positive integer to ASN.1
+>   * @data:	pointer to the pointer to the data
+> @@ -85,6 +87,60 @@ asn1_encode_integer(unsigned char *data, const unsigned char *end_data,
+>  }
+>  EXPORT_SYMBOL_GPL(asn1_encode_integer);
+>  
+> +/**
+> + * asn1_encode_integer_bytes() - encode positive integer bytes to ASN.1
+> + * @data:		pointer to the pointer to the data
+> + * @end_data:		end of data pointer, points one beyond last usable byte in @data
+> + * @bytes:		integer bytes
+> + * @bytes_len:		amount of bytes
+> + *
+> + * Encode a positive integer from a byte array in big-endian format. Strip
+> + * leading zeros.
+> + */
+> +unsigned char *
+> +asn1_encode_integer_bytes(unsigned char *data, const unsigned char *end_data,
+> +			  const unsigned char *bytes, u32 bytes_len)
+> +{
+> +	int data_len = end_data - data;
+> +	bool add_pad;
+> +	int ret;
+> +
+> +	if (IS_ERR(data))
+> +		return data;
+> +
+> +	if (!bytes || !bytes_len)
+> +		return ERR_PTR(-EINVAL);
+> +
+> +	/* Strip leading zeros: */
+> +	while (bytes_len > 1 && bytes[0] == 0) {
+> +		bytes++;
+> +		bytes_len--;
+> +	}
+> +
+> +	add_pad = bytes[0] & 0x80;
+> +
+> +	if (data_len < 2)
+> +		return ERR_PTR(-EINVAL);
+> +
+> +	*(data++) = _tag(UNIV, PRIM, INT);
+> +	data_len--;
+> +
+> +	ret = asn1_encode_length(&data, &data_len, bytes_len + add_pad);
+> +	if (ret)
+> +		return ERR_PTR(ret);
+> +
+> +	if (data_len < bytes_len + add_pad)
+> +		return ERR_PTR(-EINVAL);
+> +
+> +	if (add_pad)
+> +		*(data++) = 0;
+> +
+> +	memcpy(data, bytes, bytes_len);
+> +	data += bytes_len;
+> +	return data;
+> +}
+> +EXPORT_SYMBOL_GPL(asn1_encode_integer_bytes);
+> +
+>  /* calculate the base 128 digit values setting the top bit of the first octet */
+>  static int asn1_encode_oid_digit(unsigned char **_data, int *data_len, u32 oid)
+>  {
 
