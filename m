@@ -1,93 +1,84 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=195.135.223.130
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=100.103.45.18
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1795627386;
-	b=wnTZmB7lh65mtSkhL68LMYN1LeIHyWIlJKgEnfSaoq4ZrDTKd8ntMP/g1lTcYEdfImXe
-	 0gYuGbnGhu3grh4RnaH7YV9Zs6VvO452Zh2V3xlFb84Qoij5mzEGkZI/8yKjdF6Cdn3Av
-	 ddjKKkOugu3NizSFaioiC0CGAwBAVgsSCe2GDRtDfNgRSWVBAEcj+s8M/BedWyD2soNOV
-	 5FGbOECln5rthS3KlZqMw1tHiMjwCjMACX9vrA2cLKqdK8GdNtRHBpe7Jr5USPsS1caCt
-	 5Qd6cRna/WnCTunS2figEHFukGVwEpVTUJup8wbIonNBCQkOSC8KPsqDL4kabo9ZlxQ==
+	t=1795629989;
+	b=sY81MHrdJ2UvspfO7Ov87nXCyqij0Y8KPpuF8neTi4gHZlyFuW1TpWbtuzsJzrAChCgy
+	 Y8ynoztbpkTcM8gkxHG3iV/tWjGOzB0YGiwz9/E/+sqH5kP4XQo+oDPvRs4pJkrNLbk+U
+	 YEXA9pxFgas/JH/LTaQr+i8FSjuRdt61BKQ5tceOEUMDmtcQF9cm8i7dqn+KA3H8PtiwR
+	 j7mWHLXU7PL8I53R13kHqRrL0SondzAI57LH3x0xd3/luuSZA1+LT5qvEhN7nT4aG0epp
+	 bzvOXjn6CBt20hM4YaYhztShyNYb3hmZPemBWHU3fs6M2mjW6Kw5lyry+fXnCqs+yGg==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1795627386;
-	h=DMARC-Filter:Received:DKIM-Signature:DKIM-Signature:Received:
-	 Received:Message-ID:Subject:From:To:Cc:Date:In-Reply-To:References:
-	 Content-Type:Content-Transfer-Encoding:User-Agent:MIME-Version:
-	 X-Spam-Flag:X-Spam-Level:X-Spamd-Result:X-Spam-Score;
-	bh=989ddLjt6c/rLezq/3/JHFBbDjpPc3LzU/2sMTxtg6U=;
-	b=CIP4PtnT2iYjsIyf4dwq4HATfokawC5iybuF/IuugKBg/dYe6JeivAlhfBbshsY96brs
-	 AKT5IKn5eTWCaHq58YQ18IwbU5TP7tqU0xWh8AuNn/Z2RHyTzM8ntQ3YWKJlTEn7sxs6H
-	 UO5t4ji4Sgv6I9GVDXHmQI6Xo91J1vQQB74opr0y4XNcT/HjIOvaXyaOw/u0KR/H3rM+N
-	 oELZ1WJi+XO1OjaJTUDQQkLGSBJsE7NtJj6kS6U8XeovmeniQoWJk8F0hY2iQYGCBSiFJ
-	 Qt/dU2xOJMYKl65lGfC9ZZM1gRkyS32IHg9GaiBlo2hGI08MGF+uF5aWZ6V93sjQxkQ==
+	a=rsa-sha256; c=relaxed/relaxed; t=1795629989;
+	h=Received:DKIM-Signature:From:To:Cc:Subject:Date:Message-ID:X-Mailer:
+	 MIME-Version:Content-Transfer-Encoding;
+	bh=vwVW9YYt52UiA2UrUYRcnOGpfUWCz+wNtn31rCLdqFI=;
+	b=D5okhRcwNq3o7dTpVPl4NvFxYYajxXHcg2whabO01poH/piQo+FPs1QokaNGTTJFELQE
+	 G46qgurx3AFn14E+3Y9Toc3yWt8ruafb8J1v20yugvBuWEvnPgCkmWPo00vXXYJejly6A
+	 nJWCWtI4m+L33Fzi19m/XtB6fBQcFaD2tSFVQIBnggFc77u0pT6/KAqxT+hGv082h5xoT
+	 nsZycQUrwn+G0s+Omc7Px8b0f6eSBzrDJkFXvWzavKMaCebyIsB3+VBtUVP3H0hkcH7qG
+	 bq2PHsTBwQw89/4SF7lwZSTXlGYdj4g4/SfFdd6/1My1Bq5reHJ9Sno7cj9qm8SX7Qg==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dmarc=pass header.from=suse.com;
-	spf=pass smtp.mailfrom=suse.com;
-	dkim=pass header.d=suse.com header.i=@suse.com header.a=rsa-sha256 header.s=susede1 header.b=b7OSIYeO;
-	dkim=pass header.d=suse.com header.i=@suse.com header.a=rsa-sha256 header.s=susede1 header.b=Ekj6Nmwi;
-	arc=none smtp.remote-ip=195.135.223.130
-Received: from smtp-out1.suse.de (smtp-out1.suse.de [195.135.223.130])
+	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=dvLsqJg7;
+	arc=none smtp.remote-ip=100.103.45.18
+Received: from smtp.kernel.org (quasi.space.kernel.org [100.103.45.18])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
+	 key-exchange X25519 server-signature ECDSA (prime256v1))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 05406606A327
-	for <dm-devel@lists.linux.dev>; Wed, 25 Nov 2026 17:23:05 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 05406606A327
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=suse.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=suse.com
+	by smtp.subspace.kernel.org (Postfix) with UTF8SMTPS id 9AED5606A32C;
+	Wed, 25 Nov 2026 18:06:29 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.a=rsa-sha256 header.s=susede1 header.b=b7OSIYeO;
-	dkim=pass (1024-bit key) header.d=suse.com header.i=@suse.com header.a=rsa-sha256 header.s=susede1 header.b=Ekj6Nmwi
-Received: from imap1.dmz-prg2.suse.org (unknown [10.150.64.97])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
-	(No client certificate requested)
-	by smtp-out1.suse.de (Postfix) with ESMTPS id 6D4B622451;
-	Wed, 25 Nov 2026 17:23:03 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
-	t=1795627384; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=989ddLjt6c/rLezq/3/JHFBbDjpPc3LzU/2sMTxtg6U=;
-	b=b7OSIYeOih6tEcg7teL4ab0/qfRapKiNWFsAwUqcBlQe6WMjSPQ4oslfxFy4LEISJWwe79
-	OeKvQ1HgAjJtuezKVkQDODS4cXKihXMcPjRVumKdOM6fsS3M5kl0pPllXwSRBmb8Gy6fsK
-	yyfIzK3Mz1+mVVRspAm1i13M0HGjY+0=
-Authentication-Results: smtp-out1.suse.de;
-	none
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=suse.com; s=susede1;
-	t=1795627383; h=from:from:reply-to:date:date:message-id:message-id:to:to:cc:cc:
-	 mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=989ddLjt6c/rLezq/3/JHFBbDjpPc3LzU/2sMTxtg6U=;
-	b=Ekj6NmwiUcEz54sfLyAPYEay4QBhJd60I7jfgjArwvvxyRGHc7jsr29BLlLHiW6ruafrXb
-	ILIAN59Z1SxC2sGebW53RN/DNUnFC5ddp3+gWBPWKcS3xox4BaEs1CDsNU6565fJ8vMv4S
-	Gl74ok01+Ui23EwC7U4cPEH/SQnXC3A=
-Received: from imap1.dmz-prg2.suse.org (localhost [127.0.0.1])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (4096 bits) server-digest SHA256)
-	(No client certificate requested)
-	by imap1.dmz-prg2.suse.org (Postfix) with ESMTPS id 08E1E134E8;
-	Wed, 25 Nov 2026 17:23:03 +0000 (UTC)
-Received: from dovecot-director2.suse.de ([2a07:de40:b281:106:10:150:64:167])
-	by imap1.dmz-prg2.suse.org with ESMTPSA
-	id smavNnYZB2vaHAAAD6G6ig
-	(envelope-from <mwilck@suse.com>); Wed, 25 Nov 2026 17:23:03 +0000
-Message-ID: <8b4ea279ac2533e66eccd31e49af8bdb9a79ccb9.camel@suse.com>
-Subject: Re: [PATCH 5/7] multipath-tools: multipathc: print version string
- on startup
-From: Martin Wilck <mwilck@suse.com>
-To: Xose Vazquez Perez <xose.vazquez@gmail.com>
-Cc: Benjamin Marzinski <bmarzins@redhat.com>, Christophe Varoqui
-	 <christophe.varoqui@opensvc.com>, DM_DEVEL-ML <dm-devel@lists.linux.dev>
-Date: Wed, 25 Nov 2026 18:23:01 +0100
-In-Reply-To: <206823f9-af78-4838-bd42-dd5e7b2c8093@gmail.com>
-References: <20261125102605.82009-1-xose.vazquez@gmail.com>
-	 <20261125102605.82009-6-xose.vazquez@gmail.com>
-	 <e187be141dc1e65cb643fc5ba77c4a1cff536f99.camel@suse.com>
-	 <206823f9-af78-4838-bd42-dd5e7b2c8093@gmail.com>
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
-User-Agent: Evolution 3.62.1 
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=dvLsqJg7
+Received: by smtp.kernel.org (Postfix) with UTF8SMTPSA id 7DF011F000D8;
+	Wed, 25 Nov 2026 18:06:28 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
+	s=k20260515; t=1795629989;
+	bh=vwVW9YYt52UiA2UrUYRcnOGpfUWCz+wNtn31rCLdqFI=;
+	h=From:To:Cc:Subject:Date;
+	b=dvLsqJg73toqPo0JCwKO5eJMco5MqUX3xpeeKN1JNRHYm5qAoXjaNrEkqBYKxxpoW
+	 TwN9wfxMVbTQWwgny92HNmGs1UN3epIx8rSqPfxUOTutiuywAix/arXzHfTHbWIb0+
+	 MEBPc1JwFvirC0CwP9OpY59WXyOf/6KjBOgm+vB05WD2Wm60nfvp240y8EJzI/o2kP
+	 +6UONVFj8voG9q/lOVvpNVh2oUNALlb+Zls3I/eZhgSP8as407R/Wgk3BOpK3gqVPB
+	 4TLPncSNJFagiTT0LLYSashWMdkV4DjBOcWJ10PT6CWs3U7eXnySX1b+AFIMguI9rS
+	 hwduqdbq/R+Rg==
+From: Jarkko Sakkinen <jarkko@kernel.org>
+To: keyrings@vger.kernel.org
+Cc: Jarkko Sakkinen <jarkko@kernel.org>,
+	dm-devel@lists.linux.dev,
+	linux-crypto@vger.kernel.org,
+	linux-doc@vger.kernel.org,
+	linux-integrity@vger.kernel.org,
+	linux-kernel@vger.kernel.org,
+	linux-security-module@vger.kernel.org,
+	Ahmad Fatoum <a.fatoum@pengutronix.de>,
+	Alasdair Kergon <agk@redhat.com>,
+	Andrew Morton <akpm@linux-foundation.org>,
+	Benjamin Marzinski <bmarzins@redhat.com>,
+	David Gstir <david@sigma-star.at>,
+	David Howells <dhowells@redhat.com>,
+	David Laight <david.laight.linux@gmail.com>,
+	"David S. Miller" <davem@davemloft.net>,
+	David Woodhouse <dwmw2@infradead.org>,
+	Eric Biggers <ebiggers@kernel.org>,
+	Herbert Xu <herbert@gondor.apana.org.au>,
+	Ignat Korchagin <ignat@linux.win>,
+	James Bottomley <James.Bottomley@HansenPartnership.com>,
+	James Morris <jmorris@namei.org>,
+	James Prestwood <prestwoj@gmail.com>,
+	Jason Gunthorpe <jgg@ziepe.ca>,
+	Jonathan Corbet <corbet@lwn.net>,
+	Lukas Wunner <lukas@wunner.de>,
+	Mike Snitzer <snitzer@kernel.org>,
+	Mikulas Patocka <mpatocka@redhat.com>,
+	Mimi Zohar <zohar@linux.ibm.com>,
+	Paul Moore <paul@paul-moore.com>,
+	Peter Huewe <peterhuewe@gmx.de>,
+	Randy Dunlap <rdunlap@infradead.org>,
+	"Serge E. Hallyn" <serge@hallyn.com>,
+	Shuah Khan <skhan@linuxfoundation.org>,
+	Sumit Garg <sumit.garg@kernel.org>
+Subject: [PATCH v3 0/9] KEYS: trusted: asymmetric keys
+Date: Wed, 25 Nov 2026 20:06:06 +0200
+Message-ID: <20261125180616.1854753-1-jarkko@kernel.org>
+X-Mailer: git-send-email 2.47.3
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Post: <mailto:dm-devel@lists.linux.dev>
@@ -97,62 +88,129 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 List-Owner: <mailto:dm-devel+owner@lists.linux.dev>
 Precedence: list
 MIME-Version: 1.0
-X-Spam-Flag: NO
-X-Spam-Level: 
-X-Spamd-Result: default: False [-11.80 / 50.00];
-	SUSE_INTERNAL_BYPASS(-9.00)[];
-	BAYES_HAM(-3.00)[100.00%];
-	SUSPICIOUS_RECIPS(1.50)[];
-	NEURAL_HAM_LONG(-1.00)[-1.000];
-	NEURAL_HAM_SHORT(-0.20)[-1.000];
-	MIME_GOOD(-0.10)[text/plain];
-	TAGGED_RCPT(0.00)[];
-	RCVD_VIA_SMTP_AUTH(0.00)[];
-	ARC_NA(0.00)[];
-	MIME_TRACE(0.00)[0:+];
-	FREEMAIL_TO(0.00)[gmail.com];
-	URIBL_BLOCKED(0.00)[suse.com:email,imap1.dmz-prg2.suse.org:helo];
-	MID_RHS_MATCH_FROM(0.00)[];
-	FREEMAIL_ENVRCPT(0.00)[gmail.com];
-	DKIM_SIGNED(0.00)[suse.com:s=susede1];
-	FROM_EQ_ENVFROM(0.00)[];
-	FROM_HAS_DN(0.00)[];
-	RCPT_COUNT_THREE(0.00)[4];
-	RCVD_TLS_ALL(0.00)[];
-	RCVD_COUNT_TWO(0.00)[2];
-	TO_MATCH_ENVRCPT_ALL(0.00)[];
-	TO_DN_ALL(0.00)[];
-	DBL_BLOCKED_OPENRESOLVER(0.00)[suse.com:email,imap1.dmz-prg2.suse.org:helo]
-X-Spam-Score: -11.80
+Content-Transfer-Encoding: 8bit
 
-On Wed, 2026-11-25 at 13:58 +0100, Xose Vazquez Perez wrote:
-> On 11/25/26 12:42 PM, Martin Wilck wrote:
->=20
-> > What for? I'd prefer multipathd not to be chatty, and I fail to see
-> > the
-> > benefit of this unsolicited output.
-> >=20
-> > It would be nice to have a "show version" command that would print
-> > not
-> > only the multipath-tools version but also the versions of relevant
-> > other componenents (libdm, kernel dm, kernel mpath). But that's a
-> > different thing.
-> Since the "help" command isn't implemented either, even though it's
-> documented in the multipathc man page, this is a quick way to show
-> which version is running.
+OVERVIEW
+========
 
-I don't want this startup message, sorry. multipathc may be used in
-scripts which I don't want to confuse with stderr output which will
-be pointless in 90% of cases.
+Extend TPM 2.0 trusted keys to load ASN.1 TPMKey [1] asymmetric keys
+(OID_TPMLoadableKey, 2.23.133.10.1.3) and expose keyctl pkey-operations
+directly on key_type_trusted. In addition there are some TPMKey
+interoperability fixes.
 
-Implementtation of "help" would of course be a welcome addition.
+I.e. this my old series with a twist: instead of introducing a separate
+subtype for asymmetric keys, factor out pkey-operations into a separate
+CONFIG_KEYCTL_PKEY-feature, and wire asymmetric operations to
+key_type_trusted.
 
-Regards,
-Martin
+This work was originally derived from [3] and is direct offspring of
+[2].
 
---=20
-Dr. Martin Wilck <mwilck@suse.com>
-SUSE Software Solutions Germany GmbH, Frankenstr. 146, 90461 N=C3=BCrnberg,
-Germany
-Gesch=C3=A4ftsf=C3=BChrer: Stefan Gaiser, Jochen Jaser, Abhinav Puri (HRB
-36809,AG N=C3=BCrnberg)
+[1] https://www.hansenpartnership.com/draft-bottomley-tpm2-keys.html
+[2] https://lore.kernel.org/linux-integrity/20240520184727.22038-1-jarkko@kernel.org/
+[3] https://lore.kernel.org/all/20200518172704.29608-1-prestwoj@gmail.com/
+
+CHANGES
+=======
+
+v3:
+- KEYS: Move CONFIG_KEYCTL_PKEY factoring to the beginning of the series
+  and make it an off-by-default prompt instead of selecting it from
+  CONFIG_ASYMMETRIC_KEY_TYPE.
+- trusted: Make CONFIG_TRUSTED_KEYS_ASYMMETRIC depend on
+  CONFIG_KEYCTL_PKEY instead of selecting it.
+- trusted: Use unsigned int instead of u16 for data_len and min_len in
+  tpm2_unseal_cmd().
+- asn1: The reason for not supporting implicit tags was that it follows
+  what other functions do in asn1_encoder.c, and is that way coherent.
+
+v2:
+- lib/asn1_encoder: Remove unreachable !bytes_len branch in
+  asn1_encode_integer_bytes().
+- tpm: Bounds-check ECC coordinates, defer state updates until after
+  validation, and verify subsequent TPM2_RH_NULL primaries against
+  chip->null_key_name in tpm2_parse_create_primary().
+- trusted: Reject trailing or truncated TPM2B bytes in tpm2_key_decode() so
+  tpm2_load_cmd() and tpm2_asym_load() pass the same blob length.
+- trusted: Avoid 32-bit param_size wraparound in tpm2_asym_rsa_decrypt()
+  and tpm2_asym_parse_signature().
+
+VERSIONS
+========
+
+v2: https://lore.kernel.org/keyrings/20261124194043.1651679-1-jarkko@kernel.org/
+v1: https://lore.kernel.org/keyrings/20261124120044.1481752-1-jarkko@kernel.org/
+
+Cc: dm-devel@lists.linux.dev
+Cc: keyrings@vger.kernel.org
+Cc: linux-crypto@vger.kernel.org
+Cc: linux-doc@vger.kernel.org
+Cc: linux-integrity@vger.kernel.org
+Cc: linux-kernel@vger.kernel.org
+Cc: linux-security-module@vger.kernel.org
+Cc: Ahmad Fatoum <a.fatoum@pengutronix.de>
+Cc: Alasdair Kergon <agk@redhat.com>
+Cc: Andrew Morton <akpm@linux-foundation.org>
+Cc: Benjamin Marzinski <bmarzins@redhat.com>
+Cc: David Gstir <david@sigma-star.at>
+Cc: David Howells <dhowells@redhat.com>
+Cc: David Laight <david.laight.linux@gmail.com>
+Cc: "David S. Miller" <davem@davemloft.net>
+Cc: David Woodhouse <dwmw2@infradead.org>
+Cc: Eric Biggers <ebiggers@kernel.org>
+Cc: Herbert Xu <herbert@gondor.apana.org.au>
+Cc: Ignat Korchagin <ignat@linux.win>
+Cc: James Bottomley <James.Bottomley@HansenPartnership.com>
+Cc: James Morris <jmorris@namei.org>
+Cc: James Prestwood <prestwoj@gmail.com>
+Cc: Jarkko Sakkinen <jarkko@kernel.org>
+Cc: Jason Gunthorpe <jgg@ziepe.ca>
+Cc: Jonathan Corbet <corbet@lwn.net>
+Cc: Lukas Wunner <lukas@wunner.de>
+Cc: Mike Snitzer <snitzer@kernel.org>
+Cc: Mikulas Patocka <mpatocka@redhat.com>
+Cc: Mimi Zohar <zohar@linux.ibm.com>
+Cc: Paul Moore <paul@paul-moore.com>
+Cc: Peter Huewe <peterhuewe@gmx.de>
+Cc: Randy Dunlap <rdunlap@infradead.org>
+Cc: "Serge E. Hallyn" <serge@hallyn.com>
+Cc: Shuah Khan <skhan@linuxfoundation.org>
+Cc: Sumit Garg <sumit.garg@kernel.org>
+
+Jarkko Sakkinen (9):
+  KEYS: Factor out opt-in KEYCTL_PKEY
+  KEYS: trusted: Allow ASN.1 TPM2 sealed data shorter than MIN_KEY_SIZE
+  lib/asn1_encoder: Add asn1_encode_integer_bytes()
+  tpm: Export tpm2_create_primary()
+  tpm: Add persistent hierarchies to tpm2_create_primary()
+  KEYS: trusted: Extend TPMKey support
+  KEYS: trusted: Reject zero-length keys in symmetric consumers
+  KEYS: trusted: Factor out TPM2 blob loading
+  KEYS: trusted: Add asymmetric key support for TPM2
+
+ .../security/keys/trusted-encrypted.rst       |   25 +-
+ crypto/af_alg.c                               |    2 +
+ drivers/char/tpm/Kconfig                      |    2 +-
+ drivers/char/tpm/tpm2-sessions.c              |  239 +--
+ drivers/md/dm-crypt.c                         |    2 +-
+ include/keys/trusted-type.h                   |    5 +-
+ include/keys/trusted_tpm.h                    |   16 +-
+ include/linux/asn1_encoder.h                  |    3 +
+ include/linux/tpm.h                           |    2 +
+ include/linux/tpm_command.h                   |   13 +
+ lib/asn1_encoder.c                            |   56 +
+ security/keys/Kconfig                         |    9 +
+ security/keys/Makefile                        |    2 +-
+ .../keys/encrypted-keys/masterkey_trusted.c   |    5 +
+ security/keys/internal.h                      |    2 +-
+ security/keys/keyctl.c                        |    2 +-
+ security/keys/trusted-keys/Kconfig            |   10 +
+ security/keys/trusted-keys/tpm2key.asn1       |   19 +
+ security/keys/trusted-keys/trusted_core.c     |   20 +-
+ security/keys/trusted-keys/trusted_tpm1.c     |   26 +
+ security/keys/trusted-keys/trusted_tpm2.c     | 1341 +++++++++++++++--
+ 21 files changed, 1591 insertions(+), 210 deletions(-)
+
+--
+2.47.3
+
