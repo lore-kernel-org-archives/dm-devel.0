@@ -1,44 +1,44 @@
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=100.103.45.18
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1795630006;
-	b=4ImV5An5qlvflZWTPmqd27E1swi9UxQc7oDMtsik+dnO/13zLSCI6ha+W8gOm6+uz/wP
-	 xsWFp2Z5xkSZBkhskhOAOJtzeWbYJa9LX1fOayDVLzk8nfIB47q1o7kClbxrKmhngdYJo
-	 Zsu3DZOtEoDXJkCORN/g0qzMeHpnqRnaNW0cXWnmEbHJw47VWIHSZXZlsFUR6tuULBriY
-	 yq6ltX8yu30g5mHKK8LO0fRkNNu4SHmT7hCaHG80zjjP2HX0oEUR5mBtRSfn1LZ6D29Cm
-	 5pqkabYcTu+/6yY6N4CfNi4LgXe6o5O1gzvfY/cbHjmHRx39TQRSjK/aEc7v/wgQ+Bg==
+	t=1795630020;
+	b=N7frk/MLw/Ba7YGrFlTjLUATN2+RFPw3yGZabloeFdjBn4i9HVKKQp940cfd6rJgV/Xd
+	 X9MPTbathVrZFfR6rBhzTHoRaYQzdlTl6p70k+NvBkQq47tuj/gpIREnTMyeVOShiJ90O
+	 +fRqAV1griUyHPD0iSvnVoHgJPikQsg2YC16eu+DtHzlHYYPkGVPMLL4gx7UDI7Z77Muu
+	 +cmjwNE6/BuUyGfrqhlr7nZqDEZU0CCm1IABgPntHkrMzHA3gsI5HdtbfbAUnF88oG+86
+	 rar7HLqjL+HBVjICtZSSAglWuZO5jp6DbugBNqPc4+9pPjM7jma5MyKZ+elxwGBIwGQ==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1795630006;
+	a=rsa-sha256; c=relaxed/relaxed; t=1795630020;
 	h=Received:DKIM-Signature:From:To:Cc:Subject:Date:Message-ID:X-Mailer:
 	 In-Reply-To:References:MIME-Version:Content-Transfer-Encoding;
-	bh=uUpvOGYNFN9QNrznrG1lEyBJy5u3G08L4DNdjGeR9dE=;
-	b=p5NiWPnz7wqFK/wLZymToVXAx8sInTejvYoN00Sk1MzQudhJ8wfb0VhCCpZ5VDdtfzI2
-	 UVT4SG/UyVIY9z6xSmuA4o/xpAejp86fcpo16PMQD+nG+KnbnWtSZliOoRrm2SGRx65HR
-	 tbNOTsbCu/STq2EsM8dRuCambOWr+QwEGFAXJyDTKaUVzOeLNIJ2ejIqDNy1/Dh6mP40v
-	 1GF1AXWnQQPwvFRUfHmOrsF54vkF98+g05/b2iTLtossendeV7bp3xDu2+tpj1YvsrBKD
-	 kggjjOkUQX8XLjIwSYcYhuAbXaYGUd1RVOeU2ceTi0DeHNwCGDvq1xAcPB8jSEW7gvg==
+	bh=Zwc/0WX6N0Ikmz6rLp8weMhhFeWo/RMK4JNzjHNKGgY=;
+	b=FatqtlSzBCcGr3HbPLVRUxnJkYvK2+b8ZACSZe7BeqzUrnHyOCNQz5kjti0ijZ8UCn/E
+	 5SBTNFJfSGFF9PEkCbqQjuT0Wd0DesuLIBks/ob+108/LJ4wNSXXhFMQFE0Yh5UhqEkOg
+	 sbpURi3WpIVTM9JvpsczAF1qVzrKR8q1qo4IVpxs26zmzDKTa0qxIMPmHYCVfxNAEfIwU
+	 l2w5D6Qzy/SX4F4BaFMR+y52lR9C5OCgK5H+CwFudY3sxE/0qQsqEj6n4Ia6hij29MT1N
+	 3f6l+GjceO2n75K1ljfNwTJ3+cVUfC96bVc6/+pRfy+TAKJy1jHdKlsVD/RCxZN0V4A==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=YxW23uMR;
+	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=ixYmYZZk;
 	arc=none smtp.remote-ip=100.103.45.18
 Received: from smtp.kernel.org (quasi.space.kernel.org [100.103.45.18])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with UTF8SMTPS id CBFD1606A331;
-	Wed, 25 Nov 2026 18:06:46 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with UTF8SMTPS id DFA79606A327;
+	Wed, 25 Nov 2026 18:06:59 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=YxW23uMR
-Received: by smtp.kernel.org (Postfix) with UTF8SMTPSA id 9D6021F00AD3;
-	Wed, 25 Nov 2026 18:06:45 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=ixYmYZZk
+Received: by smtp.kernel.org (Postfix) with UTF8SMTPSA id A52541F000D3;
+	Wed, 25 Nov 2026 18:06:58 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
-	s=k20260515; t=1795630006;
-	bh=uUpvOGYNFN9QNrznrG1lEyBJy5u3G08L4DNdjGeR9dE=;
+	s=k20260515; t=1795630019;
+	bh=Zwc/0WX6N0Ikmz6rLp8weMhhFeWo/RMK4JNzjHNKGgY=;
 	h=From:To:Cc:Subject:Date:In-Reply-To:References;
-	b=YxW23uMRLabiEdWMBEacwa8wcGWwpfrp2CaEcH7iKMarPePRdLhBHZ3SoViT3YtpE
-	 pA1+zplBtP1N57AAXFenEg+rAEYCtvRySWXP55KrlhdntHEVjpSrSQWmW8fDFFxjyH
-	 yWtF8IIpFlrWpxbLAfqyEOGXwvJBRVahX0motKMeaTvZMiUXy79idejkuab+XUk1Ap
-	 VNbNTAZDiUgAGt94t6O1o0EdkIi5WanAM8GIxe2mYnPQ7vLeMTqa2x57JpdAIlimhV
-	 HQLntTUInzSzD8GOs1ActnoulmLxf5DM2MK9MktpUOYseJakG7ul3AZVfgkgtoz5qr
-	 2Vrs8kvaPVeMQ==
+	b=ixYmYZZkABZ1F1XMRAWNjqiXCDsnc91GwlEOEm291U7uoG1o+vqLCqZcC9Iay9dHr
+	 yPh7XicSEJBK2EitS1vEAMT4JyaZSbWDONgpSSLURh1sS8ZYiSXnLWuz3IcSeguf/0
+	 hutXMG1m9JolmyYOnycMpKG4HbMSi2rFzvF6OMWzEHNEYIVet47vfjza6Z9XJn6C4v
+	 c4PDlYn+PQFoxGyQcKMcza3eyP8SdWJ/AGsKGIm0fOsQ4snVkEqt1AHijBYyIyCVon
+	 Vlzk/ssTBs0JwV9EvDI/tbA+9Xy+50TuFn25L7HHdtI4tuQdZRWXHMVPbDWk/NiLG7
+	 ugO7EbXEJx0Rg==
 From: Jarkko Sakkinen <jarkko@kernel.org>
 To: keyrings@vger.kernel.org
 Cc: Jarkko Sakkinen <jarkko@kernel.org>,
@@ -75,9 +75,9 @@ Cc: Jarkko Sakkinen <jarkko@kernel.org>,
 	"Serge E. Hallyn" <serge@hallyn.com>,
 	Shuah Khan <skhan@linuxfoundation.org>,
 	Sumit Garg <sumit.garg@kernel.org>
-Subject: [PATCH v3 4/9] tpm: Export tpm2_create_primary()
-Date: Wed, 25 Nov 2026 20:06:10 +0200
-Message-ID: <20261125180616.1854753-5-jarkko@kernel.org>
+Subject: [PATCH v3 7/9] KEYS: trusted: Reject zero-length keys in symmetric consumers
+Date: Wed, 25 Nov 2026 20:06:13 +0200
+Message-ID: <20261125180616.1854753-8-jarkko@kernel.org>
 X-Mailer: git-send-email 2.47.3
 In-Reply-To: <20261125180616.1854753-1-jarkko@kernel.org>
 References: <20261125180616.1854753-1-jarkko@kernel.org>
@@ -92,206 +92,73 @@ Precedence: list
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-Move tpm2_create_primary() outside CONFIG_TCG_TPM2_HMAC and export it for
-callers such as trusted keys.
+Asymmetric trusted keys will not carry a raw symmetric key payload
+(key_len == 0). Reject zero-length trusted keys in encrypted-keys,
+af_alg, dm-crypt, and trusted_update() resealing.
 
 Signed-off-by: Jarkko Sakkinen <jarkko@kernel.org>
 ---
- drivers/char/tpm/Kconfig         |   2 +-
- drivers/char/tpm/tpm2-sessions.c | 103 ++++++++++++++++---------------
- include/linux/tpm.h              |   2 +
- 3 files changed, 56 insertions(+), 51 deletions(-)
+ crypto/af_alg.c                                  | 2 ++
+ drivers/md/dm-crypt.c                            | 2 +-
+ security/keys/encrypted-keys/masterkey_trusted.c | 5 +++++
+ security/keys/trusted-keys/trusted_core.c        | 2 +-
+ 4 files changed, 9 insertions(+), 2 deletions(-)
 
-diff --git a/drivers/char/tpm/Kconfig b/drivers/char/tpm/Kconfig
-index 35aff3003a32..7481f2c8c768 100644
---- a/drivers/char/tpm/Kconfig
-+++ b/drivers/char/tpm/Kconfig
-@@ -9,6 +9,7 @@ menuconfig TCG_TPM
- 	imply SECURITYFS
- 	select CRYPTO
- 	select CRYPTO_HASH_INFO
-+	select CRYPTO_LIB_SHA256
- 	help
- 	  If you have a TPM security chip in your system, which
- 	  implements the Trusted Computing Group's specification,
-@@ -32,7 +33,6 @@ config TCG_TPM2_HMAC
- 	default n
- 	select CRYPTO_ECDH
- 	select CRYPTO_LIB_AESCFB
--	select CRYPTO_LIB_SHA256
- 	select CRYPTO_LIB_UTILS
- 	help
- 	  Setting this causes us to deploy a scheme which uses request
-diff --git a/drivers/char/tpm/tpm2-sessions.c b/drivers/char/tpm/tpm2-sessions.c
-index 9608e545602c..b3b4f7a89d9d 100644
---- a/drivers/char/tpm/tpm2-sessions.c
-+++ b/drivers/char/tpm/tpm2-sessions.c
-@@ -421,9 +421,6 @@ EXPORT_SYMBOL_GPL(tpm_buf_append_hmac_session);
+diff --git a/crypto/af_alg.c b/crypto/af_alg.c
+index ab84c4488a15..133cb88e3c12 100644
+--- a/crypto/af_alg.c
++++ b/crypto/af_alg.c
+@@ -323,6 +323,8 @@ static const u8 *key_data_ptr_trusted(const struct key *key,
+ 	if (IS_ERR_OR_NULL(tkp))
+ 		return ERR_PTR(-EKEYREVOKED);
  
- #ifdef CONFIG_TCG_TPM2_HMAC
++	if (!tkp->key_len)
++		return ERR_PTR(-EINVAL);
+ 	*datalen = tkp->key_len;
  
--static int tpm2_create_primary(struct tpm_chip *chip, u32 hierarchy,
--			       u32 *handle, u8 *name);
--
- /*
-  * assume hash sha256 and nonces u, v of size SHA256_DIGEST_SIZE but
-  * otherwise standard tpm2_KDFa.  Note output is in bytes not bits.
-@@ -1077,6 +1074,50 @@ int tpm2_start_auth_session(struct tpm_chip *chip)
- }
- EXPORT_SYMBOL(tpm2_start_auth_session);
+ 	return tkp->key;
+diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
+index 02038a9cd21d..1e034c747d39 100644
+--- a/drivers/md/dm-crypt.c
++++ b/drivers/md/dm-crypt.c
+@@ -2492,7 +2492,7 @@ static int set_key_trusted(struct crypt_config *cc, struct key *key)
+ 	if (!tkp)
+ 		return -EKEYREVOKED;
  
-+static int tpm2_create_null_primary(struct tpm_chip *chip)
-+{
-+	u32 null_key;
-+	int rc;
-+
-+	rc = tpm2_create_primary(chip, TPM2_RH_NULL, &null_key,
-+				 chip->null_key_name);
-+
-+	if (rc == TPM2_RC_SUCCESS) {
-+		unsigned int offset = 0; /* dummy offset for null key context */
-+
-+		rc = tpm2_save_context(chip, null_key, chip->null_key_context,
-+				       sizeof(chip->null_key_context), &offset);
-+		tpm2_flush_context(chip, null_key);
+-	if (cc->key_size != tkp->key_len)
++	if (!tkp->key_len || cc->key_size != tkp->key_len)
+ 		return -EINVAL;
+ 
+ 	memcpy(cc->key, tkp->key, cc->key_size);
+diff --git a/security/keys/encrypted-keys/masterkey_trusted.c b/security/keys/encrypted-keys/masterkey_trusted.c
+index e6d22ce77e98..8c6e6bdd8ef7 100644
+--- a/security/keys/encrypted-keys/masterkey_trusted.c
++++ b/security/keys/encrypted-keys/masterkey_trusted.c
+@@ -36,6 +36,11 @@ struct key *request_trusted_key(const char *trusted_desc,
+ 
+ 	down_read(&tkey->sem);
+ 	tpayload = tkey->payload.data[0];
++	if (!tpayload->key_len) {
++		up_read(&tkey->sem);
++		key_put(tkey);
++		return ERR_PTR(-EINVAL);
 +	}
-+
-+	return rc;
-+}
-+
-+/**
-+ * tpm2_sessions_init() - start of day initialization for the sessions code
-+ * @chip: TPM chip
-+ *
-+ * Derive and context save the null primary and allocate memory in the
-+ * struct tpm_chip for the authorizations.
-+ *
-+ * Return:
-+ * * 0		- OK
-+ * * -errno	- A system error
-+ * * TPM_RC	- A TPM error
-+ */
-+int tpm2_sessions_init(struct tpm_chip *chip)
-+{
-+	int rc;
-+
-+	rc = tpm2_create_null_primary(chip);
-+	if (rc) {
-+		dev_err(&chip->dev, "null key creation failed with %d\n", rc);
-+		return rc;
-+	}
-+
-+	return rc;
-+}
-+#endif /* CONFIG_TCG_TPM2_HMAC */
- /*
-  * A mask containing the object attributes for the kernel held null primary key
-  * used in HMAC encryption. For more information on specific attributes look up
-@@ -1199,12 +1240,16 @@ static int tpm2_parse_create_primary(struct tpm_chip *chip, struct tpm_buf *buf,
- 	val = tpm_buf_read_u16(buf, &offset_t);
- 	if (val != EC_PT_SZ)
+ 	*master_key = tpayload->key;
+ 	*master_keylen = tpayload->key_len;
+ error:
+diff --git a/security/keys/trusted-keys/trusted_core.c b/security/keys/trusted-keys/trusted_core.c
+index 11d7d296d063..3721980ed83a 100644
+--- a/security/keys/trusted-keys/trusted_core.c
++++ b/security/keys/trusted-keys/trusted_core.c
+@@ -249,7 +249,7 @@ static int trusted_update(struct key *key, struct key_preparsed_payload *prep)
+ 	if (key_is_negative(key))
+ 		return -ENOKEY;
+ 	p = key->payload.data[0];
+-	if (!p->migratable)
++	if (!p->migratable || !p->key_len)
+ 		return -EPERM;
+ 	if (datalen == 0 || datalen > 32767 || !prep->data)
  		return -EINVAL;
-+#ifdef CONFIG_TCG_TPM2_HMAC
- 	memcpy(chip->null_ec_key_x, &buf->data[offset_t], val);
-+#endif
- 	offset_t += val;
- 	val = tpm_buf_read_u16(buf, &offset_t);
- 	if (val != EC_PT_SZ)
- 		return -EINVAL;
-+#ifdef CONFIG_TCG_TPM2_HMAC
- 	memcpy(chip->null_ec_key_y, &buf->data[offset_t], val);
-+#endif
- 	offset_t += val;
- 
- 	/* original length of the whole TPM2B */
-@@ -1255,11 +1300,13 @@ static int tpm2_parse_create_primary(struct tpm_chip *chip, struct tpm_buf *buf,
- 	if (len != SHA256_DIGEST_SIZE + 2)
- 		return -EINVAL;
- 
-+#ifdef CONFIG_TCG_TPM2_HMAC
- 	if (memcmp(chip->null_key_name, &buf->data[offset_r],
- 		   SHA256_DIGEST_SIZE + 2) != 0) {
- 		dev_err(&chip->dev, "NULL Seed name comparison failed\n");
- 		return -EINVAL;
- 	}
-+#endif
- 
- 	return 0;
- }
-@@ -1284,8 +1331,8 @@ static int tpm2_parse_create_primary(struct tpm_chip *chip, struct tpm_buf *buf,
-  * * -errno	- A system error
-  * * TPM_RC	- A TPM error
-  */
--static int tpm2_create_primary(struct tpm_chip *chip, u32 hierarchy,
--			       u32 *handle, u8 *name)
-+int tpm2_create_primary(struct tpm_chip *chip, u32 hierarchy, u32 *handle,
-+			u8 *name)
- {
- 	struct tpm_buf *template __free(kfree) = NULL;
- 	struct tpm_buf *buf __free(kfree) = NULL;
-@@ -1381,48 +1428,4 @@ static int tpm2_create_primary(struct tpm_chip *chip, u32 hierarchy,
- 
- 	return rc;
- }
--
--static int tpm2_create_null_primary(struct tpm_chip *chip)
--{
--	u32 null_key;
--	int rc;
--
--	rc = tpm2_create_primary(chip, TPM2_RH_NULL, &null_key,
--				 chip->null_key_name);
--
--	if (rc == TPM2_RC_SUCCESS) {
--		unsigned int offset = 0; /* dummy offset for null key context */
--
--		rc = tpm2_save_context(chip, null_key, chip->null_key_context,
--				       sizeof(chip->null_key_context), &offset);
--		tpm2_flush_context(chip, null_key);
--	}
--
--	return rc;
--}
--
--/**
-- * tpm2_sessions_init() - start of day initialization for the sessions code
-- * @chip: TPM chip
-- *
-- * Derive and context save the null primary and allocate memory in the
-- * struct tpm_chip for the authorizations.
-- *
-- * Return:
-- * * 0		- OK
-- * * -errno	- A system error
-- * * TPM_RC	- A TPM error
-- */
--int tpm2_sessions_init(struct tpm_chip *chip)
--{
--	int rc;
--
--	rc = tpm2_create_null_primary(chip);
--	if (rc) {
--		dev_err(&chip->dev, "null key creation failed with %d\n", rc);
--		return rc;
--	}
--
--	return rc;
--}
--#endif /* CONFIG_TCG_TPM2_HMAC */
-+EXPORT_SYMBOL_GPL(tpm2_create_primary);
-diff --git a/include/linux/tpm.h b/include/linux/tpm.h
-index 0f97abc82846..381af99dad31 100644
---- a/include/linux/tpm.h
-+++ b/include/linux/tpm.h
-@@ -255,6 +255,8 @@ extern int tpm_get_random(struct tpm_chip *chip, u8 *data, size_t max);
- extern struct tpm_chip *tpm_default_chip(void);
- void tpm2_flush_context(struct tpm_chip *chip, u32 handle);
- int tpm2_find_hash_alg(unsigned int crypto_id);
-+int tpm2_create_primary(struct tpm_chip *chip, u32 hierarchy, u32 *handle,
-+			u8 *name);
- 
- static inline void tpm_buf_append_empty_auth(struct tpm_buf *buf, u32 handle)
- {
 -- 
 2.47.3
 
