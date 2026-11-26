@@ -1,100 +1,82 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=pass header.oldest-pass=0 smtp.remote-ip=74.125.224.49
-ARC-Seal: i=2; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=pass;
-	t=1795660664;
-	b=FLnt+c5WuK559aL5w9SzhKSnHX9KMgUgu0+A6w4oAJwQ2rzxfjQWhQ0MJZU/N707P2C5
-	 yWYOwzdSlKkJEArwnvNMFVC7weXq4crBfQVVGw6OLeso3zeE4chROzPM2kXE2kil7O3VT
-	 ECSM93VilcbHX8M/2V8t0aDVm6tPuNKf57v6wu0SfzlvUUDo3OYDIHudrQUam5bli/qfX
-	 4ddzj3dY/NOgZBeecqNcc02MbwxDWNwNUCMliXhrBGxfc48TnBbqoXcGuk0gNX++JObV+
-	 qTRsGizXe+yVC0ITaG+6D0X5d0KuKftr0odkHP8nSrZcErjMopeHc64zV+64WQBEuow==
-ARC-Message-Signature: i=2; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1795660664;
-	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
-	 X-Gm-Message-State:X-Gm-Gg:X-Received:MIME-Version:References:
-	 In-Reply-To:From:Date:X-Gm-Features:Message-ID:Subject:To:Cc:
-	 Content-Type:Content-Transfer-Encoding;
-	bh=RZCvtCpBQTwzTPj93Oiy8qbxhXrLbrBIt1jl3I4qtj4=;
-	b=m4cxEUrMCNkbj2tOmbMmvDEhz6AiIchgEX4k+hZEcf+uUupyQQXQKw4hzaPcOl+wUeam
-	 gfMQ/NzoJgXr4Xqfqg7+ETE2EbLk/56gALXGYR1TFpAg9I+TlXl+VLKGxaIV+hVah03WK
-	 Nxe0H0gnL/y/dAt2BtzjJJAmVqOVLNYbXuMnKv+JY9lPd2dvNGDK0k+A3Z9bxube/WPNp
-	 kMbIgP3ExOPdYTTq5+38/kTCvC3njKSm8Yxy7xHVMs6nXTXpC6iRODOvIU53WLMSJyVC0
-	 xbjAp00WiqqggFBGd/wTEXH8EqWPhpfZ79AEsjrfRCL06PSg9sXDlNxHsaVhgZBuRsw==
-ARC-Authentication-Results: i=2; smtp.subspace.kernel.org; 
-	dmarc=pass header.from=gmail.com;
-	spf=pass smtp.mailfrom=gmail.com;
-	dkim=pass header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=WhmYFZPy;
-	arc=pass header.oldest-pass=0 smtp.remote-ip=74.125.224.49
-Received: from mail-yx1-f49.google.com (mail-yx1-f49.google.com [74.125.224.49])
-	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=170.10.133.124
+ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
+	t=1795670684;
+	b=gBxMViN5Moa8yMmNSElhFMaCAmTT465lB9n0s8uywRWRkXvEc1Xzd0ql8OaCEuk0IexF
+	 NUKVPgZ+hB3QKjPqXjO5EWobADlf2pTDMvR17asz2v4U+eLxuBL+S0Bp1qk+lgcuQIq8C
+	 uPy6jj61+va9uKYK2nWAOS7lwkXpqlPjOuJfyFNntbkK5SkIDlzTha462OZDcDPqHs0Un
+	 LqdRH8v2rASAamOQNPbtpupZp8Jcnm43ARuIdbkzBcLPYwk23r/JgQAIJZ8JzojXi+8d4
+	 3skR5XSTTUQ4NG2i43uwHfFQYw8cqVnSUoAcuG9zO5xBINUQbfcpSD1KodyaqzwOkvw==
+ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
+	a=rsa-sha256; c=relaxed/relaxed; t=1795670684;
+	h=DMARC-Filter:DKIM-Signature:Received:X-MC-Unique:
+	 X-Mimecast-MFC-AGG-ID:Received:Received:Received:Received:From:To:Cc:
+	 Subject:Date:Message-ID:In-Reply-To:References:MIME-Version:
+	 X-Scanned-By:X-Mimecast-Spam-Score:X-Mimecast-MFC-PROC-ID:
+	 X-Mimecast-Originator:Content-Transfer-Encoding:content-type;
+	bh=X95zpiKOyev2TRqSGjYBGo2ydKFXkxrFxHSDfq6+VZI=;
+	b=WChRv//xKF/KKUuIXp7pxf8rLr8o85ofSZL/baPVmL0jz0kN1vQvJNMhCvlWSR4T8y39
+	 1Ct1PFZl1AVzMnL9SwTES7GaN+e4tvXPxhjso15mbDhadLf7+W1PXz3rqLNCjpMPCtuDL
+	 Rw7Xl/itjzL83cG3IvzbAYdT4h2I1efq5RfWdFsyr4guoGYvL6jxhXdMnSY3iUVm4HHD7
+	 NZzUjfOx+Vh1AVwvwwvPmGg2lXyjLJgihfoRqxhSk2damuo90kvNSsWWtvpaVIrPrpZd+
+	 otKKt2TkUJLE5+XtVCE7V2nydKaVL6UdbxesyvRA+QXlBkq0v1KHFI87OKM9jOjoWWA==
+ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
+	dmarc=pass header.from=redhat.com;
+	spf=pass smtp.mailfrom=redhat.com;
+	dkim=pass header.d=redhat.com header.i=@redhat.com header.a=rsa-sha256 header.s=mimecast20190719 header.b=fDzBEDeK;
+	arc=none smtp.remote-ip=170.10.133.124
+Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.133.124])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id AA023606A31E
-	for <dm-devel@lists.linux.dev>; Thu, 26 Nov 2026 02:37:43 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org AA023606A31E
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=gmail.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=gmail.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 64702606A326
+	for <dm-devel@lists.linux.dev>; Thu, 26 Nov 2026 05:24:43 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 64702606A326
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=gmail.com header.i=@gmail.com header.a=rsa-sha256 header.s=20260707 header.b=WhmYFZPy
-Received: by mail-yx1-f49.google.com with SMTP id 956f58d0204a3-67990a45e02so6609212d50.3
-        for <dm-devel@lists.linux.dev>; Wed, 25 Nov 2026 18:37:43 -0800 (PST)
-ARC-Seal: i=1; a=rsa-sha256; t=1795660663; cv=none;
-        d=google.com; s=arc-20260327;
-        b=aGvRHfpV9l0bPr81VWPYnRQbGC2HrqnbWUmILwMp+erVEvn6s+OnweO6wk4IW02QBr
-         vJ6Q1xP3duw94LK//zRQJCse57r6pAcM7H+SUIoHjN+FB/A0tIPLL5fNhQbChivN1mxT
-         uIWfZJ3zlTVXQPKKVNwrqnFe5+I9bHqDzARzKNKxB7NkBBmfk87xxR4L0dlJ5FmsEejx
-         Xjs+ezD50gUztZ4Q2wGi0aKPeOc0plhgVKszqZbQ+uLWVr7MeKAoovsG3x3+Qw6H7Pg9
-         ldiVziH18FFSxBcDXCbeORiENIzMC9XyYzJKcNp0AntB0eYes0J4qbemGkDb40j0kX2E
-         KvXQ==
-ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=google.com; s=arc-20260327;
-        h=content-transfer-encoding:cc:to:subject:message-id:date:from
-         :in-reply-to:references:mime-version:dkim-signature;
-        bh=RZCvtCpBQTwzTPj93Oiy8qbxhXrLbrBIt1jl3I4qtj4=;
-        fh=cu1mrLmRqZ7GT07/GOzDHESE+JVEAIKq0yGJUF/W7XQ=;
-        b=aHbSRBH2oFj90BMsEpjwT9VtiISzZC3xDbnoRO77BKDqOBi8/y9CiFjHuseX/W7und
-         ARxL3hNbJQ6qRd9ldCslqN9i5PZgLLLhymzqxp0X6lMo6Afde4ABkFFgnlo8WJDPa/cZ
-         DBR0IYgb0sB0DQYDy0d3P8PWquj9Zu+8P5DrowIkwUMJzvuMVvRfK84KynqTTE/RdssM
-         OAwRhzb6lB4S2wW4ag0yMJxhdVHJ2EIymeHVLpXKG5D4XJ6JV2QBGcZn1rhZSunlOxHv
-         ym68TrBOtlfyiAunJRwZgr5Xt1y+f+r5iJQaKRQU6CnOqTCEIE60tPbsUSIk1k6yJOSe
-         HuFQ==;
-        darn=lists.linux.dev
-ARC-Authentication-Results: i=1; mx.google.com; arc=none
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=gmail.com; s=20260707; t=1795660663; x=1796265463; darn=lists.linux.dev;
-        h=content-transfer-encoding:content-type:cc:to:subject:message-id
-         :date:from:in-reply-to:references:mime-version:from:to:cc:subject
-         :date:message-id:reply-to:content-type;
-        bh=RZCvtCpBQTwzTPj93Oiy8qbxhXrLbrBIt1jl3I4qtj4=;
-        b=WhmYFZPycvYCmutqWYjw6fNsinp9EpcZlhUHIIL594PtSybvsdSBJVJt8araySp0rk
-         Q0kMMd4ZR1l/wXaCS/CDZtWxKuZKxi9WSFdlV5JDbCqnAEGSi0ZDwqcVp7bKcY2Dwev5
-         s3GV4RAL5cguNroEy3+r8OrNV61F4L9RRytirhk8y4oT9fYu2DePndhQ16jKOMcuSRsd
-         cu34QquoBhg9Pu3hEHnFLO1nKnpGLDpM8Rwtodc0oiR7GO9k6oICn1NA52sL92N2nT8o
-         aeG82pwc4xfsBQeQ929apiIB9VjnKtOAgPu/h3IDOsKq9Ij8Pte/s1NcnFhSN28Mugp3
-         9MRw==
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1795660663; x=1796265463;
-        h=content-transfer-encoding:content-type:cc:to:subject:message-id
-         :date:from:in-reply-to:references:mime-version:x-gm-gg
-         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
-         :content-type;
-        bh=RZCvtCpBQTwzTPj93Oiy8qbxhXrLbrBIt1jl3I4qtj4=;
-        b=BgCmzt0MVSJwxpVJUBbIllQAcMjqcPjH44BGHzN6/lPzsXwq00dnpxsCl116sBsw/P
-         FJCOC6VTb6tG0iua1KU8XtkVwd9IG2gZDJAtz3851hSWs28H1u8jJmPj34F/23eFkfFB
-         IfUMCCppy+0YHTpa0NFHavhtjj3T4LEXUX1SkWPMXBvZUMaEgHA5qyaxVjLcuxcLb3Yf
-         P6zeZP7lqboHTiqit5Lz3EEX7dUyvfNA+vaD5W6W07n4xQ4hZnRP/GsQ7y3+hWAWXOBX
-         G4vdKMa4WgAvZE7JHqV4XZAWJZRi8+6dxzv8gF4nyNo2ydTGaAS/8QPj5ILZYEOE/Eif
-         U+VA==
-X-Gm-Message-State: APuU4Z8AY1YMZBuZGFHgR6P/KUbGysNK4AD5Jh5di5Ca0B1O43nIwi/Q
-	gpstpZ3YyvPLr5WjNmh3BdqU1jRW5xP0ho3sy7kqYy+RZbe1JxGDdsisj3j3lGkvjjYzitcPICz
-	PUApJj+5fzLL8488DLOdY3wRnEABWqxQ=
-X-Gm-Gg: AZFdTZe9xXCCXgOrrSlyS2WP1CtGQWxZVH1fsKeISjGpFyRS6bOcnR7nYOq1D5e5Ory
-	EY9Nz7Vx+r8n3xUABl69Y0qmwvnsAdXIJznOFWxnY2G5TWoCw7R4MZMmWBrMqF1UfapWRxQyYho
-	KNJoF/nXYP+XRWBgrRl8zSbeXiqWBJyLYZUTj2a7Cwn40G47q8Vw+qahoQ5mEjWdauHKokwTtUs
-	AH+FEIPVnWaqk+ET7K0Q1vgAJz/LGKB4EtytnZmwWUM4mFhJyliYlEPOViBv13w93W6Cno67/51
-	/4s5nlJSUbMnTrk1q17YOhUc7WOrCNPod3MFwd2sWIm86qkCCiFA8UW+GTOlBCgBYrsPVXAxTV2
-	GgAxJkHakojTAcsUcRlQeoC994RqLAe0tN9xivwwjvb0IvrQvZq0sHwT26RKl9EQcbd51PgFM5r
-	Tbpg6A2ASSZ2uAjVoM+cuQNqOfqpm9vDDysO+MIKBWw6Y=
-X-Received: by 2002:a05:690e:150a:b0:67d:ba55:4be2 with SMTP id
- 956f58d0204a3-67df448c8acmr8960272d50.84.1795660662739; Wed, 25 Nov 2026
- 18:37:42 -0800 (PST)
+	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.a=rsa-sha256 header.s=mimecast20190719 header.b=fDzBEDeK
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
+	s=mimecast20190719; t=1795670682;
+	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
+	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
+	 content-transfer-encoding:content-transfer-encoding:
+	 in-reply-to:in-reply-to:references:references;
+	bh=X95zpiKOyev2TRqSGjYBGo2ydKFXkxrFxHSDfq6+VZI=;
+	b=fDzBEDeK9uvF2HOXdlvFnztfLSMdGsLb6BMLYdSfDPOko7GeEzzkp7MoYgVKRoW/2vEeAF
+	Gri7FkcsglM5TTNwSQtpeXorCpD0276/iKJzCmSvSPcg1VSXeTIf5wGC7g6iUvdNBUC9HR
+	VZs4yDJ17IUItLdZwKOm0swmEG+RQH4=
+Received: from mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com
+ (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
+ relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
+ cipher=TLS_AES_256_GCM_SHA384) id us-mta-624-EmiF1WABOEaPqRAREBkJPw-1; Thu,
+ 26 Nov 2026 05:24:38 +0000
+X-MC-Unique: EmiF1WABOEaPqRAREBkJPw-1
+X-Mimecast-MFC-AGG-ID: EmiF1WABOEaPqRAREBkJPw_1795670677
+Received: from mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.4])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
+	(No client certificate requested)
+	by mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id CCD6D18005B0;
+	Thu, 26 Nov 2026 05:24:36 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (bmarzins-01.fast.eng.rdu2.dc.redhat.com [10.6.23.12])
+	by mx-prod-int-01.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 682E330000E7;
+	Thu, 26 Nov 2026 05:24:36 +0000 (UTC)
+Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.17.1) with ESMTPS id 6AQ5OZZI725790
+	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
+	Thu, 26 Nov 2026 00:24:35 -0500
+Received: (from bmarzins@localhost)
+	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.18.1/Submit) id 6AQ5OZxJ725789;
+	Thu, 26 Nov 2026 00:24:35 -0500
+From: Benjamin Marzinski <bmarzins@redhat.com>
+To: Christophe Varoqui <christophe.varoqui@opensvc.com>
+Cc: device-mapper development <dm-devel@lists.linux.dev>,
+        Martin Wilck <Martin.Wilck@suse.com>
+Subject: [PATCH 2/4] multipathd: add infrastructure for uxlsnr waiting on events
+Date: Thu, 26 Nov 2026 00:24:32 -0500
+Message-ID: <20261126052434.725762-3-bmarzins@redhat.com>
+In-Reply-To: <20261126052434.725762-1-bmarzins@redhat.com>
+References: <20261126052434.725762-1-bmarzins@redhat.com>
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Post: <mailto:dm-devel@lists.linux.dev>
@@ -104,236 +86,320 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 List-Owner: <mailto:dm-devel+owner@lists.linux.dev>
 Precedence: list
 MIME-Version: 1.0
-References: <20261126020123.655988-1-ronniesahlberg@gmail.com> <sashiko-outbox-234635@kernel.org>
-In-Reply-To: <sashiko-outbox-234635@kernel.org>
-From: ronnie sahlberg <ronniesahlberg@gmail.com>
-Date: Thu, 26 Nov 2026 12:37:31 +1000
-X-Gm-Features: Aa3M54qk46md5Z6HrozKy32RlJWNl0cqkuhMLD8lZQhCJJGxSrEU8bgQtIxG7Gc
-Message-ID: <CAN05THQffU=vr5EGWJbkM4XxyrK1tnbE1T-vPSPwTmYdXAzuVw@mail.gmail.com>
-Subject: Re: [PATCH] dm era: read the metadata again at the first resume
-To: sashiko-reviews@lists.linux.dev
-Cc: dm-devel@lists.linux.dev, agk@redhat.com, snitzer@kernel.org, 
-	mpatocka@redhat.com, bmarzins@redhat.com
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+X-Scanned-By: MIMEDefang 3.4.1 on 10.30.177.4
+X-Mimecast-Spam-Score: 0
+X-Mimecast-MFC-PROC-ID: 3dP2cCzdI2NbEtFVLwCfO02XO4Fjdc0a4nqMiyxV3Vg_1795670677
+X-Mimecast-Originator: redhat.com
+Content-Transfer-Encoding: 8bit
+content-type: text/plain; charset="US-ASCII"; x-default=true
 
-Please disregard this version.  The Sashiko review is right about the
-space map index being lost when freshly formatted metadata is reopened,
-and the patch overlaps with Denis V. Lunev's series "dm era: a metadata
-device that never comes back".  I will send a v2 based on top of that
-series.
+There are multiple things that can happen to multipathd and the
+devices it tracks, that multipathd only finishes handling later. User
+programs may need to wait for these changes to complete before
+continuing.
 
-On Thu, 26 Nov 2026 at 12:22, <sashiko-bot@kernel.org> wrote:
->
-> Thank you for your contribution! Sashiko AI review found 4 potential
-> issues to consider:
-> - [High] dm era: missing activation check in era_message() causes NULL
->   deref
-> - [High] dm era: era_activate() reopen loses uncommitted space map index
-> - [Medium] dm era: era_preresume() starts digest before rollover and
->   leaks worker
-> - [Low] dm era: unused nr_blocks field in struct era after activation
->   refactor
-> --
->
-> commit a2950a4dea8dcd63e94b69dde9b3323092c96aec
-> Author: Ronnie Sahlberg <ronniesahlberg@gmail.com>
->
-> dm era: read the metadata again at the first resume
->
-> This commit re-reads and resizes the era metadata in the worker at the
-> first preresume, and suppresses metadata writes and writeset digestion
-> until the target has been activated.
->
-> > diff --git a/drivers/md/dm-era-target.c b/drivers/md/dm-era-target.c
-> > index ea499adca4ce2..801ca632581b4 100644
-> > --- a/drivers/md/dm-era-target.c
-> > +++ b/drivers/md/dm-era-target.c
-> [ ... ]
-> > @@ -1611,30 +1618,64 @@ static void era_postsuspend(struct dm_target *t=
-i)
-> >       }
-> >  }
-> >
-> > -static int era_preresume(struct dm_target *ti)
-> > +/*
-> > + * The metadata was opened by the constructor, but if this table repla=
-ces
-> > + * another one then that table kept changing the metadata until it was
-> > + * suspended.  So read it again now that we are the only user.
-> > + *
-> > + * Runs in the worker, and commits by itself so that nothing is writte=
-n if
-> > + * the metadata can't be read.
-> > + */
-> > +static int era_activate(struct era *era)
-> >  {
-> >       int r;
-> > -     struct era *era =3D ti->private;
-> > +     struct era_metadata *md;
-> >       dm_block_t new_size =3D calc_nr_blocks(era);
-> >
-> > -     if (era->nr_blocks !=3D new_size) {
-> > -             r =3D metadata_resize(era->md, &new_size);
-> > -             if (r) {
-> > -                     DMERR("%s: metadata_resize failed", __func__);
-> > -                     return r;
-> > -             }
-> > +     md =3D metadata_open(era->metadata_dev->bdev, era->sectors_per_bl=
-ock,
-> > +                        false);
-> > +     if (IS_ERR(md)) {
-> > +             DMERR("%s: couldn't reopen metadata", __func__);
-> > +             return PTR_ERR(md);
-> > +     }
-> >
-> > -             r =3D metadata_commit(era->md);
-> > -             if (r) {
-> > -                     DMERR("%s: metadata_commit failed", __func__);
-> > -                     return r;
-> > -             }
-> > +     metadata_close(era->md);
-> > +     era->md =3D md;
->
-> [Severity: High]
-> When a fresh metadata device is formatted during era_ctr(), does closing
-> era->md and reopening it from disk here discard uncommitted in-memory
-> space map index updates?
->
-> In create_fresh_metadata(), dm_tm_create_with_sm() commits the initial
-> space map, and then dm_btree_empty() and dm_array_empty() allocate two
-> blocks for writeset_tree_root and era_array_root.  Those allocations
-> update smm->ll.mi_le.index[0] in memory, but write_superblock() calls
-> save_sm_root() and dm_tm_commit() without calling dm_tm_pre_commit() firs=
-t:
->
-> drivers/md/dm-era-target.c:create_fresh_metadata() {
->         ...
->         r =3D dm_btree_empty(&md->writeset_tree_info, &md->writeset_tree_=
-root);
->         ...
->         r =3D dm_array_empty(&md->era_array_info, &md->era_array_root);
->         ...
->         r =3D write_superblock(md);
-> }
->
-> Because dm_tm_pre_commit() was not called, sm_metadata_commit() never
-> wrote the updated smm->ll.mi_le to the on-disk bitmap_root block.
-> Previously the first metadata_commit() in preresume flushed the in-memory
-> era->md created by era_ctr(); now metadata_close(era->md) discards it and
-> metadata_open() loads the stale bitmap_root from disk, leaving index[0]'s
-> nr_free count permanently off by 2 blocks.
->
-> > +     memset(&era->digest, 0, sizeof(era->digest));
-> > +
-> > +     r =3D metadata_resize(md, &new_size);
-> > +     if (r) {
-> > +             DMERR("%s: metadata_resize failed", __func__);
-> > +             return r;
-> > +     }
-> >
-> > -             era->nr_blocks =3D new_size;
-> > +     r =3D metadata_commit(md);
-> > +     if (r) {
-> > +             DMERR("%s: metadata_commit failed", __func__);
-> > +             return r;
-> >       }
-> >
-> > +     era->nr_blocks =3D new_size;
->
-> [Severity: Low]
-> With the era->nr_blocks !=3D new_size check removed from era_preresume(),
-> era->nr_blocks is now only ever written to and never read (all other
-> places use era->md->nr_blocks).  Can nr_blocks be removed from struct era=
-?
->
-> > +     WRITE_ONCE(era->activated, true);
-> > +
-> > +     return 0;
-> > +}
-> > +
-> > +static int era_preresume(struct dm_target *ti)
-> > +{
-> > +     int r;
-> > +     struct era *era =3D ti->private;
-> > +
-> >       start_worker(era);
-> >
-> > +     if (!era->activated) {
-> > +             struct rpc rpc =3D { .fn_era =3D era_activate, .no_commit=
- =3D true };
-> > +
-> > +             r =3D perform_rpc(era, &rpc);
-> > +             if (r)
-> > +                     return r;
-> > +     }
-> > +
-> >       r =3D in_worker0(era, metadata_era_rollover);
-> >       if (r) {
-> >               DMERR("%s: metadata_era_rollover failed", __func__);
-> >               return r;
-> >       }
->
-> [Severity: Medium]
-> If in_worker0(era, metadata_era_rollover) fails here (or a later target i=
-n
-> the table fails preresume), does era_preresume() leave the worker running
-> and digesting writesets on a still-suspended device?
->
-> era_activate() sets era->activated =3D true before the rollover RPC is
-> queued, and open_metadata() sets md->archived_writesets =3D true.  When
-> in_worker0() wakes do_work() for the rollover RPC, do_work() sees
-> era->activated =3D=3D true and runs kick_off_digest() and process_old_era=
-s()
-> before process_rpc_calls(), which re-queues era->worker via wake_worker()=
-.
-> Because the error paths in era_preresume() do not call stop_worker(era),
-> the worker continues running and mutating era->md in the background while
-> the device remains suspended, and era_dtr() can later destroy the failed
-> table without era_postsuspend() having stopped the worker.
->
-> >
-> >       return 0;
-> >  }
-> > @@ -1658,10 +1699,16 @@ static void era_status(struct dm_target *ti, st=
-atus_type_t type,
-> >       ssize_t sz =3D 0;
-> >       struct metadata_stats stats;
-> >       char buf[BDEVNAME_SIZE];
-> > +     struct rpc rpc =3D { .fn1 =3D metadata_get_stats, .arg =3D &stats=
+This commit add the architecture for waiting for events to occur. A
+future patch will add the ability to actually register these wait
+events. uxlnsr clients waiting for events will put themselves on a wait
+list with wait_for_event(). If they exit early, they will take
+themselves off with stop_waiting_for_event(). When the event occurs, the
+thread processing the event will call wakeup_event_waiter() to remove
+all clients from that wait list, and send a wakeup to the uslsnr thread.
+This works via an eventfd, using the same code as idle_fd currently
+does. Waiting clients check if their event has occured by checking if
+they are still on a wait list.
+
+Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+---
+ multipathd/main.c   |   7 +++
+ multipathd/uxlsnr.c | 120 ++++++++++++++++++++++++++++++++++++++++----
+ multipathd/uxlsnr.h |   4 ++
+ 3 files changed, 122 insertions(+), 9 deletions(-)
+
+diff --git a/multipathd/main.c b/multipathd/main.c
+index 9bce4d6b..1bb8eac8 100644
+--- a/multipathd/main.c
++++ b/multipathd/main.c
+@@ -2009,6 +2009,12 @@ uxlsnrloop (void * ap)
+ 		goto out_sock;
+ 	}
+ 
++	if (init_wait_fd() < 0) {
++		condlog(1, "Failed to open wait_fd: %m");
++		exit_daemon();
++		goto out_sock;
++	}
++
+ 	/* Tell main thread that thread has started */
+ 	post_config_state(DAEMON_CONFIGURE);
+ 
+@@ -3917,6 +3923,7 @@ static void cleanup_child(void)
+ 	cleanup_threads();
+ 	cleanup_vecs();
+ 	cleanup_bindings();
++	cleanup_wait_fd();
+ 	if (poll_dmevents)
+ 		cleanup_dmevent_waiter();
+ 
+diff --git a/multipathd/uxlsnr.c b/multipathd/uxlsnr.c
+index e92784e5..09306918 100644
+--- a/multipathd/uxlsnr.c
++++ b/multipathd/uxlsnr.c
+@@ -49,11 +49,13 @@ enum {
+ 	CLT_PARSE,
+ 	CLT_LOCKED_WORK,
+ 	CLT_WORK,
++	CLT_WAIT,
+ 	CLT_SEND,
  };
-> >
-> >       switch (type) {
-> >       case STATUSTYPE_INFO:
-> > -             r =3D in_worker1(era, metadata_get_stats, &stats);
-> > +             /*
-> > +              * Before the first resume our view of the metadata may b=
-e
-> > +              * stale and must not be written.
-> > +              */
-> > +             rpc.no_commit =3D !READ_ONCE(era->activated);
-> > +             r =3D perform_rpc(era, &rpc);
-> >               if (r)
-> >                       goto err;
->
-> [Severity: High]
-> Should era_message() also reject messages while !READ_ONCE(era->activated=
-)?
->
-> In do_resume(), dm_swap_table() installs the new table as live and drops
-> md->suspend_lock before dm_resume() calls era_preresume().  If
-> era_activate() fails (or a message arrives after dm_swap_table() before
-> era_activate() completes), the table is live with era->activated =3D=3D f=
-alse,
-> era->suspended =3D=3D 0, and era->md->writesets[0..1].bits =3D=3D NULL (s=
-ince
-> writeset bitmaps are only allocated by metadata_resize() in
-> era_activate()).  A "checkpoint" or "take_metadata_snap" message then run=
-s
-> metadata_new_era() -> writeset_init() in the worker and dereferences a
-> NULL ws->bits pointer when md->nr_blocks > 0, while "drop_metadata_snap"
-> commits the stale era->md to disk via in_worker0().
->
-> --
-> Sashiko AI review =C2=B7 https://sashiko.dev/#/patchset/20261126020123.65=
-5988-1-ronniesahlberg@gmail.com?part=3D1
+ 
+ struct client {
+ 	struct list_head node;
++	struct list_head wait_node; /* for clients waiting on an event */
+ 	struct timespec expires;
+ 	int state;
+ 	int fd;
+@@ -73,9 +75,13 @@ enum {
+ 	POLLFD_UX2,
+ 	POLLFD_NOTIFY,
+ 	POLLFD_IDLE,
++	POLLFD_WAIT,
+ 	POLLFDS_BASE,
+ };
+ 
++/* Add a new revents value to signal that a waiter wakeup event occurred */
++#define POLLWAIT 0x10000
++
+ #define POLLFD_CHUNK (4096 / sizeof(struct pollfd))
+ /* Minimum number of pollfds to reserve for clients */
+ #define MIN_POLLS (POLLFD_CHUNK - POLLFDS_BASE)
+@@ -99,6 +105,8 @@ static LIST_HEAD(clients);
+ static struct pollfd *polls;
+ static int notify_fd = -1;
+ static int idle_fd = -1;
++static int wait_fd = -1;
++static pthread_mutex_t client_wait_lock = PTHREAD_MUTEX_INITIALIZER;
+ static bool clients_need_lock = false;
+ 
+ static bool _socket_client_is_root(int fd)
+@@ -116,6 +124,8 @@ static bool _socket_client_is_root(int fd)
+ 	return false;
+ }
+ 
++static void stop_waiting_for_event(struct client *c);
++
+ /*
+  * kill off a dead client
+  */
+@@ -123,6 +133,7 @@ static void dead_client(struct client *c)
+ {
+ 	int fd = c->fd;
+ 	list_del_init(&c->node);
++	stop_waiting_for_event(c);
+ 	c->fd = -1;
+ 	reset_strbuf(&c->reply);
+ 	if (c->cmdvec)
+@@ -152,6 +163,7 @@ static void new_client(int ux_sock, int non_root_clients)
+ 		return;
+ 	}
+ 	INIT_LIST_HEAD(&c->node);
++	INIT_LIST_HEAD(&c->wait_node);
+ 	c->fd = fd;
+ 	c->state = CLT_RECV;
+ 	c->is_root = _socket_client_is_root(c->fd);
+@@ -384,6 +396,21 @@ static int execute_handler(struct client *c, struct vectors *vecs)
+ 	return c->handler->fn(c->cmdvec, &c->reply, vecs);
+ }
+ 
++int init_wait_fd(void)
++{
++	wait_fd = eventfd(0, EFD_NONBLOCK | EFD_CLOEXEC);
++
++	if (wait_fd < 0)
++		return -1;
++	return 0;
++}
++
++void cleanup_wait_fd(void)
++{
++	if (wait_fd >= 0)
++		close(wait_fd);
++}
++
+ static void wakeup_listener(int event_fd)
+ {
+ 	uint64_t one = 1;
+@@ -397,6 +424,55 @@ static void wakeup_idle_listener(void)
+ 	wakeup_listener(idle_fd);
+ }
+ 
++void wait_for_event(struct list_head *wait_node, struct list_head *wait_list)
++{
++	pthread_mutex_lock(&client_wait_lock);
++	list_add(wait_node, wait_list);
++	pthread_mutex_unlock(&client_wait_lock);
++}
++
++void wakeup_event_waiter(struct list_head *wait_list)
++{
++	bool have_waiter = false;
++
++	pthread_mutex_lock(&client_wait_lock);
++	while (list_pop(wait_list))
++		have_waiter = true;
++	pthread_mutex_unlock(&client_wait_lock);
++	if (have_waiter)
++		wakeup_listener(wait_fd);
++}
++
++/* must only be called by uxlsnr_thr */
++static void stop_waiting_for_event(struct client *c)
++{
++	/*
++	 * As long as clients will only be added to wait lists by uxlsnr_thr
++	 * and only removed with list_del_init(), it is safe to check if
++	 * wait_node is empty without holding client_wait_lock. uxlsnr_thr
++	 * can't miss a client being added to the list, since a process is
++	 * guaranteed to see all memory changes it did. It can miss a client
++	 * being removed from the list or see a torn write from a concurrent
++	 * removal, but this will just cause it to unnecessarily grab the lock
++	 * and redo the removal.
++	 */
++	if (!list_empty(&c->wait_node)) {
++		pthread_mutex_lock(&client_wait_lock);
++		list_del_init(&c->wait_node);
++		pthread_mutex_unlock(&client_wait_lock);
++	}
++}
++
++static bool finished_waiting(struct client *c)
++{
++	bool ret;
++
++	pthread_mutex_lock(&client_wait_lock);
++	ret = list_empty(&c->wait_node);
++	pthread_mutex_unlock(&client_wait_lock);
++	return ret;
++}
++
+ static void drain_event_fd(int event_fd)
+ {
+ 	uint64_t val;
+@@ -466,8 +542,7 @@ enum {
+ 	STM_BREAK,
+ };
+ 
+-static int client_state_machine(struct client *c, struct vectors *vecs,
+-				short revents)
++static int client_state_machine(struct client *c, struct vectors *vecs, int revents)
+ {
+ 	ssize_t n;
+ 
+@@ -549,8 +624,15 @@ static int client_state_machine(struct client *c, struct vectors *vecs,
+ 			check_for_locked_work(c);
+ 			pthread_cleanup_pop(1);
+ 			condlog(4, "%s: cli[%d] grabbed lock", __func__, c->fd);
+-			set_client_state(c, CLT_SEND);
+-			/* Wait for POLLOUT */
++			/*
++			 * This list_empty() is safe to test without a lock for
++			 * the same reason as in stop_waiting_for_event().
++			 */
++			if (!c->error && !list_empty(&c->wait_node))
++				set_client_state(c, CLT_WAIT);
++			else
++				set_client_state(c, CLT_SEND);
++			/* Wait for POLLOUT or POLLWAIT */
+ 			return STM_BREAK;
+ 		} else {
+ 			condlog(4, "%s: cli[%d] waiting for lock", __func__, c->fd);
+@@ -559,8 +641,18 @@ static int client_state_machine(struct client *c, struct vectors *vecs,
+ 
+ 	case CLT_WORK:
+ 		c->error = execute_handler(c, vecs);
+-		set_client_state(c, CLT_SEND);
+-		/* Wait for POLLOUT */
++		if (!c->error && !list_empty(&c->wait_node))
++			set_client_state(c, CLT_WAIT);
++		else
++			set_client_state(c, CLT_SEND);
++		/* Wait for POLLOUT or POLLWAIT */
++		return STM_BREAK;
++
++	case CLT_WAIT:
++		if (!(revents & POLLWAIT))
++			return STM_BREAK;
++		if (finished_waiting(c))
++			set_client_state(c, CLT_SEND);
+ 		return STM_BREAK;
+ 
+ 	case CLT_SEND:
+@@ -617,10 +709,11 @@ static void check_timeout(struct client *c)
+ 		c->fd, (long)c->expires.tv_sec, c->expires.tv_nsec / 1000000);
+ 
+ 	c->error = -ETIMEDOUT;
++	stop_waiting_for_event(c);
+ 	set_client_state(c, CLT_SEND);
+ }
+ 
+-static void handle_client(struct client *c, struct vectors *vecs, short revents)
++static void handle_client(struct client *c, struct vectors *vecs, int revents)
+ {
+ 	if (revents & (POLLHUP|POLLERR)) {
+ 		c->error = -ECONNRESET;
+@@ -677,6 +770,7 @@ void *uxsock_listen(int n_socks, long *ux_sock_in, void *trigger_data)
+ 	sigdelset(&mask, SIGHUP);
+ 	sigdelset(&mask, SIGUSR1);
+ 	while (1) {
++		int wait_event = 0;
+ 		struct client *c, *tmp;
+ 		int i, n_pfds, poll_count, num_clients, non_root_clients;
+ 		struct timespec __timeout, *timeout;
+@@ -733,6 +827,9 @@ void *uxsock_listen(int n_socks, long *ux_sock_in, void *trigger_data)
+ 		else
+ 			polls[POLLFD_IDLE].events = 0;
+ 
++		polls[POLLFD_WAIT].fd = wait_fd;
++		polls[POLLFD_WAIT].events = POLLIN;
++
+ 		/* setup the clients */
+ 		i = POLLFDS_BASE;
+ 		list_for_each_entry(c, &clients, node) {
+@@ -775,13 +872,18 @@ void *uxsock_listen(int n_socks, long *ux_sock_in, void *trigger_data)
+ 		    polls[POLLFD_IDLE].revents & POLLIN)
+ 			drain_event_fd(idle_fd);
+ 
++		if (polls[POLLFD_WAIT].revents & POLLIN) {
++			drain_event_fd(wait_fd);
++			wait_event = POLLWAIT;
++		}
++
+ 		/* see if a client needs handling */
+ 		list_for_each_entry_safe(c, tmp, &clients, node) {
+-			short revents = 0;
++			int revents = wait_event;
+ 
+ 			for (i = POLLFDS_BASE; i < n_pfds; i++) {
+ 				if (polls[i].fd == c->fd) {
+-					revents = polls[i].revents;
++					revents |= polls[i].revents;
+ 					break;
+ 				}
+ 			}
+diff --git a/multipathd/uxlsnr.h b/multipathd/uxlsnr.h
+index a331e23b..d33920ea 100644
+--- a/multipathd/uxlsnr.h
++++ b/multipathd/uxlsnr.h
+@@ -6,5 +6,9 @@
+ bool waiting_clients(void);
+ void uxsock_cleanup(void *arg);
+ void *uxsock_listen(int n_socks, long *ux_sock, void *trigger_data);
++int init_wait_fd(void);
++void cleanup_wait_fd(void);
++void wait_for_event(struct list_head *wait_node, struct list_head *wait_list);
++void wakeup_event_waiter(struct list_head *wait_list);
+ 
+ #endif
+-- 
+2.56.0
+
