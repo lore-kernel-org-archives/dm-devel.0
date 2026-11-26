@@ -1,44 +1,44 @@
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=100.103.45.18
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1795726275;
-	b=il8RMsG8SzGrrpr3e2EiMl13WAW6mqpxgq1z/avGcoNAys3ggusmLPkLJUkX+Gq5gZG/
-	 Ddh50D6fYB5gYZxMHHf6qxEJe1AaG7Xq7PXm1NvJ911NEDbzViaxCzHVmPNiIx0X5LIKW
-	 R8X4dOxGGz/vGTvYPBU84NTP8y838kLaq42cKHw5s7986keP42S4HmlB9zcph+sp1swCw
-	 9ib3/EpBx+wfgHMN/rG1F5Lwq4VU8JZzEbcMPOw6PDLKQkzXaYxpACmRQvXo2c43YbgG3
-	 c6fbSJbIH5aFKb1aoWCbhR2n7dgHHzVC34Vi6agJxmP0BSSRfZitTKqPRzAxg2x+n1A==
+	t=1795726283;
+	b=B4/tdAs5UgJ0vdKOpntpX82yhGuCERbkBK1+b5AXurApfWd0gElBnRNsmTUpJlw3KTW2
+	 Fo5wIvZMl2gHuV1xIsR/Rhz1kj7vJgqC+spT7HT/tBtcGGfD2wkD6rL/IWRbFz3dzamoJ
+	 wxh+l6sC6KE0uusJso8ZOY64w29KmZKqTzFECpetBebEEvrY2CjEGsdARyqs7LFeBOUtQ
+	 P8oirBiXT5tlXkq//1fLtX/19Sj3xYa49xXg/qYKg9TeN/u3KTWYiHA3DycQ5GuEuEatm
+	 ReiqZkKokJU8tfuoHqNdBU+3Gouxxs/EmfgBAipQStXHAXfSuzTcM3pYpzvrfL9BjuQ==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1795726275;
+	a=rsa-sha256; c=relaxed/relaxed; t=1795726283;
 	h=Received:DKIM-Signature:From:To:Cc:Subject:Date:Message-ID:X-Mailer:
 	 In-Reply-To:References:MIME-Version:Content-Transfer-Encoding;
-	bh=hA+f6mNsTc9W51csUC2q9wjtv1U7ByYW5lCg1cGqWvg=;
-	b=Cb089wmA+lmNISb9QZEX1OHioTQhQBOYaxwPBx6PFte1gp1XFJWUP5Br8mMWx8pqzyCg
-	 ZOtB5Ik3I+5Q+OzUW2np68ScOpPlsOBCIAVHcJgB9ICv4ZhVHLxU7pZ/imItfPLkiBUF8
-	 qchBPbR2qumzmnNDjrUqHeE4AKzP66GLnOIRcsFvBvSGNg4jEkPBt9p7KLmOV+dDcaF+k
-	 FBnhe/wE3eSrh3qQ3P5NtnZKXIPb3WpUClFY5LAcWqX7djvQh+YV4yf+i3mHQPuop9M/I
-	 cvQOrmz6MCEKG26PZ2xjPXupNqFR779h4WlGWtkPi6xr1tPVUSp1JFomdQHxqdgKQqA==
+	bh=ovE10ecPuuG4Q9OyRtgv4d61+DAHAD6pr+MnShX2Rv0=;
+	b=JnyAA2KB8cJK2hXdpEse2l4z39xKTy7XJx7OEj6RzHJOPi+UpLyU+yv2l6fRquz6ZnvI
+	 +7j5IJIGBzVsuDwFmrQ0b/dvp5QucFHM8ujGeDslw3oW4/vPrOyPZiwTv+ycVsIbzlIBX
+	 v+nb3DZLnkystl3dSKD5sXh+4FwKHf/Bls6a6K0PmNF24WJKNabOk7TzwE+9degtCmbzA
+	 IZE5Y/9GJH/kFU1x6yLVxQ+BkoSzPtji5W0hUji4te+783D6lezKQsmDJS+p2XII2CcPM
+	 WscLFED51GpONVia45LFEErnln0xc/yuA9K1sZoP1Dmi3klruR7FZq6g/FQ7U9XSlVQ==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=C2V0wC0l;
+	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=Uk+x+z9P;
 	arc=none smtp.remote-ip=100.103.45.18
 Received: from smtp.kernel.org (quasi.space.kernel.org [100.103.45.18])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with UTF8SMTPS id A3FE9606A337;
-	Thu, 26 Nov 2026 20:51:15 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with UTF8SMTPS id 2D3C6606A321;
+	Thu, 26 Nov 2026 20:51:22 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=C2V0wC0l
-Received: by smtp.kernel.org (Postfix) with UTF8SMTPSA id 8BD1C1F0089A;
-	Thu, 26 Nov 2026 20:51:14 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=Uk+x+z9P
+Received: by smtp.kernel.org (Postfix) with UTF8SMTPSA id 15F461F000C1;
+	Thu, 26 Nov 2026 20:51:22 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
-	s=k20260515; t=1795726275;
-	bh=hA+f6mNsTc9W51csUC2q9wjtv1U7ByYW5lCg1cGqWvg=;
+	s=k20260515; t=1795726282;
+	bh=ovE10ecPuuG4Q9OyRtgv4d61+DAHAD6pr+MnShX2Rv0=;
 	h=From:To:Cc:Subject:Date:In-Reply-To:References;
-	b=C2V0wC0l/YN5fmIXMarw2FEV5iHvzPd4E7o0SZM8Af7LlZ1dUyxpwAt9D3SyYZ+px
-	 05jUWrefMHrUZv+7VRw9n2+iFh2hBwL5JEKcUKwMBBPwZT+rSfXNlND4STKI0U9IqQ
-	 C+zYyEgp0Pd1O3Duji3jQPyt3oku8MOwAYLpX4yLTDcVSb+NPddAgZuqZTsHP31aAu
-	 tXcas7DT7jNv42BYisyvS0tk7AvhYFvvFK0SipzfXB4LU+A9BvYonw4JV5/d6JhmEy
-	 ad7+eJIvNHQkdloya4KaRUHLujpvazp47grYbhdPS+Mj8f3dgFEI3MEWq+0dQ+rcoF
-	 meijcogmMxN4Q==
+	b=Uk+x+z9PvG6Yd5h8MXLve74FONlG7+wrxZlv2yNVg3o7vBNuu1A/SK3B8OrHxebYW
+	 bbQzabvRlKz0WM+gSbq28UkLY62+TfbVONQN/09t2ivONhkeKgynDAKoqdC+wChTJN
+	 JNVlr9lK5YFUjUm6URoKHEyNOsukz59t9G5ekwSeCfTX6ccDiLk1czkgo4J5lRtOLJ
+	 edQGarym0kG2792WvZzA9QswiVTEhTlvADHgn2WZ5R0sy6z17wkoc30BrT4CPMW+e/
+	 ANraVjr/9pLu5fAtrdT47D5CzylLB4Zwr98bVquNCLd65wRGq25lrF927x16Hnl3FJ
+	 7inhk/E+YWzCw==
 From: Jarkko Sakkinen <jarkko@kernel.org>
 To: keyrings@vger.kernel.org
 Cc: Jarkko Sakkinen <jarkko@kernel.org>,
@@ -76,9 +76,9 @@ Cc: Jarkko Sakkinen <jarkko@kernel.org>,
 	"Serge E. Hallyn" <serge@hallyn.com>,
 	Shuah Khan <skhan@linuxfoundation.org>,
 	Sumit Garg <sumit.garg@kernel.org>
-Subject: [PATCH v4 08/11] KEYS: trusted: Reject zero-length keys in symmetric consumers
-Date: Thu, 26 Nov 2026 22:50:18 +0200
-Message-ID: <20261126205021.2200819-9-jarkko@kernel.org>
+Subject: [PATCH v4 10/11] KEYS: trusted: Factor out TPM2 blob loading
+Date: Thu, 26 Nov 2026 22:50:20 +0200
+Message-ID: <20261126205021.2200819-11-jarkko@kernel.org>
 X-Mailer: git-send-email 2.47.3
 In-Reply-To: <20261126205021.2200819-1-jarkko@kernel.org>
 References: <20261126205021.2200819-1-jarkko@kernel.org>
@@ -93,73 +93,324 @@ Precedence: list
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-Asymmetric trusted keys will not carry a raw symmetric key payload
-(key_len == 0). Reject zero-length trusted keys in encrypted-keys,
-af_alg, dm-crypt, and trusted_update() resealing.
+Prepare for asymmetric TPM2 key operations, which reload the TPM key blob
+and append key authorization on each pkey call, by factoring out common
+helpers:
+
+1. Decouple tpm2_key_decode() from struct trusted_key_options.
+2. Factor out tpm2_load_blob() and tpm2_buf_append_key_auth() from
+   tpm2_load_cmd() and tpm2_unseal_cmd().
 
 Signed-off-by: Jarkko Sakkinen <jarkko@kernel.org>
 ---
- crypto/af_alg.c                                  | 2 ++
- drivers/md/dm-crypt.c                            | 2 +-
- security/keys/encrypted-keys/masterkey_trusted.c | 5 +++++
- security/keys/trusted-keys/trusted_core.c        | 2 +-
- 4 files changed, 9 insertions(+), 2 deletions(-)
+ security/keys/trusted-keys/trusted_tpm2.c | 207 ++++++++++++----------
+ 1 file changed, 114 insertions(+), 93 deletions(-)
 
-diff --git a/crypto/af_alg.c b/crypto/af_alg.c
-index ab84c4488a15..133cb88e3c12 100644
---- a/crypto/af_alg.c
-+++ b/crypto/af_alg.c
-@@ -323,6 +323,8 @@ static const u8 *key_data_ptr_trusted(const struct key *key,
- 	if (IS_ERR_OR_NULL(tkp))
- 		return ERR_PTR(-EKEYREVOKED);
+diff --git a/security/keys/trusted-keys/trusted_tpm2.c b/security/keys/trusted-keys/trusted_tpm2.c
+index 921d6fd9a024..231062fd17b6 100644
+--- a/security/keys/trusted-keys/trusted_tpm2.c
++++ b/security/keys/trusted-keys/trusted_tpm2.c
+@@ -97,6 +97,7 @@ static int tpm2_key_encode(struct trusted_key_payload *payload,
  
-+	if (!tkp->key_len)
-+		return ERR_PTR(-EINVAL);
- 	*datalen = tkp->key_len;
+ struct tpm2_key_context {
+ 	u32 parent;
++	enum OID oid;
+ 	const u8 *pub;
+ 	u32 pub_len;
+ 	const u8 *priv;
+@@ -104,11 +105,11 @@ struct tpm2_key_context {
+ 	bool has_policy;
+ };
  
- 	return tkp->key;
-diff --git a/drivers/md/dm-crypt.c b/drivers/md/dm-crypt.c
-index 02038a9cd21d..1e034c747d39 100644
---- a/drivers/md/dm-crypt.c
-+++ b/drivers/md/dm-crypt.c
-@@ -2492,7 +2492,7 @@ static int set_key_trusted(struct crypt_config *cc, struct key *key)
- 	if (!tkp)
- 		return -EKEYREVOKED;
+-static int tpm2_key_decode(struct trusted_key_payload *payload,
+-			   struct trusted_key_options *options,
+-			   u8 **buf, unsigned int *blob_len)
++static int tpm2_key_decode(const struct trusted_key_payload *payload,
++			   const struct trusted_key_tpm *private,
++			   u32 *parent, u8 **buf, unsigned int *blob_len,
++			   enum OID *oid)
+ {
+-	struct trusted_key_tpm *private = options->private;
+ 	int ret;
+ 	struct tpm2_key_context ctx;
+ 	u8 *blob;
+@@ -132,8 +133,10 @@ static int tpm2_key_decode(struct trusted_key_payload *payload,
  
--	if (cc->key_size != tkp->key_len)
-+	if (!tkp->key_len || cc->key_size != tkp->key_len)
- 		return -EINVAL;
+ 	*buf = blob;
+ 	*blob_len = ctx.priv_len + ctx.pub_len;
+-	if (!private->keyhandle)
+-		private->keyhandle = ctx.parent;
++	if (oid)
++		*oid = ctx.oid;
++	if (parent)
++		*parent = ctx.parent;
  
- 	memcpy(cc->key, tkp->key, cc->key_size);
-diff --git a/security/keys/encrypted-keys/masterkey_trusted.c b/security/keys/encrypted-keys/masterkey_trusted.c
-index e6d22ce77e98..8c6e6bdd8ef7 100644
---- a/security/keys/encrypted-keys/masterkey_trusted.c
-+++ b/security/keys/encrypted-keys/masterkey_trusted.c
-@@ -36,6 +36,11 @@ struct key *request_trusted_key(const char *trusted_desc,
+ 	memcpy(blob, ctx.priv, ctx.priv_len);
+ 	blob += ctx.priv_len;
+@@ -209,18 +212,22 @@ int tpm2_key_type(void *context, size_t hdrlen,
+ 		unsigned char tag,
+ 		const void *value, size_t vlen)
+ {
++	struct tpm2_key_context *ctx = context;
+ 	enum OID oid = look_up_OID(value, vlen);
  
- 	down_read(&tkey->sem);
- 	tpayload = tkey->payload.data[0];
-+	if (!tpayload->key_len) {
-+		up_read(&tkey->sem);
-+		key_put(tkey);
-+		return ERR_PTR(-EINVAL);
+-	if (oid != OID_TPMSealedData) {
++	if (oid == OID_TPMSealedData) {
++		ctx->oid = oid;
++		return 0;
 +	}
- 	*master_key = tpayload->key;
- 	*master_keylen = tpayload->key_len;
- error:
-diff --git a/security/keys/trusted-keys/trusted_core.c b/security/keys/trusted-keys/trusted_core.c
-index 27756fc906b9..665b2c37734b 100644
---- a/security/keys/trusted-keys/trusted_core.c
-+++ b/security/keys/trusted-keys/trusted_core.c
-@@ -249,7 +249,7 @@ static int trusted_update(struct key *key, struct key_preparsed_payload *prep)
- 	if (key_is_negative(key))
- 		return -ENOKEY;
- 	p = key->payload.data[0];
--	if (!p->migratable)
-+	if (!p->migratable || !p->key_len)
- 		return -EPERM;
- 	if (datalen == 0 || datalen > 32767 || !prep->data)
- 		return -EINVAL;
++
++	if (IS_ENABLED(CONFIG_DEBUG_KERNEL)) {
+ 		char buffer[50];
+ 
+ 		sprint_oid(value, vlen, buffer, sizeof(buffer));
+-		pr_debug("OID is \"%s\" which is not TPMSealedData\n",
+-			 buffer);
+-		return -EINVAL;
++		pr_debug("OID \"%s\" is not supported\n", buffer);
+ 	}
+ 
+-	return 0;
++	return -EINVAL;
+ }
+ int tpm2_key_pub(void *context, size_t hdrlen,
+ 	       unsigned char tag,
+@@ -462,6 +469,68 @@ int tpm2_seal_trusted(struct tpm_chip *chip,
+ 	return tpm_ret_to_err(rc);
+ }
+ 
++static int tpm2_load_blob(struct tpm_chip *chip,
++			  struct trusted_key_tpm *private,
++			  const u8 *blob, unsigned int blob_len,
++			  u32 *blob_handle)
++{
++	struct tpm_buf *buf __free(kfree) = NULL;
++	u8 parent_name[TPM2_NAME_SIZE];
++	bool created_parent = false;
++	u32 parent_handle;
++	int rc;
++
++	rc = tpm2_load_parent(chip, private->keyhandle, &parent_handle,
++			      parent_name, &created_parent);
++	if (rc)
++		return rc;
++
++	rc = tpm2_start_auth_session(chip);
++	if (rc)
++		goto out;
++
++	buf = kzalloc(TPM_BUFSIZE, GFP_KERNEL);
++	if (!buf) {
++		tpm2_end_auth_session(chip);
++		rc = -ENOMEM;
++		goto out;
++	}
++
++	tpm_buf_init(buf, TPM_BUFSIZE);
++	tpm_buf_reset(buf, TPM2_ST_SESSIONS, TPM2_CC_LOAD);
++
++	rc = tpm_buf_append_name(chip, buf, parent_handle,
++				 created_parent ? parent_name : NULL);
++	if (rc)
++		goto out;
++
++	tpm_buf_append_hmac_session(chip, buf, 0, private->keyauth,
++				    TPM_DIGEST_SIZE);
++
++	tpm_buf_append(buf, blob, blob_len);
++
++	if (buf->flags & TPM_BUF_INVALID) {
++		tpm2_end_auth_session(chip);
++		rc = -E2BIG;
++		goto out;
++	}
++
++	rc = tpm_buf_fill_hmac_session(chip, buf);
++	if (rc)
++		goto out;
++
++	rc = tpm_transmit_cmd(chip, buf, 4, "loading blob");
++	rc = tpm_buf_check_hmac_response(chip, buf, rc);
++	if (!rc)
++		*blob_handle = get_unaligned_be32(&buf->data[TPM_HEADER_SIZE]);
++
++out:
++	if (created_parent)
++		tpm2_flush_context(chip, parent_handle);
++
++	return tpm_ret_to_err(rc);
++}
++
+ /**
+  * tpm2_load_cmd() - execute a TPM2_Load command
+  *
+@@ -482,18 +551,15 @@ static int tpm2_load_cmd(struct tpm_chip *chip,
+ {
+ 	u8 *blob_ref __free(kfree) = NULL;
+ 	struct trusted_key_tpm *private = options->private;
+-	struct tpm_buf *buf __free(kfree) = NULL;
+-	u8 parent_name[TPM2_NAME_SIZE];
+-	bool created_parent = false;
+ 	unsigned int private_len;
+ 	unsigned int public_len;
+ 	unsigned int blob_len;
+-	u32 parent_handle;
++	u32 parent = 0;
+ 	u8 *blob, *pub;
+ 	int rc;
+ 	u32 attrs;
+ 
+-	rc = tpm2_key_decode(payload, options, &blob, &blob_len);
++	rc = tpm2_key_decode(payload, private, &parent, &blob, &blob_len, NULL);
+ 	if (rc) {
+ 		if (rc != -EBADMSG ||
+ 		    (payload->blob_len &&
+@@ -507,6 +573,8 @@ static int tpm2_load_cmd(struct tpm_chip *chip,
+ 	} else {
+ 		/* Bind for cleanup: */
+ 		blob_ref = blob;
++		if (!private->keyhandle)
++			private->keyhandle = parent;
+ 	}
+ 
+ 	/* new format carries keyhandle but old format doesn't */
+@@ -544,56 +612,40 @@ static int tpm2_load_cmd(struct tpm_chip *chip,
+ 	if (blob_len > payload->blob_len)
+ 		return -E2BIG;
+ 
+-	rc = tpm2_load_parent(chip, private->keyhandle, &parent_handle,
+-			      parent_name, &created_parent);
+-	if (rc)
+-		return rc;
++	return tpm2_load_blob(chip, private, blob, blob_len, blob_handle);
++}
+ 
+-	rc = tpm2_start_auth_session(chip);
+-	if (rc)
+-		goto out;
++static void tpm2_buf_append_key_auth(struct tpm_chip *chip,
++				     struct tpm_buf *buf,
++				     struct trusted_key_tpm *private,
++				     u8 hmac_attrs)
++{
++	struct tpm_header *head;
++	int offset;
+ 
+-	buf = kzalloc(TPM_BUFSIZE, GFP_KERNEL);
+-	if (!buf) {
+-		tpm2_end_auth_session(chip);
+-		rc = -ENOMEM;
+-		goto out;
++	if (!private->policyhandle) {
++		tpm_buf_append_hmac_session(chip, buf, hmac_attrs,
++					    private->blobauth,
++					    private->blobauth_len);
++		return;
+ 	}
+ 
+-	tpm_buf_init(buf, TPM_BUFSIZE);
+-	tpm_buf_reset(buf, TPM2_ST_SESSIONS, TPM2_CC_LOAD);
+-
+-	rc = tpm_buf_append_name(chip, buf, parent_handle,
+-				 created_parent ? parent_name : NULL);
+-	if (rc)
+-		goto out;
+-
+-	tpm_buf_append_hmac_session(chip, buf, 0, private->keyauth,
+-				    TPM_DIGEST_SIZE);
+-
+-	tpm_buf_append(buf, blob, blob_len);
+-
+-	if (buf->flags & TPM_BUF_INVALID) {
+-		tpm2_end_auth_session(chip);
+-		rc = -E2BIG;
+-		goto out;
++	/*
++	 * FIXME: The policy session was generated outside the kernel so we
++	 * don't know the nonce and thus can't calculate a HMAC on it.
++	 * Therefore, the user can only really use TPM2_PolicyPassword and we
++	 * must send down the plain text password, which could be intercepted.
++	 */
++	tpm2_buf_append_auth(buf, private->policyhandle, NULL, 0, 0,
++			     private->blobauth, private->blobauth_len);
++	if (tpm2_chip_auth(chip)) {
++		tpm_buf_append_hmac_session(chip, buf, hmac_attrs, NULL, 0);
++	} else {
++		offset = buf->handles * 4 + TPM_HEADER_SIZE;
++		head = (struct tpm_header *)buf->data;
++		if (tpm_buf_length(buf) == offset)
++			head->tag = cpu_to_be16(TPM2_ST_NO_SESSIONS);
+ 	}
+-
+-	rc = tpm_buf_fill_hmac_session(chip, buf);
+-	if (rc)
+-		goto out;
+-
+-	rc = tpm_transmit_cmd(chip, buf, 4, "loading blob");
+-	rc = tpm_buf_check_hmac_response(chip, buf, rc);
+-	if (!rc)
+-		*blob_handle = be32_to_cpup(
+-			(__be32 *)&buf->data[TPM_HEADER_SIZE]);
+-
+-out:
+-	if (created_parent)
+-		tpm2_flush_context(chip, parent_handle);
+-
+-	return tpm_ret_to_err(rc);
+ }
+ 
+ /**
+@@ -614,13 +666,10 @@ static int tpm2_unseal_cmd(struct tpm_chip *chip,
+ 			   u32 blob_handle)
+ {
+ 	struct trusted_key_tpm *private = options->private;
+-	struct tpm_header *head;
+ 	struct tpm_buf *buf __free(kfree) = NULL;
+ 	unsigned int data_len;
+-	int offset;
+ 	u8 *data;
+ 	int rc;
+-
+ 	rc = tpm2_start_auth_session(chip);
+ 	if (rc)
+ 		return rc;
+@@ -638,35 +687,7 @@ static int tpm2_unseal_cmd(struct tpm_chip *chip,
+ 	if (rc)
+ 		return rc;
+ 
+-	if (!private->policyhandle) {
+-		tpm_buf_append_hmac_session(chip, buf, TPM2_SA_ENCRYPT,
+-					    private->blobauth,
+-					    private->blobauth_len);
+-	} else {
+-		/*
+-		 * FIXME: The policy session was generated outside the
+-		 * kernel so we don't known the nonce and thus can't
+-		 * calculate a HMAC on it.  Therefore, the user can
+-		 * only really use TPM2_PolicyPassword and we must
+-		 * send down the plain text password, which could be
+-		 * intercepted.  We can still encrypt the returned
+-		 * key, but that's small comfort since the interposer
+-		 * could repeat our actions with the exfiltrated
+-		 * password.
+-		 */
+-		tpm2_buf_append_auth(buf, private->policyhandle,
+-				     NULL /* nonce */, 0, 0,
+-				     private->blobauth, private->blobauth_len);
+-		if (tpm2_chip_auth(chip)) {
+-			tpm_buf_append_hmac_session(chip, buf, TPM2_SA_ENCRYPT,
+-						    NULL, 0);
+-		} else  {
+-			offset = buf->handles * 4 + TPM_HEADER_SIZE;
+-			head = (struct tpm_header *)buf->data;
+-			if (tpm_buf_length(buf) == offset)
+-				head->tag = cpu_to_be16(TPM2_ST_NO_SESSIONS);
+-		}
+-	}
++	tpm2_buf_append_key_auth(chip, buf, private, TPM2_SA_ENCRYPT);
+ 
+ 	rc = tpm_buf_fill_hmac_session(chip, buf);
+ 	if (rc)
 -- 
 2.47.3
 
