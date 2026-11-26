@@ -1,70 +1,69 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=220.197.31.3
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=220.197.31.5
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1795681605;
-	b=fjpAzQDHyPsCMH/IVm6w/V6putat6cnw95RL4a4QHcb68roOJS8atxJWbGrd5SkBCrq7
-	 N5VOfWN8latVYGy9yFPWRTNRGCVGycOvnHpwig0YCJXOc/oQ2sA38iTZfhX1Da58PxLAs
-	 bcWfiOf/wNan5ZOmsxKOASmdeOjw2szsG+dnj214ebljoznqxs+D1Ldx+D1PB51WuBh+t
-	 LyWu5Ih0huDMbgL3BwZXToYdKdeZshpyXR/FOsNzibG6a2V2PBTgvFXbQESD25ocRSqMD
-	 rQED8dr2zairly/sRk+r3qCGbICJhfByInNX9Jb8+X5oCZck5fba9qj2e+w9Z/Xkq0Q==
+	t=1795681965;
+	b=yP4CLJsgdrc5iohF/mOrYTH1/BabHzgpOKcWhHkxCzGcY+q3zc/VS4CEk5fyV4DOyyWq
+	 CETShSEjErI7JNHJAPy4sqaYEIJlxn5vSHVo7CtE29kca0a5CrUk+5nc6oWYrFvk0OiRI
+	 aCUK2XA59o8in2V+I/uBXc+NWQqJGnUPPPyFku3Uwao1O/1KsOpnIy3WhvJKTbmj1Ouu+
+	 m3kvwqHxqQWjjJw6SR9xKBgeoq0gpCGGL+KVj3HlDhAXBeVUxPMa4INEvZuzEoQNQXNpI
+	 zI6mUd9gcq4P9fFVEglESuR4zCGBvgDYY4H/QClqURqttO+ePz3Q5uCIzY8tOtFb8lw==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1795681605;
+	a=rsa-sha256; c=relaxed/relaxed; t=1795681965;
 	h=DMARC-Filter:DKIM-Signature:Received:From:To:Cc:Subject:Date:
 	 Message-Id:X-Mailer:In-Reply-To:References:MIME-Version:
 	 Content-Transfer-Encoding:X-CM-TRANSID:X-Coremail-Antispam:
 	 X-CM-SenderInfo;
-	bh=nMb0vrZtB0rCGRBMD5Szuw+BH4dPouiVXcf115w+KNw=;
-	b=1E3XgEbG71TpdIqwnb+g96mn0dU+6IduEwbGHREA9Be/C4DFhLs7xBsNXQ7q2HZD4912
-	 Dxv5BQSUkwdhjtpg4c1DOMddfGVYFgSC7ca58Xs5TG44xJqS5ONPtjk6oWuc2d0DWImI5
-	 Pf0maJPqs2FV4w0kuXpVYYEHCkN15koJvw6+R6uIuLmT/th9UcH67EZRNT3uuYxuqhgil
-	 MHnt/UJ6JeqtSbmJU27/7IDvpImfS/DRdifNcyuCZ23TSAqBA/DZRcwgBrGou1feiQF5k
-	 HvF7Z1fQnSDlk8pgnCQTcbjiemfDsqehWobSfRvkFN1ANL6wm1sQ2gzbeFJCeryHhpw==
+	bh=CVPnZRSCWOQxsvGWQVXg1N1wwt11N5KB5w/geIRGCyM=;
+	b=mqN8ytuH50mreJ5lSNePKG2YJrGk31tsD5C864uLpnZ3wrL3gv70eeRmoStY8cgSELIt
+	 +YnA7n6pqRIXdrNCmpbvqgA7sGgPCAtGCg6+ZQ7x3/4wxd1t0V7WectdtjODy8ubWQWF3
+	 kt0HSjooprkQLDpfWE8y72z/W+D1eS3KJekE7FMlvADlKtj0BRXYP/8GsP+lRh3RcroN5
+	 4Bs89xow9Qp8/PjWbAkt6ZGJhpcU2737Qu3D45NXFsOK54PRErtVJ/FI1d0D6usfgIdou
+	 +g+Di0hvdTyQNKJI1Il8/Xl//uEoLmh9PRq+AFzQkXBHvTxqJ4ofwV/9B5AsPfeaggA==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
 	dmarc=pass header.from=163.com;
 	spf=pass smtp.mailfrom=163.com;
-	dkim=pass header.d=163.com header.i=@163.com header.a=rsa-sha256 header.s=s110527 header.b=c1UESQdY;
-	arc=none smtp.remote-ip=220.197.31.3
-Received: from m16.mail.163.com (m16.mail.163.com [220.197.31.3])
+	dkim=pass header.d=163.com header.i=@163.com header.a=rsa-sha256 header.s=s110527 header.b=BxlfYtwY;
+	arc=none smtp.remote-ip=220.197.31.5
+Received: from m16.mail.163.com (m16.mail.163.com [220.197.31.5])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 82E55606A31C
-	for <dm-devel@lists.linux.dev>; Thu, 26 Nov 2026 08:26:44 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 82E55606A31C
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id CAE95606A327
+	for <dm-devel@lists.linux.dev>; Thu, 26 Nov 2026 08:32:42 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org CAE95606A327
 Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=163.com
 Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=163.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=163.com header.i=@163.com header.a=rsa-sha256 header.s=s110527 header.b=c1UESQdY
+	dkim=pass (1024-bit key, unprotected) header.d=163.com header.i=@163.com header.a=rsa-sha256 header.s=s110527 header.b=BxlfYtwY
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=163.com;
-	s=s110527; h=From:To:Subject:Date:Message-Id:MIME-Version; bh=nM
-	b0vrZtB0rCGRBMD5Szuw+BH4dPouiVXcf115w+KNw=; b=c1UESQdYYdl8ML0ayl
-	TR1i+ed15Q22nTaEcsNSQPkwVb2Wi6fHLrtoBHsLjxR+nDOcveoYsIuNi22n+1JW
-	+uMgvfbLt6dC5+rFpIUdgMRbRG/KFQGF+x5yVOeaCfewDpS091+deDSqVUP+Ua6H
-	qssZZBQGJ5+Ipfczff8r+NI4o=
+	s=s110527; h=From:To:Subject:Date:Message-Id:MIME-Version; bh=CV
+	PnZRSCWOQxsvGWQVXg1N1wwt11N5KB5w/geIRGCyM=; b=BxlfYtwYZHssk8y/r5
+	wANDT8vMT4ubKdZsZ7FzjdSsiZtDoZuMmPAIOCCrn0yHWvi6qDmj0/NjR1HPwZlo
+	W0rI3GdPVGJq+cK21pHrTmQ1ha5Vf2/L8YIjOp0MbZGQoC30E/W+JecPTek0mfls
+	Ghihdxp8dJWuquRaRxZmk+Gcg=
 Received: from localhost.localdomain (unknown [])
-	by gzsmtp1 (Coremail) with SMTP id PCgvCgBn7+Yt7Qdr9WuKHQ--.46746S2;
-	Thu, 26 Nov 2026 16:26:22 +0800 (CST)
+	by gzga-smtp-mtada-g0-4 (Coremail) with SMTP id _____wD3_72N7gdr0m+nLA--.38709S3;
+	Thu, 26 Nov 2026 16:32:15 +0800 (CST)
 From: "Li Youhong" <dayou5941@163.com>
-To: dayou5941@163.com
-Cc: agk@redhat.com,
-	bmarzins@redhat.com,
+To: song@kernel.org,
+	yukuai@fygo.io,
+	agk@redhat.com,
+	snitzer@kernel.org,
+	mpatocka@redhat.com,
+	bmarzins@redhat.com
+Cc: magiclinan@didiglobal.com,
+	xiao@kernel.org,
+	linux-raid@vger.kernel.org,
 	dm-devel@lists.linux.dev,
 	linux-kernel@vger.kernel.org,
-	linux-raid@vger.kernel.org,
-	liyouhong@kylinos.cn,
-	magiclinan@didiglobal.com,
-	mpatocka@redhat.com,
-	snitzer@kernel.org,
-	song@kernel.org,
-	stable@vger.kernel.org,
 	syzbot+a53c2918175b36cfd601@syzkaller.appspotmail.com,
-	xiao@kernel.org,
-	yukuai@fygo.io
-Subject: Re: [PATCH v6 2/2] md: fix sync_work vs array teardown races
-Date: Thu, 26 Nov 2026 16:26:21 +0800
-Message-Id: <20261126082621.194246-1-dayou5941@163.com>
+	liyouhong@kylinos.cn,
+	stable@vger.kernel.org
+Subject: [PATCH v7 1/2] md: use work_busy() to flush sync_work in stop_sync_thread()
+Date: Thu, 26 Nov 2026 16:32:09 +0800
+Message-Id: <20261126083210.210866-2-dayou5941@163.com>
 X-Mailer: git-send-email 2.25.1
-In-Reply-To: <20261126081030.150032-1-dayou5941@163.com>
-References: <20261126081030.150032-1-dayou5941@163.com>
+In-Reply-To: <20261126083210.210866-1-dayou5941@163.com>
+References: <20261126083210.210866-1-dayou5941@163.com>
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Post: <mailto:dm-devel@lists.linux.dev>
@@ -75,18 +74,37 @@ List-Owner: <mailto:dm-devel+owner@lists.linux.dev>
 Precedence: list
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
-X-CM-TRANSID:PCgvCgBn7+Yt7Qdr9WuKHQ--.46746S2
-X-Coremail-Antispam: 1Uf129KBjDUn29KB7ZKAUJUUUUU529EdanIXcx71UUUUU7v73
-	VFW2AGmfu7bjvjm3AaLaJ3UbIYCTnIWIevJa73UjIFyTuYvjTRMUDXUUUUU
-X-CM-SenderInfo: 5gd103ivzuiqqrwthudrp/xtbC+g4j0WsH7S4yjwAA3U
+X-CM-TRANSID:_____wD3_72N7gdr0m+nLA--.38709S3
+X-Coremail-Antispam: 1Uf129KBjvdXoWrtFy5Ww47Gry5WryxJw18Zrb_yoWfuwcE9F
+	W5Xry7Gry7Kr1rJF1rZwn7ZrWrtrnIgw1DWF1IyFW2kryUZr1jvFs8CwnIvwnava97Ww4a
+	9rWDCa4IywsxujkaLaAFLSUrUUUUjb8apTn2vfkv8UJUUUU8Yxn0WfASr-VFAUDa7-sFnT
+	9fnUUvcSsGvfC2KfnxnUUI43ZEXa7IUbApnPUUUUU==
+X-CM-SenderInfo: 5gd103ivzuiqqrwthudrp/xtbC+Q97KmsH7o++qwAA3-
 
-Hi,
+From: Li Youhong <liyouhong@kylinos.cn>
 
-Sorry, this series was not sent correctly (the patches were not
-posted as one continuous, dependent series). Please ignore it.
+stop_sync_thread() only flushes sync_work when work_pending() is true.
+Once the work is running, PENDING is cleared, so an in-flight
+md_start_sync() can be missed and teardown can race with it.
 
-I will resend a corrected v6 shortly.
+Use work_busy() instead, so both queued and executing sync_work are
+flushed.
 
-Thanks,
-Li Youhong
+Fixes: db5e653d7c9f ("md: delay choosing sync action to md_start_sync()")
+Cc: stable@vger.kernel.org
+Signed-off-by: Li Youhong <liyouhong@kylinos.cn>
+
+diff --git a/drivers/md/md.c b/drivers/md/md.c
+index 03e35386a802..1974943bf746 100644
+--- a/drivers/md/md.c
++++ b/drivers/md/md.c
+@@ -5213,7 +5213,7 @@ static void stop_sync_thread(struct mddev *mddev, bool locked)
+ 	 * never happen
+ 	 */
+ 	md_wakeup_thread_directly(&mddev->sync_thread);
+-	if (work_pending(&mddev->sync_work))
++	if (work_busy(&mddev->sync_work))
+ 		flush_work(&mddev->sync_work);
+ 
+ 	wait_event(resync_wait,
 
