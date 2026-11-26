@@ -1,82 +1,66 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=170.10.129.124
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=117.135.210.4
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1795670684;
-	b=rTBnKA3sakmwnYBTkC36VQzpS4f+4sw18R0xfbR6tPNXLCpWDx+o1vzaaOdOjVXnXzuD
-	 mxqV9seKtikjQF8TGEyLoBDe3GRpl5V/KO/N8k5IqUiELqsg21RJqv0vFCkAPVb0hpopr
-	 uINTGIaYkSF3Alsr+BFiHwDaeXpkOBjSuHAkFA0b/Lr8aWROp/bobHOcwQFrTHIZ7ve7S
-	 oAvtuYVTs82MMaogUW3dkyCsohczrlNSazyFy8ZYxq8K0RtT4yECLYvTK+nHatOTg5pty
-	 jgY7lEhKJTyXI8UvN+0AH3J503f4lAdqEdvX97PMyY5LyF4v6Uh2KEMFor8hHXA8QwA==
+	t=1795680664;
+	b=RGF6hLJgYnIrhnuANjHle5/HzA+quLCpnye/PFkILuVxrixaif05voeX2cfqGJ0qbCom
+	 9k1mJYHGWF4okOqzhdC1MR17cXeD8mqOKTGETjgL/rno00QLDKkUFg5S38QBXyZbTU98z
+	 j9X6YkXjhZ4gvEV0o70vdQwiorLZTsXoUyIKCYRQgbc1HVsT5OsDDTGG7FnPg0XirlYdB
+	 VSbBwRMC+HnhDZQt7r3lRQ+QRbLd701eDug0lcovUtC3HSl5pxIRW40L5zT2g5wHIckS9
+	 +JbJktTUZsREnH6JKB1nWPTnXtVrZ+kh4LvkfGN+KY7MZJNl+SHZfAaV6slfw+s8DBQ==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1795670684;
-	h=DMARC-Filter:DKIM-Signature:Received:X-MC-Unique:
-	 X-Mimecast-MFC-AGG-ID:Received:Received:Received:Received:From:To:Cc:
-	 Subject:Date:Message-ID:In-Reply-To:References:MIME-Version:
-	 X-Scanned-By:X-Mimecast-Spam-Score:X-Mimecast-MFC-PROC-ID:
-	 X-Mimecast-Originator:Content-Transfer-Encoding:content-type;
-	bh=r7Jv/1hIpAAJ2lN0lfawmlPAKAx/pl4W3D4qvmP28wQ=;
-	b=x5nzGzCwwtnh/lirkwmNJpk0OfpUgnLwkoFt4LgUGtBZ/kX6wFXRFoN3KJDg0fpDAbnq
-	 aUt4c4DBBLbiOci/Cvj9kartDMU+ZMfDhc4o+7k6ZmrRgYhfbQdwe8dM1MzrlqfphZorF
-	 rZrwIeINrlMDgFODdMlFVAFmAPqqRoqJHvDalMBoQdL+Oz+C8fK+5W10XghgXQE7kpYgg
-	 RMASAc/iOP2PpCGjo77bHVeI4/R0e6AhyQw/YbYxnTz2oebLjw+nlPpg+54uKaL0itxJk
-	 pc/lyd39KcgnlPkseEtn7BkiAr9OiMHArYe4UC03fIYd7C+usbQf6D0PEfzeZIJS1Ug==
+	a=rsa-sha256; c=relaxed/relaxed; t=1795680664;
+	h=DMARC-Filter:DKIM-Signature:Received:From:To:Cc:Subject:Date:
+	 Message-Id:X-Mailer:MIME-Version:Content-Transfer-Encoding:
+	 X-CM-TRANSID:X-Coremail-Antispam:X-CM-SenderInfo;
+	bh=zEQwtcUWwjAq78GdjPwtjH5gDHtM20DukqhFmEz6c/g=;
+	b=ww9rehmuDuZz8gYa5ZV+FdeadTKpe4gMeXRLv4HLhhLZxPXSGiIDh9BPRwBT3DyWV0nQ
+	 fkDqUTiCGfUW2oKHPHw/arCIIYgSbnBLNoqzyLTDcUbuKdWAKUmga0Dbm393VgVqISrZB
+	 wLGtYfZffj+YouB1k/K4EsqTN2M8IXyAmoq+IqZQRLFos30H4h815W7/PutHXBeWSz4vk
+	 oiygmrCkAFt1qeosuXn8QWa0TNtwtY9pb3JZvxULLJ8Xc2iLFe8HzRo9IWReae4x4JyfA
+	 qouJpOgOBymqHIFterEYWavOxPM6ZVOZZ18lytGImNaHAjUvJ2n9WJCuyPacAFwZjVw==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dmarc=pass header.from=redhat.com;
-	spf=pass smtp.mailfrom=redhat.com;
-	dkim=pass header.d=redhat.com header.i=@redhat.com header.a=rsa-sha256 header.s=mimecast20190719 header.b=ORk0Lkoc;
-	arc=none smtp.remote-ip=170.10.129.124
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
+	dmarc=pass header.from=163.com;
+	spf=pass smtp.mailfrom=163.com;
+	dkim=pass header.d=163.com header.i=@163.com header.a=rsa-sha256 header.s=s110527 header.b=Ei22lknx;
+	arc=none smtp.remote-ip=117.135.210.4
+Received: from m16.mail.163.com (m16.mail.163.com [117.135.210.4])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 55D9D606A321
-	for <dm-devel@lists.linux.dev>; Thu, 26 Nov 2026 05:24:42 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 55D9D606A321
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 7D09C606A31E
+	for <dm-devel@lists.linux.dev>; Thu, 26 Nov 2026 08:11:01 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 7D09C606A31E
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=163.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=163.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.a=rsa-sha256 header.s=mimecast20190719 header.b=ORk0Lkoc
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1795670682;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=r7Jv/1hIpAAJ2lN0lfawmlPAKAx/pl4W3D4qvmP28wQ=;
-	b=ORk0LkocdFt0ik76JOAfBViIixXhhGbS5mhxTcvDkgRTylGBzz0pqSVY7vn0m+00LBNyYJ
-	s3HVajwfqlTugcxN76G1abfdNeceWyslREl7grYBYndjIwh2xbOYsQJWItBGS2PPTsi469
-	wQCNLToJsjMxa2Z7d7HhWK96KnUOJ7U=
-Received: from mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com
- (ec2-35-165-154-97.us-west-2.compute.amazonaws.com [35.165.154.97]) by
- relay.mimecast.com with ESMTP with STARTTLS (version=TLSv1.3,
- cipher=TLS_AES_256_GCM_SHA384) id us-mta-125-s_yr69nHMK-XBMO20lbQUg-1; Thu,
- 26 Nov 2026 05:24:38 +0000
-X-MC-Unique: s_yr69nHMK-XBMO20lbQUg-1
-X-Mimecast-MFC-AGG-ID: s_yr69nHMK-XBMO20lbQUg_1795670677
-Received: from mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com [10.30.177.12])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature RSA-PSS (2048 bits) server-digest SHA256)
-	(No client certificate requested)
-	by mx-prod-mc-08.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id 010301800359;
-	Thu, 26 Nov 2026 05:24:37 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (bmarzins-01.fast.eng.rdu2.dc.redhat.com [10.6.23.12])
-	by mx-prod-int-03.mail-002.prod.us-west-2.aws.redhat.com (Postfix) with ESMTPS id A5A9C195608B;
-	Thu, 26 Nov 2026 05:24:36 +0000 (UTC)
-Received: from bmarzins-01.fast.eng.rdu2.dc.redhat.com (localhost [127.0.0.1])
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.17.1) with ESMTPS id 6AQ5OZY9725794
-	(version=TLSv1.3 cipher=TLS_AES_256_GCM_SHA384 bits=256 verify=NOT);
-	Thu, 26 Nov 2026 00:24:35 -0500
-Received: (from bmarzins@localhost)
-	by bmarzins-01.fast.eng.rdu2.dc.redhat.com (8.18.1/8.18.1/Submit) id 6AQ5OZlj725793;
-	Thu, 26 Nov 2026 00:24:35 -0500
-From: Benjamin Marzinski <bmarzins@redhat.com>
-To: Christophe Varoqui <christophe.varoqui@opensvc.com>
-Cc: device-mapper development <dm-devel@lists.linux.dev>,
-        Martin Wilck <Martin.Wilck@suse.com>
-Subject: [PATCH 3/4] multipathd: make cli_handlers take a wait_node
-Date: Thu, 26 Nov 2026 00:24:33 -0500
-Message-ID: <20261126052434.725762-4-bmarzins@redhat.com>
-In-Reply-To: <20261126052434.725762-1-bmarzins@redhat.com>
-References: <20261126052434.725762-1-bmarzins@redhat.com>
+	dkim=pass (1024-bit key) header.d=163.com header.i=@163.com header.a=rsa-sha256 header.s=s110527 header.b=Ei22lknx
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=163.com;
+	s=s110527; h=From:To:Subject:Date:Message-Id:MIME-Version; bh=zE
+	QwtcUWwjAq78GdjPwtjH5gDHtM20DukqhFmEz6c/g=; b=Ei22lknx7JSeUpb/2v
+	Ekt8HgRfA1xvDgERXeZrgs8zM1sX70K3ooREsFL0+m6gbHAo+HBNruGcr+q5RJPw
+	+e71A0/pojFw3UnPt9bberiG1rJVvZmzcFdLwukB5wWB8t+8RZ4nugZXuF0q6VGA
+	xXSEPVZ2fYofvyaz4CwuDBHG0=
+Received: from localhost.localdomain (unknown [])
+	by gzsmtp5 (Coremail) with SMTP id QCgvCgAnxpp36Qdr_XPjIA--.32026S2;
+	Thu, 26 Nov 2026 16:10:32 +0800 (CST)
+From: "Li Youhong" <dayou5941@163.com>
+To: song@kernel.org,
+	yukuai@fygo.io,
+	agk@redhat.com,
+	snitzer@kernel.org,
+	mpatocka@redhat.com,
+	bmarzins@redhat.com
+Cc: dm-devel@lists.linux.dev,
+	magiclinan@didiglobal.com,
+	xiao@kernel.org,
+	linux-raid@vger.kernel.org,
+	linux-kernel@vger.kernel.org,
+	Li Youhong <liyouhong@kylinos.cn>,
+	syzbot+a53c2918175b36cfd601@syzkaller.appspotmail.com,
+	stable@vger.kernel.org
+Subject: [PATCH v6 2/2] md: fix sync_work vs array teardown races
+Date: Thu, 26 Nov 2026 16:10:30 +0800
+Message-Id: <20261126081030.150032-1-dayou5941@163.com>
+X-Mailer: git-send-email 2.25.1
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Post: <mailto:dm-devel@lists.linux.dev>
@@ -86,686 +70,133 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 List-Owner: <mailto:dm-devel+owner@lists.linux.dev>
 Precedence: list
 MIME-Version: 1.0
-X-Scanned-By: MIMEDefang 3.0 on 10.30.177.12
-X-Mimecast-Spam-Score: 0
-X-Mimecast-MFC-PROC-ID: gHEfT9k92GUpfdxnuFjJpxCo3O89YQwS4sX2vBP52K0_1795670677
-X-Mimecast-Originator: redhat.com
 Content-Transfer-Encoding: 8bit
-content-type: text/plain; charset="US-ASCII"; x-default=true
+X-CM-TRANSID:QCgvCgAnxpp36Qdr_XPjIA--.32026S2
+X-Coremail-Antispam: 1Uf129KBjvJXoWxZF15AF4xZry3Kw45tr1DKFg_yoWruryxp3
+	yrJFn8Jr4Ut3yrZFyDKFyDua4Yvw1ag3yDtryxua4rAw1ftr4a9Fy093WjvFWDJas3tayU
+	Z3yrJFZxZFyvgF7anT9S1TB71UUUUU7qnTZGkaVYY2UrUUUUjbIjqfuFe4nvWSU5nxnvy2
+	9KBjDUYxBIdaVFxhVjvjDU0xZFpf9x07jjCJQUUUUU=
+X-CM-SenderInfo: 5gd103ivzuiqqrwthudrp/xtbC+hg142sH6XjahAAA3X
 
-To enable client handler functions to add clients to wait lists, add
-c->wait_node as a cli_handler argument.
+From: Li Youhong <liyouhong@kylinos.cn>
 
-Signed-off-by: Benjamin Marzinski <bmarzins@redhat.com>
+dm-raid tears down arrays via md_stop(), which cleared mddev->pers
+without waiting for previously queued sync_work. That work could
+then call remove_spares() with pers == NULL, or keep using mddev
+after raid_dtr() frees it.
+
+do_md_stop()/md_stop_writes() already call stop_sync_thread() before
+teardown. Do the same in md_stop().
+
+Calling stop_sync_thread() from md_stop() can drop reconfig_mutex,
+which introduces two follow-on issues:
+
+- When nothing is in flight, keep reconfig_mutex if the caller held
+  it (gate the idle early-return with work_busy()). Otherwise clear
+  of an inactive array can race with do_md_run().
+
+- While the mutex is dropped, mddev->thread may run
+  md_reap_sync_thread() and queue event_work. Flush event_work on
+  the raid_ctr() error path before raid_set_free().
+
+Separately, the read-only path in md_check_recovery() queued
+sync_work without honouring MD_RECOVERY_FROZEN, unlike the
+read-write path. Check FROZEN there so freeze/stop cannot race
+with a new queue.
+
+Fixes: db5e653d7c9f ("md: delay choosing sync action to md_start_sync()")
+Fixes: 81e2ce1b3d5a ("md: delay remove_and_add_spares() for read only array to md_start_sync()")
+Reported-by: syzbot+a53c2918175b36cfd601@syzkaller.appspotmail.com
+Closes: https://syzkaller.appspot.com/bug?extid=a53c2918175b36cfd601
+Cc: stable@vger.kernel.org
+Signed-off-by: Li Youhong <liyouhong@kylinos.cn>
 ---
- multipathd/cli.h          |   4 +-
- multipathd/cli_handlers.c | 224 ++++++++++++++++++++------------------
- multipathd/uxlsnr.c       |   2 +-
- 3 files changed, 120 insertions(+), 110 deletions(-)
-
-diff --git a/multipathd/cli.h b/multipathd/cli.h
-index 3e607389..6d599ca7 100644
---- a/multipathd/cli.h
-+++ b/multipathd/cli.h
-@@ -2,6 +2,7 @@
- #define CLI_H_INCLUDED
+diff --git a/drivers/md/dm-raid.c b/drivers/md/dm-raid.c
+index ac019a0f5a92..f82c09d858de 100644
+--- a/drivers/md/dm-raid.c
++++ b/drivers/md/dm-raid.c
+@@ -3319,6 +3319,13 @@ static int raid_ctr(struct dm_target *ti, unsigned int argc, char **argv)
+ 	md_stop(&rs->md);
+ 	mddev_unlock(&rs->md);
+ bad:
++	/*
++	 * md_stop() may drop reconfig_mutex so mddev->thread can run
++	 * md_reap_sync_thread() and queue event_work; wait for it before
++	 * freeing raid_set. Skip if INIT_WORK has not run yet.
++	 */
++	if (rs->md.event_work.func)
++		flush_work(&rs->md.event_work);
+ 	raid_set_free(rs);
  
- #include <stdint.h>
-+#include "list.h"
- 
- /*
-  * CLI commands consist of 4 bytes, a verb (byte 0) and up to
-@@ -133,7 +134,8 @@ struct key {
- 
- struct strbuf;
- 
--typedef int (cli_handler)(void *keywords, struct strbuf *reply, void *data);
-+typedef int (cli_handler)(void *keywords, struct strbuf *reply,
-+			  struct list_head *wait_node, void *data);
- 
- struct handler {
- 	uint32_t fingerprint;
-diff --git a/multipathd/cli_handlers.c b/multipathd/cli_handlers.c
-index f5a13c46..e5c43bd8 100644
---- a/multipathd/cli_handlers.c
-+++ b/multipathd/cli_handlers.c
-@@ -184,8 +184,8 @@ reset_stats(struct multipath * mpp)
- 	mpp->stat_map_failures = 0;
- }
- 
--static int
--cli_list_config (void *v, struct strbuf *reply, void *data)
-+static int cli_list_config(void *v, struct strbuf *reply,
-+			   struct list_head *wait_node, void *data)
- {
- 	condlog(3, "list config (operator)");
- 
-@@ -197,8 +197,8 @@ static void v_free(void *x)
- 	vector_free(x);
- }
- 
--static int
--cli_list_config_local (void *v, struct strbuf *reply, void *data)
-+static int cli_list_config_local(void *v, struct strbuf *reply,
-+				 struct list_head *wait_node, void *data)
- {
- 	struct vectors *vecs = (struct vectors *)data;
- 	vector hwes;
-@@ -213,8 +213,8 @@ cli_list_config_local (void *v, struct strbuf *reply, void *data)
- 	return ret;
- }
- 
--static int
--cli_list_paths (void *v, struct strbuf *reply, void *data)
-+static int cli_list_paths(void *v, struct strbuf *reply,
-+			  struct list_head *wait_node, void *data)
- {
- 	struct vectors * vecs = (struct vectors *)data;
- 
-@@ -223,8 +223,8 @@ cli_list_paths (void *v, struct strbuf *reply, void *data)
- 	return show_paths(reply, vecs, PRINT_PATH_CHECKER, 1);
- }
- 
--static int
--cli_list_paths_fmt (void *v, struct strbuf *reply, void *data)
-+static int cli_list_paths_fmt(void *v, struct strbuf *reply,
-+			      struct list_head *wait_node, void *data)
- {
- 	struct vectors * vecs = (struct vectors *)data;
- 	char * fmt = get_keyparam(v, KEY_FMT);
-@@ -234,8 +234,8 @@ cli_list_paths_fmt (void *v, struct strbuf *reply, void *data)
- 	return show_paths(reply, vecs, fmt, 1);
- }
- 
--static int
--cli_list_paths_raw (void *v, struct strbuf *reply, void * data)
-+static int cli_list_paths_raw(void *v, struct strbuf *reply,
-+			      struct list_head *wait_node, void *data)
- {
- 	struct vectors * vecs = (struct vectors *)data;
- 	char * fmt = get_keyparam(v, KEY_FMT);
-@@ -245,8 +245,8 @@ cli_list_paths_raw (void *v, struct strbuf *reply, void * data)
- 	return show_paths(reply, vecs, fmt, 0);
- }
- 
--static int
--cli_list_path (void *v, struct strbuf *reply, void *data)
-+static int cli_list_path(void *v, struct strbuf *reply,
-+			 struct list_head *wait_node, void *data)
- {
- 	struct vectors * vecs = (struct vectors *)data;
- 	char * param = get_keyparam(v, KEY_PATH);
-@@ -262,8 +262,8 @@ cli_list_path (void *v, struct strbuf *reply, void *data)
- 	return show_path(reply, vecs, pp, "%o");
- }
- 
--static int
--cli_list_map_topology (void *v, struct strbuf *reply, void *data)
-+static int cli_list_map_topology(void *v, struct strbuf *reply,
-+				 struct list_head *wait_node, void *data)
- {
- 	struct multipath * mpp;
- 	struct vectors * vecs = (struct vectors *)data;
-@@ -284,8 +284,8 @@ cli_list_map_topology (void *v, struct strbuf *reply, void *data)
- 	return show_map_topology(reply, mpp, vecs, p_width);
- }
- 
--static int
--cli_list_maps_topology (void *v, struct strbuf *reply, void *data)
-+static int cli_list_maps_topology(void *v, struct strbuf *reply,
-+				  struct list_head *wait_node, void *data)
- {
- 	struct vectors * vecs = (struct vectors *)data;
- 
-@@ -294,8 +294,8 @@ cli_list_maps_topology (void *v, struct strbuf *reply, void *data)
- 	return show_maps_topology(reply, vecs);
- }
- 
--static int
--cli_list_map_json (void *v, struct strbuf *reply, void *data)
-+static int cli_list_map_json(void *v, struct strbuf *reply,
-+			     struct list_head *wait_node, void *data)
- {
- 	struct multipath * mpp;
- 	struct vectors * vecs = (struct vectors *)data;
-@@ -312,8 +312,8 @@ cli_list_map_json (void *v, struct strbuf *reply, void *data)
- 	return show_map_json(reply, mpp, vecs);
- }
- 
--static int
--cli_list_maps_json (void *v, struct strbuf *reply, void *data)
-+static int cli_list_maps_json(void *v, struct strbuf *reply,
-+			      struct list_head *wait_node, void *data)
- {
- 	struct vectors * vecs = (struct vectors *)data;
- 
-@@ -322,8 +322,8 @@ cli_list_maps_json (void *v, struct strbuf *reply, void *data)
- 	return show_maps_json(reply, vecs);
- }
- 
--static int
--cli_list_wildcards (void *v, struct strbuf *reply, void *data)
-+static int cli_list_wildcards(void *v, struct strbuf *reply,
-+			      struct list_head *wait_node, void *data)
- {
- 	if (snprint_wildcards(reply) < 0)
- 		return 1;
-@@ -404,8 +404,8 @@ show_maps (struct strbuf *reply, struct vectors *vecs, char *style,
- 	return 0;
- }
- 
--static int
--cli_list_maps_fmt (void *v, struct strbuf *reply, void *data)
-+static int cli_list_maps_fmt(void *v, struct strbuf *reply,
-+			     struct list_head *wait_node, void *data)
- {
- 	struct vectors * vecs = (struct vectors *)data;
- 	char * fmt = get_keyparam(v, KEY_FMT);
-@@ -415,8 +415,8 @@ cli_list_maps_fmt (void *v, struct strbuf *reply, void *data)
- 	return show_maps(reply, vecs, fmt, 1);
- }
- 
--static int
--cli_list_maps_raw (void *v, struct strbuf *reply, void *data)
-+static int cli_list_maps_raw(void *v, struct strbuf *reply,
-+			     struct list_head *wait_node, void *data)
- {
- 	struct vectors * vecs = (struct vectors *)data;
- 	char * fmt = get_keyparam(v, KEY_FMT);
-@@ -426,8 +426,8 @@ cli_list_maps_raw (void *v, struct strbuf *reply, void *data)
- 	return show_maps(reply, vecs, fmt, 0);
- }
- 
--static int
--cli_list_map_fmt (void *v, struct strbuf *reply, void *data)
-+static int cli_list_map_fmt(void *v, struct strbuf *reply,
-+			    struct list_head *wait_node, void *data)
- {
- 	struct multipath * mpp;
- 	struct vectors * vecs = (struct vectors *)data;
-@@ -448,8 +448,8 @@ cli_list_map_fmt (void *v, struct strbuf *reply, void *data)
- 	return show_map(reply, mpp, fmt, width);
- }
- 
--static int
--cli_list_maps (void *v, struct strbuf *reply, void *data)
-+static int cli_list_maps(void *v, struct strbuf *reply,
-+			 struct list_head *wait_node, void *data)
- {
- 	struct vectors * vecs = (struct vectors *)data;
- 
-@@ -458,8 +458,8 @@ cli_list_maps (void *v, struct strbuf *reply, void *data)
- 	return show_maps(reply, vecs, PRINT_MAP_NAMES, 1);
- }
- 
--static int
--cli_list_status (void *v, struct strbuf *reply, void *data)
-+static int cli_list_status(void *v, struct strbuf *reply,
-+			   struct list_head *wait_node, void *data)
- {
- 	struct vectors * vecs = (struct vectors *)data;
- 
-@@ -468,8 +468,8 @@ cli_list_status (void *v, struct strbuf *reply, void *data)
- 	return show_status(reply, vecs);
- }
- 
--static int
--cli_list_maps_status (void *v, struct strbuf *reply, void *data)
-+static int cli_list_maps_status(void *v, struct strbuf *reply,
-+				struct list_head *wait_node, void *data)
- {
- 	struct vectors * vecs = (struct vectors *)data;
- 
-@@ -478,8 +478,8 @@ cli_list_maps_status (void *v, struct strbuf *reply, void *data)
- 	return show_maps(reply, vecs, PRINT_MAP_STATUS, 1);
- }
- 
--static int
--cli_list_maps_stats (void *v, struct strbuf *reply, void *data)
-+static int cli_list_maps_stats(void *v, struct strbuf *reply,
-+			       struct list_head *wait_node, void *data)
- {
- 	struct vectors * vecs = (struct vectors *)data;
- 
-@@ -488,16 +488,16 @@ cli_list_maps_stats (void *v, struct strbuf *reply, void *data)
- 	return show_maps(reply, vecs, PRINT_MAP_STATS, 1);
- }
- 
--static int
--cli_list_daemon (void *v, struct strbuf *reply, void *data)
-+static int cli_list_daemon(void *v, struct strbuf *reply,
-+			   struct list_head *wait_node, void *data)
- {
- 	condlog(3, "list daemon (operator)");
- 
- 	return show_daemon(reply);
- }
- 
--static int
--cli_reset_maps_stats (void *v, struct strbuf *reply, void *data)
-+static int cli_reset_maps_stats(void *v, struct strbuf *reply,
-+				struct list_head *wait_node, void *data)
- {
- 	struct vectors * vecs = (struct vectors *)data;
- 	int i;
-@@ -511,8 +511,8 @@ cli_reset_maps_stats (void *v, struct strbuf *reply, void *data)
- 	return 0;
- }
- 
--static int
--cli_reset_map_stats (void *v, struct strbuf *reply, void *data)
-+static int cli_reset_map_stats(void *v, struct strbuf *reply,
-+			       struct list_head *wait_node, void *data)
- {
- 	struct vectors * vecs = (struct vectors *)data;
- 	struct multipath * mpp;
-@@ -560,8 +560,8 @@ add_partial_path(struct path *pp, struct vectors *vecs)
- 	return finish_path_init(pp, vecs);
- }
- 
--static int
--cli_add_path (void *v, struct strbuf *reply, void *data)
-+static int cli_add_path(void *v, struct strbuf *reply,
-+			struct list_head *wait_node, void *data)
- {
- 	struct vectors * vecs = (struct vectors *)data;
- 	char * param = get_keyparam(v, KEY_PATH);
-@@ -680,8 +680,8 @@ blacklisted:
- 	return 0;
- }
- 
--static int
--cli_del_path (void * v, struct strbuf *reply, void * data)
-+static int cli_del_path(void *v, struct strbuf *reply,
-+			struct list_head *wait_node, void *data)
- {
- 	struct vectors * vecs = (struct vectors *)data;
- 	char * param = get_keyparam(v, KEY_PATH);
-@@ -703,8 +703,8 @@ cli_del_path (void * v, struct strbuf *reply, void * data)
- 	return (ret == REMOVE_PATH_FAILURE);
- }
- 
--static int
--cli_add_map (void * v, struct strbuf *reply, void * data)
-+static int cli_add_map(void *v, struct strbuf *reply,
-+		       struct list_head *wait_node, void *data)
- {
- 	struct vectors * vecs = (struct vectors *)data;
- 	char * param = get_keyparam(v, KEY_MAP);
-@@ -749,8 +749,8 @@ cli_add_map (void * v, struct strbuf *reply, void * data)
- 	return rc;
- }
- 
--static int
--cli_del_map (void * v, struct strbuf *reply, void * data)
-+static int cli_del_map(void *v, struct strbuf *reply,
-+		       struct list_head *wait_node, void *data)
- {
- 	struct vectors * vecs = (struct vectors *)data;
- 	char * param = get_keyparam(v, KEY_MAP);
-@@ -773,8 +773,8 @@ cli_del_map (void * v, struct strbuf *reply, void * data)
- 	return 1;
- }
- 
--static int
--cli_del_maps (void *v, struct strbuf *reply, void *data)
-+static int cli_del_maps(void *v, struct strbuf *reply,
-+			struct list_head *wait_node, void *data)
- {
- 	struct vectors * vecs = (struct vectors *)data;
- 	struct multipath *mpp;
-@@ -799,8 +799,8 @@ cli_del_maps (void *v, struct strbuf *reply, void *data)
  	return r;
- }
- 
--static int
--cli_reload(void *v, struct strbuf *reply, void *data)
-+static int cli_reload(void *v, struct strbuf *reply,
-+		      struct list_head *wait_node, void *data)
+diff --git a/drivers/md/md.c b/drivers/md/md.c
+index 1974943bf746..2d87b3297da4 100644
+--- a/drivers/md/md.c
++++ b/drivers/md/md.c
+@@ -5199,7 +5199,14 @@ static void stop_sync_thread(struct mddev *mddev, bool locked)
  {
- 	struct vectors * vecs = (struct vectors *)data;
- 	char * mapname = get_keyparam(v, KEY_MAP);
-@@ -823,8 +823,8 @@ cli_reload(void *v, struct strbuf *reply, void *data)
- 	return reload_and_sync_map(mpp, vecs);
- }
+ 	int sync_seq = atomic_read(&mddev->sync_seq);
  
--static int
--cli_resize(void *v, struct strbuf *reply, void *data)
-+static int cli_resize(void *v, struct strbuf *reply,
-+		      struct list_head *wait_node, void *data)
+-	if (!test_bit(MD_RECOVERY_RUNNING, &mddev->recovery)) {
++	/*
++	 * If nothing is in flight, keep reconfig_mutex when locked so
++	 * callers such as do_md_stop() cannot race with do_md_run().
++	 * work_busy() is required: md_start_sync() may clear RUNNING and
++	 * still use mddev after unlocking.
++	 */
++	if (!test_bit(MD_RECOVERY_RUNNING, &mddev->recovery) &&
++	    !work_busy(&mddev->sync_work)) {
+ 		if (!locked)
+ 			mddev_unlock(mddev);
+ 		return;
+@@ -5207,12 +5214,14 @@ static void stop_sync_thread(struct mddev *mddev, bool locked)
+ 
+ 	mddev_unlock(mddev);
+ 
+-	set_bit(MD_RECOVERY_INTR, &mddev->recovery);
+-	/*
+-	 * Thread might be blocked waiting for metadata update which will now
+-	 * never happen
+-	 */
+-	md_wakeup_thread_directly(&mddev->sync_thread);
++	if (test_bit(MD_RECOVERY_RUNNING, &mddev->recovery)) {
++		set_bit(MD_RECOVERY_INTR, &mddev->recovery);
++		/*
++		 * Thread might be blocked waiting for metadata update which
++		 * will now never happen
++		 */
++		md_wakeup_thread_directly(&mddev->sync_thread);
++	}
+ 	if (work_busy(&mddev->sync_work))
+ 		flush_work(&mddev->sync_work);
+ 
+@@ -7130,6 +7139,14 @@ void md_stop(struct mddev *mddev)
  {
- 	struct vectors * vecs = (struct vectors *)data;
- 	char * mapname = get_keyparam(v, KEY_MAP);
-@@ -885,8 +885,8 @@ cli_resize(void *v, struct strbuf *reply, void *data)
- 	return (ret != 0);
- }
+ 	lockdep_assert_held(&mddev->reconfig_mutex);
  
--static int
--cli_force_no_daemon_q(void * v, struct strbuf *reply, void * data)
-+static int cli_force_no_daemon_q(void *v, struct strbuf *reply,
-+				 struct list_head *wait_node, void *data)
- {
- 	struct config *conf;
++	/*
++	 * md_check_recovery() may have queued sync_work; that work accesses
++	 * pers. Wait for it here before __md_stop() clears pers, as
++	 * do_md_stop()/md_stop_writes() do.
++	 */
++	set_bit(MD_RECOVERY_FROZEN, &mddev->recovery);
++	stop_sync_thread(mddev, true);
++
+ 	/* stop the array and free an attached data structures.
+ 	 * This is called from dm-raid
+ 	 */
+@@ -10520,9 +10537,11 @@ void md_check_recovery(struct mddev *mddev)
  
-@@ -898,8 +898,8 @@ cli_force_no_daemon_q(void * v, struct strbuf *reply, void * data)
- 	return 0;
- }
- 
--static int
--cli_restore_no_daemon_q(void * v, struct strbuf *reply, void * data)
-+static int cli_restore_no_daemon_q(void *v, struct strbuf *reply,
-+				   struct list_head *wait_node, void *data)
- {
- 	struct config *conf;
- 
-@@ -911,8 +911,8 @@ cli_restore_no_daemon_q(void * v, struct strbuf *reply, void * data)
- 	return 0;
- }
- 
--static int
--cli_restore_queueing(void *v, struct strbuf *reply, void *data)
-+static int cli_restore_queueing(void *v, struct strbuf *reply,
-+				struct list_head *wait_node, void *data)
- {
- 	struct vectors * vecs = (struct vectors *)data;
- 	char * mapname = get_keyparam(v, KEY_MAP);
-@@ -939,8 +939,8 @@ cli_restore_queueing(void *v, struct strbuf *reply, void *data)
- 	return 0;
- }
- 
--static int
--cli_restore_all_queueing(void *v, struct strbuf *reply, void *data)
-+static int cli_restore_all_queueing(void *v, struct strbuf *reply,
-+				    struct list_head *wait_node, void *data)
- {
- 	struct vectors * vecs = (struct vectors *)data;
- 	struct multipath *mpp;
-@@ -962,8 +962,8 @@ cli_restore_all_queueing(void *v, struct strbuf *reply, void *data)
- 	return 0;
- }
- 
--static int
--cli_disable_queueing(void *v, struct strbuf *reply, void *data)
-+static int cli_disable_queueing(void *v, struct strbuf *reply,
-+				struct list_head *wait_node, void *data)
- {
- 	struct vectors * vecs = (struct vectors *)data;
- 	char * mapname = get_keyparam(v, KEY_MAP);
-@@ -985,8 +985,8 @@ cli_disable_queueing(void *v, struct strbuf *reply, void *data)
- 	return 0;
- }
- 
--static int
--cli_disable_all_queueing(void *v, struct strbuf *reply, void *data)
-+static int cli_disable_all_queueing(void *v, struct strbuf *reply,
-+				    struct list_head *wait_node, void *data)
- {
- 	struct vectors * vecs = (struct vectors *)data;
- 	struct multipath *mpp;
-@@ -1004,8 +1004,8 @@ cli_disable_all_queueing(void *v, struct strbuf *reply, void *data)
- 	return 0;
- }
- 
--static int
--cli_switch_group(void * v, struct strbuf *reply, void * data)
-+static int cli_switch_group(void *v, struct strbuf *reply,
-+			    struct list_head *wait_node, void *data)
- {
- 	char * mapname = get_keyparam(v, KEY_MAP);
- 	int groupnum = atoi(get_keyparam(v, KEY_GROUP));
-@@ -1016,8 +1016,8 @@ cli_switch_group(void * v, struct strbuf *reply, void * data)
- 	return dm_switchgroup(mapname, groupnum);
- }
- 
--static int
--cli_reconfigure(void * v, struct strbuf *reply, void * data)
-+static int cli_reconfigure(void *v, struct strbuf *reply,
-+			   struct list_head *wait_node, void *data)
- {
- 	condlog(2, "reconfigure (operator)");
- 
-@@ -1025,8 +1025,8 @@ cli_reconfigure(void * v, struct strbuf *reply, void * data)
- 	return 0;
- }
- 
--int
--cli_reconfigure_all(void * v, struct strbuf *reply, void * data)
-+int cli_reconfigure_all(void *v, struct strbuf *reply,
-+			struct list_head *wait_node, void *data)
- {
- 	condlog(2, "reconfigure all (operator)");
- 
-@@ -1034,8 +1034,8 @@ cli_reconfigure_all(void * v, struct strbuf *reply, void * data)
- 	return 0;
- }
- 
--static int
--cli_suspend(void * v, struct strbuf *reply, void * data)
-+static int cli_suspend(void *v, struct strbuf *reply,
-+		       struct list_head *wait_node, void *data)
- {
- 	struct vectors * vecs = (struct vectors *)data;
- 	char * param = get_keyparam(v, KEY_MAP);
-@@ -1064,8 +1064,8 @@ cli_suspend(void * v, struct strbuf *reply, void * data)
- 	return 0;
- }
- 
--static int
--cli_resume(void * v, struct strbuf *reply, void * data)
-+static int cli_resume(void *v, struct strbuf *reply,
-+		      struct list_head *wait_node, void *data)
- {
- 	struct vectors * vecs = (struct vectors *)data;
- 	char * param = get_keyparam(v, KEY_MAP);
-@@ -1096,8 +1096,8 @@ cli_resume(void * v, struct strbuf *reply, void * data)
- 	return 0;
- }
- 
--static int
--cli_reinstate(void * v, struct strbuf *reply, void * data)
-+static int cli_reinstate(void *v, struct strbuf *reply,
-+			 struct list_head *wait_node, void *data)
- {
- 	struct vectors * vecs = (struct vectors *)data;
- 	char * param = get_keyparam(v, KEY_PATH);
-@@ -1132,8 +1132,8 @@ cli_reinstate(void * v, struct strbuf *reply, void * data)
- 	return dm_reinstate_path(pp->mpp->alias, pp->dev_t);
- }
- 
--static int
--cli_reassign (void * v, struct strbuf *reply, void * data)
-+static int cli_reassign(void *v, struct strbuf *reply,
-+			struct list_head *wait_node, void *data)
- {
- 	struct vectors * vecs = (struct vectors *)data;
- 	char * param = get_keyparam(v, KEY_MAP);
-@@ -1157,7 +1157,7 @@ cli_reassign (void * v, struct strbuf *reply, void * data)
- }
- 
- static int
--cli_fail(void * v, struct strbuf *reply, void * data)
-+cli_fail(void *v, struct strbuf *reply, struct list_head *wait_node, void *data)
- {
- 	struct vectors * vecs = (struct vectors *)data;
- 	char * param = get_keyparam(v, KEY_PATH);
-@@ -1202,8 +1202,8 @@ show_blacklist (struct strbuf *reply)
- 	return 0;
- }
- 
--static int
--cli_list_blacklist (void * v, struct strbuf *reply, void * data)
-+static int cli_list_blacklist(void *v, struct strbuf *reply,
-+			      struct list_head *wait_node, void *data)
- {
- 	condlog(3, "list blacklist (operator)");
- 
-@@ -1227,8 +1227,8 @@ show_devices (struct strbuf *reply, struct vectors *vecs)
- 	return 0;
- }
- 
--static int
--cli_list_devices (void * v, struct strbuf *reply, void * data)
-+static int cli_list_devices(void *v, struct strbuf *reply,
-+			    struct list_head *wait_node, void *data)
- {
- 	struct vectors * vecs = (struct vectors *)data;
- 
-@@ -1238,13 +1238,13 @@ cli_list_devices (void * v, struct strbuf *reply, void * data)
- }
- 
- static int
--cli_quit (void * v, struct strbuf *reply, void * data)
-+cli_quit(void *v, struct strbuf *reply, struct list_head *wait_node, void *data)
- {
- 	return 0;
- }
- 
--static int
--cli_shutdown (void * v, struct strbuf *reply, void * data)
-+static int cli_shutdown(void *v, struct strbuf *reply,
-+			struct list_head *wait_node, void *data)
- {
- 	condlog(3, "shutdown (operator)");
- 	exit_daemon();
-@@ -1257,8 +1257,8 @@ static const char *const pr_str[] = {
- 	[PR_SET] = "set\n",
- };
- 
--static int
--cli_getprstatus (void * v, struct strbuf *reply, void * data)
-+static int cli_getprstatus(void *v, struct strbuf *reply,
-+			   struct list_head *wait_node, void *data)
- {
- 	struct multipath * mpp;
- 	struct vectors * vecs = (struct vectors *)data;
-@@ -1303,12 +1303,14 @@ static int do_setprstatus(void *v, struct strbuf *reply, void *data,
- 	return 0;
- }
- 
--static int cli_setprstatus(void *v, struct strbuf *reply, void *data)
-+static int cli_setprstatus(void *v, struct strbuf *reply,
-+			   struct list_head *wait_node, void *data)
- {
- 	return do_setprstatus(v, reply, data, NULL);
- }
- 
--static int cli_setprstatus_list(void *v, struct strbuf *reply, void *data)
-+static int cli_setprstatus_list(void *v, struct strbuf *reply,
-+				struct list_head *wait_node, void *data)
- {
- 	int r;
- 	struct vector_s registered_paths_vec = {.allocated = 0};
-@@ -1331,8 +1333,8 @@ static int cli_setprstatus_list(void *v, struct strbuf *reply, void *data)
- 	return r;
- }
- 
--static int
--cli_unsetprstatus(void * v, struct strbuf *reply, void * data)
-+static int cli_unsetprstatus(void *v, struct strbuf *reply,
-+			     struct list_head *wait_node, void *data)
- {
- 	struct multipath * mpp;
- 	struct vectors * vecs = (struct vectors *)data;
-@@ -1354,8 +1356,8 @@ cli_unsetprstatus(void * v, struct strbuf *reply, void * data)
- 	return 0;
- }
- 
--static int
--cli_getprkey(void * v, struct strbuf *reply, void * data)
-+static int cli_getprkey(void *v, struct strbuf *reply,
-+			struct list_head *wait_node, void *data)
- {
- 	struct multipath * mpp;
- 	struct vectors * vecs = (struct vectors *)data;
-@@ -1381,8 +1383,8 @@ cli_getprkey(void * v, struct strbuf *reply, void * data)
- 	return 0;
- }
- 
--static int
--cli_unsetprkey(void * v, struct strbuf *reply, void * data)
-+static int cli_unsetprkey(void *v, struct strbuf *reply,
-+			  struct list_head *wait_node, void *data)
- {
- 	struct multipath * mpp;
- 	struct vectors * vecs = (struct vectors *)data;
-@@ -1405,8 +1407,8 @@ cli_unsetprkey(void * v, struct strbuf *reply, void * data)
- 	return ret;
- }
- 
--static int
--cli_setprkey(void * v, struct strbuf *reply, void * data)
-+static int cli_setprkey(void *v, struct strbuf *reply,
-+			struct list_head *wait_node, void *data)
- {
- 	struct multipath * mpp;
- 	struct vectors * vecs = (struct vectors *)data;
-@@ -1452,17 +1454,20 @@ static int do_prhold(struct vectors *vecs, char *param, int prhold)
- 	return 0;
- }
- 
--static int cli_setprhold(void *v, struct strbuf *reply, void *data)
-+static int cli_setprhold(void *v, struct strbuf *reply,
-+			 struct list_head *wait_node, void *data)
- {
- 	return do_prhold((struct vectors *)data, get_keyparam(v, KEY_MAP), PR_SET);
- }
- 
--static int cli_unsetprhold(void *v, struct strbuf *reply, void *data)
-+static int cli_unsetprhold(void *v, struct strbuf *reply,
-+			   struct list_head *wait_node, void *data)
- {
- 	return do_prhold((struct vectors *)data, get_keyparam(v, KEY_MAP), PR_UNSET);
- }
- 
--static int cli_getprhold(void *v, struct strbuf *reply, void *data)
-+static int cli_getprhold(void *v, struct strbuf *reply,
-+			 struct list_head *wait_node, void *data)
- {
- 	struct multipath *mpp;
- 	struct vectors *vecs = (struct vectors *)data;
-@@ -1479,7 +1484,8 @@ static int cli_getprhold(void *v, struct strbuf *reply, void *data)
- 	return 0;
- }
- 
--static int cli_set_marginal(void * v, struct strbuf *reply, void * data)
-+static int cli_set_marginal(void *v, struct strbuf *reply,
-+			    struct list_head *wait_node, void *data)
- {
- 	struct vectors * vecs = (struct vectors *)data;
- 	char * param = get_keyparam(v, KEY_PATH);
-@@ -1506,7 +1512,8 @@ static int cli_set_marginal(void * v, struct strbuf *reply, void * data)
- 	return reload_and_sync_map(pp->mpp, vecs);
- }
- 
--static int cli_unset_marginal(void * v, struct strbuf *reply, void * data)
-+static int cli_unset_marginal(void *v, struct strbuf *reply,
-+			      struct list_head *wait_node, void *data)
- {
- 	struct vectors * vecs = (struct vectors *)data;
- 	char * param = get_keyparam(v, KEY_PATH);
-@@ -1533,7 +1540,8 @@ static int cli_unset_marginal(void * v, struct strbuf *reply, void * data)
- 	return reload_and_sync_map(pp->mpp, vecs);
- }
- 
--static int cli_unset_all_marginal(void * v, struct strbuf *reply, void * data)
-+static int cli_unset_all_marginal(void *v, struct strbuf *reply,
-+				  struct list_head *wait_node, void *data)
- {
- 	struct vectors * vecs = (struct vectors *)data;
- 	char * mapname = get_keyparam(v, KEY_MAP);
-diff --git a/multipathd/uxlsnr.c b/multipathd/uxlsnr.c
-index 09306918..e8ce459d 100644
---- a/multipathd/uxlsnr.c
-+++ b/multipathd/uxlsnr.c
-@@ -393,7 +393,7 @@ static int execute_handler(struct client *c, struct vectors *vecs)
- 	if (!c->handler || !c->handler->fn)
- 		return -EINVAL;
- 
--	return c->handler->fn(c->cmdvec, &c->reply, vecs);
-+	return c->handler->fn(c->cmdvec, &c->reply, &c->wait_node, vecs);
- }
- 
- int init_wait_fd(void)
--- 
-2.56.0
+ 			/*
+ 			 * Let md_start_sync() to remove and add rdevs to the
+-			 * array.
++			 * array. Honour MD_RECOVERY_FROZEN like the read-write
++			 * path so freeze/stop does not race with a new queue.
+ 			 */
+-			if (md_spares_need_change(mddev)) {
++			if (md_spares_need_change(mddev) &&
++			    !test_bit(MD_RECOVERY_FROZEN, &mddev->recovery)) {
+ 				set_bit(MD_RECOVERY_RUNNING, &mddev->recovery);
+ 				queue_work(md_misc_wq, &mddev->sync_work);
+ 			}
 
