@@ -1,44 +1,44 @@
 Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=100.103.45.18
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1795759016;
-	b=LDOlix/3ZhIlXemh5SoRwM8GxlrPBhoDf2YcyRk/3ExDp5AE0SMXStSx2Jah7DBycgbI
-	 pmgyte1zkt2HtvCHRCeGHHBxmXCd3KLYYOmgwOI20drMUwn6Bcd+1iv5pHvgBCV4I4Gjb
-	 IVtmKfxbZ1zLkwC9Cf46GjVOJMltf9gjykk1qMe4Xdcb57vJ7lJpN+sLdjXlOm2F9G2mZ
-	 E3Mtxe9J/vrKXuT3LGmGJD7dUmzWp74eBgEa1D1ZlB7+xdn7JYr4WKKutZV6up161ZvUO
-	 LvP3Lyk2NXVU1V+0TToXhine7aGB4N9iiV2Ux3EJPg5/KHWO4ppsawOVS23pFM0sS9A==
+	t=1795759011;
+	b=llMwtWrd9vlQeF0ZtEwvhg+SjS1PRG44e0svut6Ld73H4tILsZHfD8BqQba2VezGQUCv
+	 ayy3cyWnNzUxkp2vLSB2kDJbf4KRy07toGCy3O8P2QvolaIdt93WrgSjk2u+3EmRIsL1D
+	 43cIA1Hp8I2NsHB9huEnZeDRojmw1dLeAqzByaxu+g+b1c3VXheoavB6bsprqdyyhImjz
+	 I8BttAHzpLgyBwmfJRdqPbtEmZwKRkS9a/c5ceij9saOOijP5RuTSDKl8cL3fB8Ip+1UE
+	 iPgR7axCI0WdMnBRpmELdu1fdd9g+kXdxM0Sm/Go7T4mRJ58TE2BMkqoo/XQyl9r8wQ==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1795759016;
+	a=rsa-sha256; c=relaxed/relaxed; t=1795759011;
 	h=Received:DKIM-Signature:From:To:Cc:Subject:Date:Message-ID:X-Mailer:
 	 In-Reply-To:References:MIME-Version:Content-Transfer-Encoding;
-	bh=PhA1+KTbKxjqsV4huk04paq2b/ZCG/qJi/llqtV6QUc=;
-	b=qHMXxyxVxQDE/MRVpKscuzbACGVxWzMuuQPERmbqI0etrNdqphSD9JmIqWXwgjueVXEy
-	 MzR37/OXp9WV1JpBCJWDGDAkdVf/GTU/fo1GFJx8B/yRARCcdS76DJlAQ9DTUpr+wxNaZ
-	 qqnRtfFR7Dhwyy/xRW5yKi/l4E0XaniP6yZrq3gFBzaNZDQAylOMv6rCiTqSDPgpZzRfs
-	 uPw6QPf5SjWsaKbnnHBQQ6ezBCj5rNPZ1dPLaphcluuzw92MatFL70JPQDqOBTeagYDKz
-	 a4dVHqtGX8mm3H/JXDaeAdIhReWX7TpgGzPE6d1YOPZnSMUNNvGLhih/C8giHCHjuAQ==
+	bh=r7fclzzKOWMyf7ywe58Ae38O43mUtx+8bhUvqry9F/k=;
+	b=PSMlnEwJgeKBIDbOl0Su8c47dCcaWjugvGvTLWKHzccuS2dp9Byy0YziElpGTRVi79bo
+	 owYwzbpdLbskQ4KSPTZrBbgYkoTCi1HpZVcmuFechwilsjbbdtGJCNqzGIuzKiTIOBQhy
+	 BQgxtU+GLWYTDamlB5YvQbFnOvJ4fB1XfIOq/tWSBeJmSo5fl5VWWC9hBZCVqa1cuRnYD
+	 kwC/2ya1egYBROWA0e4mToVR/0E6DDE5Qb2n65C6C7r44v/JlbE3rUiOmXhwwpk1NJQGe
+	 0imdfAF/5wVAva5QPDc4DZwtgGcjVhHp7/H7PBo++Kf/vfn5tNl7jQZb++KD6dQFKJQ==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=Ov0TCJk1;
+	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=AcFo3mxs;
 	arc=none smtp.remote-ip=100.103.45.18
 Received: from smtp.kernel.org (quasi.space.kernel.org [100.103.45.18])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
 	 key-exchange X25519 server-signature ECDSA (prime256v1))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with UTF8SMTPS id 34105606A324;
-	Fri, 27 Nov 2026 05:56:55 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with UTF8SMTPS id C1A78606A32D;
+	Fri, 27 Nov 2026 05:56:51 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=Ov0TCJk1
-Received: by smtp.kernel.org (Postfix) with UTF8SMTPSA id 258DA1F00933;
-	Fri, 27 Nov 2026 05:56:55 +0000 (UTC)
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=AcFo3mxs
+Received: by smtp.kernel.org (Postfix) with UTF8SMTPSA id 95E8F1F00897;
+	Fri, 27 Nov 2026 05:56:50 +0000 (UTC)
 DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
-	s=k20260515; t=1795759015;
-	bh=PhA1+KTbKxjqsV4huk04paq2b/ZCG/qJi/llqtV6QUc=;
+	s=k20260515; t=1795759011;
+	bh=r7fclzzKOWMyf7ywe58Ae38O43mUtx+8bhUvqry9F/k=;
 	h=From:To:Cc:Subject:Date:In-Reply-To:References;
-	b=Ov0TCJk1rCib0Wobmh0smbVwrsRF476mQWOmw7z71SC3me8l4mO4igBH423XMjvox
-	 iNKsTquX6n7aH8/spj2EdwEqfTyCmfHpf4ME8P7uxEguXURLZD/UFrJE6on782fMYT
-	 7xgUpSM258ICilaVVnp9rYFVkia1DcQL747LqgC4pyR1J8IOWNJUaDaC9Wk9xtN++9
-	 aZRlONt+lZOOcsG1pfobrSnYdMYEx7XJr6RPm2EFvUbd4jI8M9J/PVH59YZxUYo3I3
-	 LfwSYy0vdQB3WFrwm/rczqSpGy45NiQ/ZKoheNAmPRwDcOrbZzZK6m2lkugSD9dOMU
-	 DcAL8sUCB2Ksg==
+	b=AcFo3mxssOPvH/hMEppeMYGWtOaW/mGrnjDw0W76iKn2nPH40QzVX1topHn/F3f7r
+	 +gbFuMBZs7MrAcAgJAm3etRRUr+R7dYFxnARcTQZhv/dH0KvWLXeBnXCtOTpFtkof2
+	 N4YR1gPtQjq0ztOwVi71xeWPWEqnBD0UwvXs6nX5+JD/GB7DH83TxcMB1eF4Zbkm+z
+	 vM+xTSH0IBe9SHpAhMYM4xk0yTHu1ryTc+IBz4h5/zQKhNVocMRdfW1548ZjEdaTqi
+	 sJ+846MZZjxAipd4MMvql8xIopU3enBSo3RhomqdOX44IRL9uyk2MoVtc8ZTKp+tva
+	 Kyj1/UNW01joA==
 From: Jarkko Sakkinen <jarkko@kernel.org>
 To: keyrings@vger.kernel.org
 Cc: Jarkko Sakkinen <jarkko@kernel.org>,
@@ -77,9 +77,9 @@ Cc: Jarkko Sakkinen <jarkko@kernel.org>,
 	"Serge E. Hallyn" <serge@hallyn.com>,
 	Shuah Khan <skhan@linuxfoundation.org>,
 	Sumit Garg <sumit.garg@kernel.org>
-Subject: [PATCH v5 10/17] tpm: Export tpm2_create_primary()
-Date: Fri, 27 Nov 2026 07:55:55 +0200
-Message-ID: <20261127055602.2357884-11-jarkko@kernel.org>
+Subject: [PATCH v5 09/17] lib/asn1_encoder: Add asn1_encode_integer_bytes()
+Date: Fri, 27 Nov 2026 07:55:54 +0200
+Message-ID: <20261127055602.2357884-10-jarkko@kernel.org>
 X-Mailer: git-send-email 2.47.3
 In-Reply-To: <20261127055602.2357884-1-jarkko@kernel.org>
 References: <20261127055602.2357884-1-jarkko@kernel.org>
@@ -94,208 +94,102 @@ Precedence: list
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-Move tpm2_create_primary() outside CONFIG_TCG_TPM2_HMAC and export it for
-callers such as trusted keys.
+Add a helper encoding a positive integer from a byte array in big-endian
+format.
 
 Signed-off-by: Jarkko Sakkinen <jarkko@kernel.org>
 ---
- drivers/char/tpm/Kconfig         |   2 +-
- drivers/char/tpm/tpm2-sessions.c | 103 ++++++++++++++++---------------
- include/linux/tpm.h              |   2 +
- 3 files changed, 56 insertions(+), 51 deletions(-)
+ include/linux/asn1_encoder.h |  3 ++
+ lib/asn1_encoder.c           | 56 ++++++++++++++++++++++++++++++++++++
+ 2 files changed, 59 insertions(+)
 
-diff --git a/drivers/char/tpm/Kconfig b/drivers/char/tpm/Kconfig
-index 35aff3003a32..7481f2c8c768 100644
---- a/drivers/char/tpm/Kconfig
-+++ b/drivers/char/tpm/Kconfig
-@@ -9,6 +9,7 @@ menuconfig TCG_TPM
- 	imply SECURITYFS
- 	select CRYPTO
- 	select CRYPTO_HASH_INFO
-+	select CRYPTO_LIB_SHA256
- 	help
- 	  If you have a TPM security chip in your system, which
- 	  implements the Trusted Computing Group's specification,
-@@ -32,7 +33,6 @@ config TCG_TPM2_HMAC
- 	default n
- 	select CRYPTO_ECDH
- 	select CRYPTO_LIB_AESCFB
--	select CRYPTO_LIB_SHA256
- 	select CRYPTO_LIB_UTILS
- 	help
- 	  Setting this causes us to deploy a scheme which uses request
-diff --git a/drivers/char/tpm/tpm2-sessions.c b/drivers/char/tpm/tpm2-sessions.c
-index 185bae525519..4b827112be4d 100644
---- a/drivers/char/tpm/tpm2-sessions.c
-+++ b/drivers/char/tpm/tpm2-sessions.c
-@@ -413,9 +413,6 @@ EXPORT_SYMBOL_GPL(tpm_buf_append_hmac_session);
+diff --git a/include/linux/asn1_encoder.h b/include/linux/asn1_encoder.h
+index d17484dffb74..e206bd425854 100644
+--- a/include/linux/asn1_encoder.h
++++ b/include/linux/asn1_encoder.h
+@@ -12,6 +12,9 @@ unsigned char *
+ asn1_encode_integer(unsigned char *data, const unsigned char *end_data,
+ 		    s64 integer);
+ unsigned char *
++asn1_encode_integer_bytes(unsigned char *data, const unsigned char *end_data,
++			  const unsigned char *integer, u32 integer_len);
++unsigned char *
+ asn1_encode_oid(unsigned char *data, const unsigned char *end_data,
+ 		u32 oid[], int oid_len);
+ unsigned char *
+diff --git a/lib/asn1_encoder.c b/lib/asn1_encoder.c
+index 92f35aae13b1..8fea70dc0846 100644
+--- a/lib/asn1_encoder.c
++++ b/lib/asn1_encoder.c
+@@ -10,6 +10,8 @@
+ #include <linux/string.h>
+ #include <linux/module.h>
  
- #ifdef CONFIG_TCG_TPM2_HMAC
- 
--static int tpm2_create_primary(struct tpm_chip *chip, u32 hierarchy,
--			       u32 *handle, u8 *name);
--
- /*
-  * assume hash sha256 and nonces u, v of size SHA256_DIGEST_SIZE but
-  * otherwise standard tpm2_KDFa.  Note output is in bytes not bits.
-@@ -1083,6 +1080,50 @@ int tpm2_start_auth_session(struct tpm_chip *chip)
++static int asn1_encode_length(unsigned char **data, int *data_len, int len);
++
+ /**
+  * asn1_encode_integer() - encode positive integer to ASN.1
+  * @data:	pointer to the pointer to the data
+@@ -85,6 +87,60 @@ asn1_encode_integer(unsigned char *data, const unsigned char *end_data,
  }
- EXPORT_SYMBOL(tpm2_start_auth_session);
+ EXPORT_SYMBOL_GPL(asn1_encode_integer);
  
-+static int tpm2_create_null_primary(struct tpm_chip *chip)
-+{
-+	u32 null_key;
-+	int rc;
-+
-+	rc = tpm2_create_primary(chip, TPM2_RH_NULL, &null_key,
-+				 chip->null_key_name);
-+
-+	if (rc == TPM2_RC_SUCCESS) {
-+		unsigned int offset = 0; /* dummy offset for null key context */
-+
-+		rc = tpm2_save_context(chip, null_key, chip->null_key_context,
-+				       sizeof(chip->null_key_context), &offset);
-+		tpm2_flush_context(chip, null_key);
-+	}
-+
-+	return rc;
-+}
-+
 +/**
-+ * tpm2_sessions_init() - start of day initialization for the sessions code
-+ * @chip: TPM chip
++ * asn1_encode_integer_bytes() - encode positive integer bytes to ASN.1
++ * @data:		pointer to the pointer to the data
++ * @end_data:		end of data pointer, points one beyond last usable byte in @data
++ * @bytes:		integer bytes
++ * @bytes_len:		amount of bytes
 + *
-+ * Derive and context save the null primary and allocate memory in the
-+ * struct tpm_chip for the authorizations.
-+ *
-+ * Return:
-+ * * 0		- OK
-+ * * -errno	- A system error
-+ * * TPM_RC	- A TPM error
++ * Encode a positive integer from a byte array in big-endian format. Strip
++ * leading zeros.
 + */
-+int tpm2_sessions_init(struct tpm_chip *chip)
++unsigned char *
++asn1_encode_integer_bytes(unsigned char *data, const unsigned char *end_data,
++			  const unsigned char *bytes, u32 bytes_len)
 +{
-+	int rc;
++	int data_len = end_data - data;
++	bool add_pad;
++	int ret;
 +
-+	rc = tpm2_create_null_primary(chip);
-+	if (rc) {
-+		dev_err(&chip->dev, "null key creation failed with %d\n", rc);
-+		return rc;
++	if (IS_ERR(data))
++		return data;
++
++	if (!bytes || !bytes_len)
++		return ERR_PTR(-EINVAL);
++
++	/* Strip leading zeros: */
++	while (bytes_len > 1 && bytes[0] == 0) {
++		bytes++;
++		bytes_len--;
 +	}
 +
-+	return rc;
++	add_pad = bytes[0] & 0x80;
++
++	if (data_len < 2)
++		return ERR_PTR(-EINVAL);
++
++	*(data++) = _tag(UNIV, PRIM, INT);
++	data_len--;
++
++	ret = asn1_encode_length(&data, &data_len, bytes_len + add_pad);
++	if (ret)
++		return ERR_PTR(ret);
++
++	if (data_len < bytes_len + add_pad)
++		return ERR_PTR(-EINVAL);
++
++	if (add_pad)
++		*(data++) = 0;
++
++	memcpy(data, bytes, bytes_len);
++	data += bytes_len;
++	return data;
 +}
-+#endif /* CONFIG_TCG_TPM2_HMAC */
- /*
-  * A mask containing the object attributes for the kernel held null primary key
-  * used in HMAC encryption. For more information on specific attributes look up
-@@ -1234,7 +1275,9 @@ static int tpm2_parse_create_primary(struct tpm_chip *chip, struct tpm_buf *buf,
- 
- 	if (val != EC_PT_SZ)
- 		return -EINVAL;
-+#ifdef CONFIG_TCG_TPM2_HMAC
- 	memcpy(chip->null_ec_key_x, &buf->data[offset_t], val);
-+#endif
- 	offset_t += val;
- 
- 	if (!tpm_buf_read_u16(buf, &offset_t, &val))
-@@ -1242,7 +1285,9 @@ static int tpm2_parse_create_primary(struct tpm_chip *chip, struct tpm_buf *buf,
- 
- 	if (val != EC_PT_SZ)
- 		return -EINVAL;
-+#ifdef CONFIG_TCG_TPM2_HMAC
- 	memcpy(chip->null_ec_key_y, &buf->data[offset_t], val);
-+#endif
- 	offset_t += val;
- 
- 	/* original length of the whole TPM2B */
-@@ -1305,11 +1350,13 @@ static int tpm2_parse_create_primary(struct tpm_chip *chip, struct tpm_buf *buf,
- 	if (len != SHA256_DIGEST_SIZE + 2)
- 		return -EINVAL;
- 
-+#ifdef CONFIG_TCG_TPM2_HMAC
- 	if (memcmp(chip->null_key_name, &buf->data[offset_r],
- 		   SHA256_DIGEST_SIZE + 2) != 0) {
- 		dev_err(&chip->dev, "NULL Seed name comparison failed\n");
- 		return -EINVAL;
- 	}
-+#endif
- 
- 	return 0;
- }
-@@ -1334,8 +1381,8 @@ static int tpm2_parse_create_primary(struct tpm_chip *chip, struct tpm_buf *buf,
-  * * -errno	- A system error
-  * * TPM_RC	- A TPM error
-  */
--static int tpm2_create_primary(struct tpm_chip *chip, u32 hierarchy,
--			       u32 *handle, u8 *name)
-+int tpm2_create_primary(struct tpm_chip *chip, u32 hierarchy, u32 *handle,
-+			u8 *name)
- {
- 	struct tpm_buf *template __free(kfree) = NULL;
- 	struct tpm_buf *buf __free(kfree) = NULL;
-@@ -1431,48 +1478,4 @@ static int tpm2_create_primary(struct tpm_chip *chip, u32 hierarchy,
- 
- 	return rc;
- }
--
--static int tpm2_create_null_primary(struct tpm_chip *chip)
--{
--	u32 null_key;
--	int rc;
--
--	rc = tpm2_create_primary(chip, TPM2_RH_NULL, &null_key,
--				 chip->null_key_name);
--
--	if (rc == TPM2_RC_SUCCESS) {
--		unsigned int offset = 0; /* dummy offset for null key context */
--
--		rc = tpm2_save_context(chip, null_key, chip->null_key_context,
--				       sizeof(chip->null_key_context), &offset);
--		tpm2_flush_context(chip, null_key);
--	}
--
--	return rc;
--}
--
--/**
-- * tpm2_sessions_init() - start of day initialization for the sessions code
-- * @chip: TPM chip
-- *
-- * Derive and context save the null primary and allocate memory in the
-- * struct tpm_chip for the authorizations.
-- *
-- * Return:
-- * * 0		- OK
-- * * -errno	- A system error
-- * * TPM_RC	- A TPM error
-- */
--int tpm2_sessions_init(struct tpm_chip *chip)
--{
--	int rc;
--
--	rc = tpm2_create_null_primary(chip);
--	if (rc) {
--		dev_err(&chip->dev, "null key creation failed with %d\n", rc);
--		return rc;
--	}
--
--	return rc;
--}
--#endif /* CONFIG_TCG_TPM2_HMAC */
-+EXPORT_SYMBOL_GPL(tpm2_create_primary);
-diff --git a/include/linux/tpm.h b/include/linux/tpm.h
-index 042f36600db1..9cc401813a19 100644
---- a/include/linux/tpm.h
-+++ b/include/linux/tpm.h
-@@ -249,6 +249,8 @@ extern int tpm_get_random(struct tpm_chip *chip, u8 *data, size_t max);
- extern struct tpm_chip *tpm_default_chip(void);
- void tpm2_flush_context(struct tpm_chip *chip, u32 handle);
- int tpm2_find_hash_alg(unsigned int crypto_id);
-+int tpm2_create_primary(struct tpm_chip *chip, u32 hierarchy, u32 *handle,
-+			u8 *name);
- 
- static inline void tpm_buf_append_empty_auth(struct tpm_buf *buf, u32 handle)
++EXPORT_SYMBOL_GPL(asn1_encode_integer_bytes);
++
+ /* calculate the base 128 digit values setting the top bit of the first octet */
+ static int asn1_encode_oid_digit(unsigned char **_data, int *data_len, u32 oid)
  {
 -- 
 2.47.3
