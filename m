@@ -1,67 +1,89 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=111.22.67.151
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=100.103.45.18
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1795750225;
-	b=CCR0qGGTdRf5E/V+5IcpoE4Bq5zz/v1TSJrpeF6rVGd7OvfPUavreaIEAOAPkx2H1JSh
-	 OJtinFxq01ndYdXi1GEmKPui2nkoGtBl6+acJczDTz1RshT+1QNeDw9voK2CD3QQbkCeP
-	 rg2hOg43EWznxUOHyo4Cca40HXXzl0k4dxvpcCk0niutHUSo0wGNp/pEdXKx6vPP7pCqF
-	 egBobCo7UZ4/7HhGOiZbpTu7YLKdhCPwrI/E27SUh0ZIxnxNbOsyAjFwBe+/XWxrxdXTO
-	 CImFpnLGiW+gtlW8MytTc0rfBD4bIPpKtB9kqTodXGlw4qE/Nz/biOC3afwlVkKxRzA==
+	t=1795758978;
+	b=NYBt9pu0LXICgRAOXK9J/GhKWd2Oc8v15BO9fjxdH8++CTBHRlviRHglGvMGuRyeBW9w
+	 GKMQ0WV34vyNjnF2NRXaqIv1qnAg6I9doFxsnxShefhNBXAa90cgEIBRVOGCyuIxvvW6W
+	 kc7AOqPgfUC6aRNIVH2CWgq1gPb7bQcgXlzwrCo9gr1xxtLxQmqiF7CV9hNU8lCJplm23
+	 MUTZZiygjJPJkGKw1JDr+0yuuQPt2z2nBCDA9GRp1KIAZKPIzFaZKqsw3SQPzAWrvuL+T
+	 ef+bUvp0U0NABP+npnG5zfbNnqSs4T+fPBdf76KE0Y8eymn7TMkdRpAfxwCG/BeIybQ==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1795750225;
-	h=DMARC-Filter:DKIM-Signature:X-RM-TagInfo:X-RM-SPAM-FLAG:Received:
-	 X-RM-TRANSID:X-RM-TagInfo:X-RM-SPAM-FLAG:Received:X-RM-TRANSID:From:
-	 To:Cc:Subject:Date:Message-ID:X-Mailer:MIME-Version:
-	 Content-Transfer-Encoding;
-	bh=2F2hxqVE/hInKFHBY2zMbzmQ4nNGWwOBoQq6/i9B19g=;
-	b=zwuaXh3Pc2pQabcaAiJ+2g0BqBSNWjW0eGT06zvEJDnqSPktkE89b6ho5+cYXgFk+euM
-	 2qSiZHs6fwj40cU6Ana+lDMwUT+OY/nFzlOrrrV9WB52IHVoGToqxHpw0T9k/6+mYCVI/
-	 EOfkIyebWLXbfKC1oH9bRD3geOqarLTi3tIbj7UvRCpu8CJhMFpKM+P2ufXRBwMfDk8N5
-	 vEO+mb3uoLLs7nAEKQUT+fvYTWjm4SgTiqU35M9CnK8zoXfEwXx8nzlU4DwHY+1oEB604
-	 F+Q6jgQH0RPRDTvSDIzAlMYctd9X/Hu1YBdBV3MU7oSJzpoXju0fHc4uzSxVD2SSCAw==
+	a=rsa-sha256; c=relaxed/relaxed; t=1795758978;
+	h=Received:DKIM-Signature:From:To:Cc:Subject:Date:Message-ID:X-Mailer:
+	 In-Reply-To:References:MIME-Version:Content-Transfer-Encoding;
+	bh=zznQ3eIIt4MXzH550xMn/VqtHsMWKy2RUWA2dY4XBXs=;
+	b=Aqnv0LtWE2qxwgRGHtzrMQM8w1hNWZhKRJkHfsPH6NAMxcUBu0uBAJZLpXSKi8DCz2gV
+	 hoCQKfqdEKgNItQPs+jAQ+YwwWbEy6lWAvPbDs7Cegf9frH6QpNPzjWDrMSvDUlzp7iJu
+	 9nDV9cjIsDUidpTdh3g5oB/X5bF/M2KlOA8VZboyxdZMZPT/CK8QB17QQbjWnI7MUpuTF
+	 0GVuoi2RIDp3MvPAfqqT/m+0xAqCeLBO5oyDckDZO0PdtCtiyzNlygXhh4G1SriPM92nm
+	 DKMpDmbUqzV3VkutFmQIRbo/2DSGEBYEG2OZrpYAhuq7RoTHMDwt+AQPL2mHFXjkLDg==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dmarc=pass header.from=cmss.chinamobile.com;
-	spf=pass smtp.mailfrom=cmss.chinamobile.com;
-	dkim=pass header.d=cmss.chinamobile.com header.i=@cmss.chinamobile.com header.a=rsa-sha256 header.s=default header.b=mQtb4kDv;
-	arc=none smtp.remote-ip=111.22.67.151
-Received: from cmccmta8.chinamobile.com (cmccmta8.chinamobile.com [111.22.67.151])
-	by smtp.subspace.kernel.org (Postfix) with ESMTP id 0770F606A31C
-	for <dm-devel@lists.linux.dev>; Fri, 27 Nov 2026 03:30:23 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 0770F606A31C
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=cmss.chinamobile.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=cmss.chinamobile.com
+	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=lzS4f7NL;
+	arc=none smtp.remote-ip=100.103.45.18
+Received: from smtp.kernel.org (quasi.space.kernel.org [100.103.45.18])
+	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
+	 key-exchange X25519 server-signature ECDSA (prime256v1))
+	(No client certificate requested)
+	by smtp.subspace.kernel.org (Postfix) with UTF8SMTPS id 55C93606A31C;
+	Fri, 27 Nov 2026 05:56:18 +0000 (UTC)
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=cmss.chinamobile.com header.i=@cmss.chinamobile.com header.a=rsa-sha256 header.s=default header.b=mQtb4kDv
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-	d=cmss.chinamobile.com; s=default; l=0;
-	h=from:subject:message-id:to:cc:mime-version;
-	bh=47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU=;
-	b=mQtb4kDvfQ+C90Tn9jTcKpwd6Osu5dAK47bsr1q3lCpPadmpNWunL5Uf7rcuHark2txo1qbownT7a
-	 BXhPI8JYsN991FEBHoyDwTjxE/9nI+TfFfLJ0/kP1jwV2CoQ7dpx8Qz3q3WRGcQ4PBjPE56GUUwANK
-	 V8PKPtWJr214oJrk=
-X-RM-TagInfo: emlType=0                                       
-X-RM-SPAM-FLAG:00000000
-Received:from spf.mail.chinamobile.com (unknown[10.188.0.87])
-	by rmmx-syy-dmz-app06-12006 (RichMail) with SMTP id 2ee66b08f93092c-2df5e;
-	Fri, 27 Nov 2026 11:29:53 +0800 (CST)
-X-RM-TRANSID:2ee66b08f93092c-2df5e
-X-RM-TagInfo: emlType=0                                       
-X-RM-SPAM-FLAG:00000000
-Received:from localhost.localdomain (unknown[10.55.1.72])
-	by rmsmtp-syy-appsvr04-12004 (RichMail) with SMTP id 2ee46b08f930695-8422d;
-	Fri, 27 Nov 2026 11:29:53 +0800 (CST)
-X-RM-TRANSID:2ee46b08f930695-8422d
-From: tongzhiwei <tongzhiwei@cmss.chinamobile.com>
-To: Dongsheng Yang <dongsheng.yang@linux.dev>,
-	Zheng Gu <cengku@gmail.com>
-Cc: tongzhiwei@cmss.chinamobile.com,
-	Mikulas Patocka <mpatocka@redhat.com>,
+	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=lzS4f7NL
+Received: by smtp.kernel.org (Postfix) with UTF8SMTPSA id 4F48A1F00897;
+	Fri, 27 Nov 2026 05:56:17 +0000 (UTC)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
+	s=k20260515; t=1795758978;
+	bh=zznQ3eIIt4MXzH550xMn/VqtHsMWKy2RUWA2dY4XBXs=;
+	h=From:To:Cc:Subject:Date:In-Reply-To:References;
+	b=lzS4f7NLY2T+Lu6Om1nql1IaxKijTMk4hPoXXvRSfVBxos0n4wIEd9rLsGBqOtw9k
+	 rE7WkQKKL8VQsnJhL9A1Dsuu7sAdrd8Ce11mU7j6r3ZJx3F96ANj+th4WUYytDsTFz
+	 T1do5deH7VpWY9kZ3mavc3br1PAhEQaATCllalbi4bYgs5thydeAkItJ4HjY4JRdzB
+	 zdTwsP3n1ol5CqYAo7qsGmgLI941sLHFhsgdNoCKr7HJddT9fwdc3jB5eiMXqj2sGT
+	 /EVMo2wcXpCEYLbkSyHgIOSRcIGFDuYZ17wCVKTsCSb6AQPZyV15jWBjOdlWq4CuA1
+	 byaA25/O7CBxQ==
+From: Jarkko Sakkinen <jarkko@kernel.org>
+To: keyrings@vger.kernel.org
+Cc: Jarkko Sakkinen <jarkko@kernel.org>,
 	dm-devel@lists.linux.dev,
+	linux-crypto@vger.kernel.org,
+	linux-doc@vger.kernel.org,
+	linux-integrity@vger.kernel.org,
 	linux-kernel@vger.kernel.org,
+	linux-security-module@vger.kernel.org,
+	Ahmad Fatoum <a.fatoum@pengutronix.de>,
+	Alasdair Kergon <agk@redhat.com>,
+	Andrew Morton <akpm@linux-foundation.org>,
+	Benjamin Marzinski <bmarzins@redhat.com>,
+	David Gstir <david@sigma-star.at>,
+	David Howells <dhowells@redhat.com>,
+	David Laight <david.laight.linux@gmail.com>,
+	"David S. Miller" <davem@davemloft.net>,
+	David Woodhouse <dwmw2@infradead.org>,
+	Eric Biggers <ebiggers@kernel.org>,
+	Herbert Xu <herbert@gondor.apana.org.au>,
+	Ignat Korchagin <ignat@linux.win>,
+	James Bottomley <James.Bottomley@HansenPartnership.com>,
+	James Morris <jmorris@namei.org>,
+	James Prestwood <prestwoj@gmail.com>,
+	Jason Gunthorpe <jgg@ziepe.ca>,
+	Jonathan Corbet <corbet@lwn.net>,
+	Jonathan McDowell <noodles@meta.com>,
+	Lukas Wunner <lukas@wunner.de>,
+	=?UTF-8?q?Marek=20Beh=C3=BAn?= <kabel@kernel.org>,
+	Mike Snitzer <snitzer@kernel.org>,
+	Mikulas Patocka <mpatocka@redhat.com>,
+	Mimi Zohar <zohar@linux.ibm.com>,
+	Paul Moore <paul@paul-moore.com>,
+	Peter Huewe <peterhuewe@gmx.de>,
+	Randy Dunlap <rdunlap@infradead.org>,
+	"Serge E. Hallyn" <serge@hallyn.com>,
+	Shuah Khan <skhan@linuxfoundation.org>,
+	Sumit Garg <sumit.garg@kernel.org>,
 	stable@vger.kernel.org
-Subject: [PATCH] dm-pcache: fix use-after-free of cache segments on teardown
-Date: Fri, 27 Nov 2026 11:29:29 +0800
-Message-ID: <20261127032934.484-1-tongzhiwei@cmss.chinamobile.com>
-X-Mailer: git-send-email 2.45.0.windows.1
+Subject: [PATCH v5 01/17] KEYS: trusted: Validate public_len before reading key attributes
+Date: Fri, 27 Nov 2026 07:55:46 +0200
+Message-ID: <20261127055602.2357884-2-jarkko@kernel.org>
+X-Mailer: git-send-email 2.47.3
+In-Reply-To: <20261127055602.2357884-1-jarkko@kernel.org>
+References: <20261127055602.2357884-1-jarkko@kernel.org>
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Post: <mailto:dm-devel@lists.linux.dev>
@@ -73,80 +95,31 @@ Precedence: list
 MIME-Version: 1.0
 Content-Transfer-Encoding: 8bit
 
-NOTE: this fix is found by LLM but reviewed by human.
+tpm2_load_cmd() reads the 32-bit objectAttributes field at pub + 4
+without checking that public_len is at least 8 bytes. Reject blobs with
+public_len < 8 before dereferencing pub + 4.
 
-pcache_cache_stop() (called from dm_pcache_dtr() BEFORE
-backing_dev_stop()) freed cache->segments via cache_exit().  An
-inflight KMEM writeback completion can still be in flight then: its
-late callback path
-
-  req_complete_fn -> backing_dev_req_end -> writeback_end_req ->
-  writeback_ctx_end -> cache_pos_advance
-
-dereferences dirty_tail.cache_seg (== &cache->segments[id]), already
-freed -> use-after-free.  backing_dev_stop() is the authoritative
-drain (wait_event(inflight_reqs == 0) + flush_work(req_complete_work))
-but ran after the free.
-
-Drop the cache_exit() call from pcache_cache_stop() and free
-segments/seg_map from dm_pcache_dtr() instead, after backing_dev_stop().
-The free is a local static cache_exit() in dm_pcache.c (not exported);
-cache.c's static cache_exit() is left untouched for the start-failure
-error path (pcache_cache_start's cache_exit: label, reached only when
-cache_init() succeeded).
-
-The other resources the late completion touches (cache_dev mapping,
-req/bvec pools, task_wq, backing dm_dev) are already released after
-the drain, so relocating segments/seg_map closes the only UAF window.
-
-Fixes: 1d57628ff95b ("dm-pcache: add persistent cache target in device-mapper")
 Cc: stable@vger.kernel.org
-Signed-off-by: tongzhiwei <tongzhiwei@cmss.chinamobile.com>
+Fixes: e5fb5d2c5a03 ("security: keys: trusted: Make sealed key properly interoperable")
+Signed-off-by: Jarkko Sakkinen <jarkko@kernel.org>
 ---
- drivers/md/dm-pcache/cache.c     | 2 +-
- drivers/md/dm-pcache/dm_pcache.c | 7 +++++++
- 2 files changed, 8 insertions(+), 1 deletion(-)
+ security/keys/trusted-keys/trusted_tpm2.c | 3 +++
+ 1 file changed, 3 insertions(+)
 
-diff --git a/drivers/md/dm-pcache/cache.c b/drivers/md/dm-pcache/cache.c
-index b0b3e21677de..c41f7b7d1d04 100644
---- a/drivers/md/dm-pcache/cache.c
-+++ b/drivers/md/dm-pcache/cache.c
-@@ -453,7 +453,7 @@ void pcache_cache_stop(struct dm_pcache *pcache)
- 	if (cache->req_key_tree.n_subtrees)
- 		cache_destroy_req_keys(cache);
+diff --git a/security/keys/trusted-keys/trusted_tpm2.c b/security/keys/trusted-keys/trusted_tpm2.c
+index 30188a0ec676..621f8ffba17e 100644
+--- a/security/keys/trusted-keys/trusted_tpm2.c
++++ b/security/keys/trusted-keys/trusted_tpm2.c
+@@ -425,6 +425,9 @@ static int tpm2_load_cmd(struct tpm_chip *chip,
+ 	if (private_len + 2 + public_len + 2 > blob_len)
+ 		return -E2BIG;
  
--	cache_exit(cache);
-+	/* cache_exit() is called from dm_pcache_dtr() after backing_dev_stop(). */
- }
- 
- struct workqueue_struct *cache_get_wq(struct pcache_cache *cache)
-diff --git a/drivers/md/dm-pcache/dm_pcache.c b/drivers/md/dm-pcache/dm_pcache.c
-index 645fc27d82ba..b7abe585098e 100644
---- a/drivers/md/dm-pcache/dm_pcache.c
-+++ b/drivers/md/dm-pcache/dm_pcache.c
-@@ -351,6 +351,12 @@ static void defer_req_stop(struct dm_pcache *pcache)
- 	}
- }
- 
-+static void cache_exit(struct pcache_cache *cache)
-+{
-+	kvfree(cache->seg_map);
-+	kvfree(cache->segments);
-+}
++	if (public_len < 8)
++		return -EINVAL;
 +
- static void dm_pcache_dtr(struct dm_target *ti)
- {
- 	struct dm_pcache *pcache;
-@@ -364,6 +370,7 @@ static void dm_pcache_dtr(struct dm_target *ti)
- 
- 	pcache_cache_stop(pcache);
- 	backing_dev_stop(pcache);
-+	cache_exit(&pcache->cache);
- 	cache_dev_stop(pcache);
- 
- 	pcache_destroy_args(pcache);
+ 	pub = blob + 2 + private_len + 2;
+ 	/* key attributes are always at offset 4 */
+ 	attrs = get_unaligned_be32(pub + 4);
 -- 
-2.43.0
-
-
+2.47.3
 
