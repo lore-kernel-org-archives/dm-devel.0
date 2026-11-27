@@ -1,88 +1,77 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=170.10.129.124
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=43.163.128.43
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1795771349;
-	b=B0mOryfx6jcg1DMmDVgx1OOxBym8GLlI1ZsX6sH2nIBqAQac0NeKplUqt6Kovpi+gZ6U
-	 33u0oQweEdCeXKQb6Yh4KWiJ91YgcRwlh/Y0zps8OuorZ4v5lpShLGVGgKPPzROAdrzPU
-	 2lNn1zZXGD45gT7PHjvyZa+gSPIEQACPkrYosICEdYwpv+5/BXp1J3PMfZlqMNXMSZwTE
-	 RptAB6ytaykLjveEo/EotlW6gjXkgCZO9WxKB1ixrx0FW5yr+BqbUaeebkZSvPobkBn9P
-	 8CoSaT5Tm8s+pulwPBOjdQGQB785ZLYsDLWRmXaugIPuxZguWZBAtO5YhIVFvM795hw==
+	t=1795773543;
+	b=Y53RoG6gNvjuahhLwyRLs8oysHSSxScEvT60tIKCpwbaCsHho6Zlq3OtuhNpnPvt6Rsc
+	 nhIWifX4cPSTjWWO4acMLeF+6RB+or9TDSkFUh1pJHV9+90JkTolsWsKBVHGlhxfRwN6n
+	 jaDVHPvw1NogfvJNxEqW4/ELxFTNAz7ee2CesV0/x7sdIL29AkGEo58fZu5gCv0pDnkMi
+	 YQOFnktCx37w/sWQAxhDG5P/LP628BXGPqg/jYEpsqpEEbE+0P7yg5ZGrdIdydazOSXrC
+	 eSeSDlrH/+IFh6gDjRGDDcMu7AYwGnO6qEWGnMrpN3MvFOs0VNtbuyxDCGifLDpT2IA==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1795771349;
-	h=DMARC-Filter:DKIM-Signature:X-MC-Rep:Received:X-MC-Unique:
-	 X-Mimecast-MFC-AGG-ID:Received:X-Google-DKIM-Signature:
-	 X-Forwarded-Encrypted:X-Gm-Message-State:X-Gm-Gg:X-Received:
-	 X-Received:MIME-Version:References:In-Reply-To:From:Date:
-	 X-Gm-Features:Message-ID:Subject:To:Cc:X-Mimecast-Spam-Score:
-	 X-Mimecast-MFC-PROC-ID:X-Mimecast-Originator:Content-Type:
-	 Content-Transfer-Encoding;
-	bh=lRVWoXHWreHp+KU3b738W9MVqAqGC16lHMedn1zkJ/w=;
-	b=mkuCTM/ezWqzmc31jCrubr9kSzcnPTeR9BjVth2t/sIng7BJpdqg2/Wk476ofs4Hl8h0
-	 wiHyaBr1VlkIl99lM/u9M6dTQmNUbbs1qKfrNvJEkCfOplxZlHmGKbCRITR612MyPfQOE
-	 z3w7BO2SPW3qU54PvFfLmIWD+A/D+7sT0ZZYBFJeo7qNBWa47VCGoG+lrn71jBbZvK27F
-	 yCI8W5meWB/Jv4o5V6LhsliKYMYVpgE4P+DubeVL/I9XV2r6jmZyL49w5QaA9yo+5ZHZW
-	 5KDFlKMuTK1U9EVOD9IdsrjwXZMtTolIhYSjsv9MB/dJSl5O4rrlELOam49HFuiwYSQ==
+	a=rsa-sha256; c=relaxed/relaxed; t=1795773543;
+	h=DMARC-Filter:DKIM-Signature:Received:X-QQ-mid:Message-ID:
+	 X-QQ-XMAILINFO:X-QQ-XMRINFO:From:To:Cc:Subject:Date:X-OQ-MSGID:
+	 X-Mailer:MIME-Version:Content-Transfer-Encoding;
+	bh=HS1h1bZTmMeyGAoFJ9k7WiesLziPXfI0iGAFPkyd0U8=;
+	b=cOH58Wq7HwsGeO6TtG/7AveLnuexcL6o9B/e/qQe5+5rwxQ8QvcI9DR/9pp6YaVsFF51
+	 R+//h5HJlrYhnQqF61FjVVXhkiOOE+zAQcn0X4w3g+mEz+7ifbkjz6iXDbjl8PrOHf5sA
+	 SKmhdLBPSMQ9ILcLlpHeegnLCM/T7leOMriXK0x8pzX51mOT9cR4ykZdcIA/taXWSTpeG
+	 QU49WwEapA8uHNoJGQBXnuxY+85Xdrk00l0BXiu8fputhacme6hjhT5WfubPhd8PhiJyj
+	 9I9imlJqsu2GtmFSj2lgFsPCbI4a+kbiDGK4gwOffpWMbiIHcm0UJvazRYN3KqtMdig==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dmarc=pass header.from=redhat.com;
-	spf=pass smtp.mailfrom=redhat.com;
-	dkim=pass header.d=redhat.com header.i=@redhat.com header.a=rsa-sha256 header.s=mimecast20190719 header.b=JxNxaVm0;
-	arc=none smtp.remote-ip=170.10.129.124
-Received: from us-smtp-delivery-124.mimecast.com (us-smtp-delivery-124.mimecast.com [170.10.129.124])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
+	dmarc=pass header.from=qq.com;
+	spf=pass smtp.mailfrom=qq.com;
+	dkim=pass header.d=qq.com header.i=@qq.com header.a=rsa-sha256 header.s=s201512 header.b="R/X+MprA";
+	arc=none smtp.remote-ip=43.163.128.43
+Received: from xmbghk7.mail.qq.com (xmbghk7.mail.qq.com [43.163.128.43])
+	(using TLSv1.2 with cipher ECDHE-ECDSA-AES256-GCM-SHA384 (256/256 bits))
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with ESMTPS id CD271606A321
-	for <dm-devel@lists.linux.dev>; Fri, 27 Nov 2026 09:22:28 +0000 (UTC)
-DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org CD271606A321
-Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=redhat.com
-Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=redhat.com
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id AB341606A69E
+	for <dm-devel@lists.linux.dev>; Fri, 27 Nov 2026 09:58:59 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org AB341606A69E
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=quarantine dis=none) header.from=qq.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=qq.com
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (1024-bit key) header.d=redhat.com header.i=@redhat.com header.a=rsa-sha256 header.s=mimecast20190719 header.b=JxNxaVm0
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=redhat.com;
-	s=mimecast20190719; t=1795771347;
-	h=from:from:reply-to:subject:subject:date:date:message-id:message-id:
-	 to:to:cc:cc:mime-version:mime-version:content-type:content-type:
-	 content-transfer-encoding:content-transfer-encoding:
-	 in-reply-to:in-reply-to:references:references;
-	bh=lRVWoXHWreHp+KU3b738W9MVqAqGC16lHMedn1zkJ/w=;
-	b=JxNxaVm0cv2Cj2g9Pi6ASiUB9ZKHTswNMBWBi96UuIgxfA5eT2a/PQ5u0cejCcxc/ch8eg
-	BSJqJFBADte+IdQSReYLy4vAkrBtfIXrOv0Ia/iquS6NYhcD0h2/SRe/E0lcJWaBgFKH8W
-	lWoLZYw+WZiv8yyyOkJ1OCe2BYxoTbc=
-X-MC-Rep: binary re single
-Received: from mail-lj1-f198.google.com (mail-lj1-f198.google.com
- [209.85.208.198]) by relay.mimecast.com with ESMTP with STARTTLS
- (version=TLSv1.3, cipher=TLS_AES_256_GCM_SHA384) id
- us-mta-175-U86o7NbxO9q4HLv-372A7A-1; Fri, 27 Nov 2026 09:22:26 +0000
-X-MC-Unique: U86o7NbxO9q4HLv-372A7A-1
-X-Mimecast-MFC-AGG-ID: U86o7NbxO9q4HLv-372A7A_1795771344
-Received: by mail-lj1-f198.google.com with SMTP id 38308e7fff4ca-3ae0c42947aso35330251fa.1
-        for <dm-devel@lists.linux.dev>; Fri, 27 Nov 2026 01:22:25 -0800 (PST)
-X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
-        d=1e100.net; s=20260707; t=1795771344; x=1796376144;
-        h=content-transfer-encoding:content-type:cc:to:subject:message-id
-         :date:from:in-reply-to:references:mime-version:x-gm-gg
-         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
-         :content-type;
-        bh=lRVWoXHWreHp+KU3b738W9MVqAqGC16lHMedn1zkJ/w=;
-        b=krAh/vHogqs0AL3kkD4gS9IV0ut1zMmCnoZO9ybzC3D8PidXyBUduQogJ1Lh66znpy
-         H1Kio/QS+/8WV1Ybuj/oGfTFLUs8Gy9MTxv9jg9gCd8linjNOqNy2GnfcP0fL9J4BJRM
-         rTo47FCffJWfgqNy9SsrmAqeQoUW1Eg1hM/Pf0IGZTFNXXyWfUQX7alDewXGSuh59BKf
-         OuaTu3TRjfZuSUfmGntAx8gpC88CrrZ/W53bLPR1PGKMYAo8To+CLF3fUl3ixOGTIY9E
-         lVoU1apFxs0htSngP7mDoDOktMQHjKKOHdY4YcVVS3iSPulyET1NC+KVHbE51/wJjcGY
-         YG0g==
-X-Forwarded-Encrypted: i=1; AL+hErGJescx84rM32QvBw3zDQC6khQn8qB9OT0iJju7PQcawfrDjJa4P6rP7uyVAMaok6Q8e91tP5LVEg==@lists.linux.dev
-X-Gm-Message-State: APuU4Z+3avm/dHraRj2l+jY3+62U8Wp2AwU7CS2f5vWpVM3PPfFSGZy7
-	Mwl8VMBQEBHfbm/6vdHS0oAzxE8tig6k2X7QRKNZBKOX1pwQByeFA/SvgSvIEZqThvfacbtt3Rl
-	mai1uEJuTOQ4kXecp4WKHrrn6kRp/IOUPS2EspCrLtCnnUMa0DyczhIWwMj56xTIknP3XiYJkkq
-	D8HLABxFqoOWCGk3VTi9EG/cn5v/YicdIVcg==
-X-Gm-Gg: AZFdTZeVPnWGP1wnO2NsPd2dm5iagSj4p4JkFgV6XXBVEJ/twiv4+KZ/EURwigV6Fpu
-	QS44//OTqRwy0+TnXn/0jIApbLc+5Qsf+NrgPjjgfJB48VvkDSoOfq1z1HA7EGZh/fB4S3cT7Ur
-	8ZQ76c+3gqiMBqMOU86lySjK7j495phklzfsIkiMs9gbMWQZ+zcA4lLDOtOn2hbF8xVtUH33Z4c
-	pRgDmoQLyT0PByNF6SpVXHAM0NH01lIQu3CwV3hAC1DGPhxaDQ=
-X-Received: by 2002:a2e:9a0d:0:b0:3a9:74f3:17d5 with SMTP id 38308e7fff4ca-3ae7f8d2d94mr80755971fa.3.1795771344403;
-        Fri, 27 Nov 2026 01:22:24 -0800 (PST)
-X-Received: by 2002:a2e:9a0d:0:b0:3a9:74f3:17d5 with SMTP id
- 38308e7fff4ca-3ae7f8d2d94mr80755861fa.3.1795771343968; Fri, 27 Nov 2026
- 01:22:23 -0800 (PST)
+	dkim=pass (1024-bit key) header.d=qq.com header.i=@qq.com header.a=rsa-sha256 header.s=s201512 header.b=R/X+MprA
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=qq.com; s=s201512;
+	t=1795773531; bh=HS1h1bZTmMeyGAoFJ9k7WiesLziPXfI0iGAFPkyd0U8=;
+	h=From:To:Cc:Subject:Date;
+	b=R/X+MprA1iiYsbVn2QorYQD4I5+6eLG6x84toLp/nIL/uCoJ7IiQsU5MqGVGgEpzC
+	 BUB9O/51DNOMUYPwuyK2pL3ZGiU0nzWZqSNlHsRKVae5gDi+O2XAfpSZuRshYyuQFt
+	 mrWA/yHrEjVX42dh+3MTsUcndbyEOeFcXI+CAhvk=
+Received: from shuai-VMware-Virtual-Platform.. ([39.165.245.102])
+	by newxmesmtplogicsvrszc43-0.qq.com (NewEsmtp) with SMTP
+	id EB0908DD; Fri, 27 Nov 2026 17:58:48 +0800
+X-QQ-mid: xmsmtpt1795773528tjyzhcp99
+Message-ID: <tencent_D498CB0489BB9C74184B927C7393282E9806@qq.com>
+X-QQ-XMAILINFO: NbgegmlEc3JuK4QQFK/DEJQKnRWlXqelqaw1sONkFVjW2acjdeHZTr0FvYhkqq
+	 i7lx3s3jTO+kfSEOwXC/dh5zINJKrdRKazWcucLlzXiT7w/7UtpiujZzBbjpaNJnQxPye1e3CX7l
+	 V8wBP5rfOYSLdtwgR6+vUWXXd2x/lSb9Yv7mm1bh2BuhCsE599cLNgk33ZUf9fkeeBOIVArml+xY
+	 9eoc+4DRsOxYTxJfF5iylk/pu+8kA3oP4VglMi+H3wlB7cPhIBOkH4tUYW7qd3kWpEddhmaLLHkU
+	 mfdQNrBRhH7Qdn0fWfTMHBx/eXvCygrjMrDNu1x+zPyq+tO67HjmpZAyq9OKYZWAdullKfr8CSED
+	 2in8tWCNRnvh9Sp6yVeeZnLnUkWmVgQrSGlAh55AP0ZNcyQL4JkfqzDmgiHPTcbDn8y/prMeZ9NC
+	 75ZrWKuFeQvs6oKWzPmIT1bPEOjy4v1fstbfxTSHQRmgd9uBEgvi7N/ni5S1TSKKlWzzARNXX/Ai
+	 W05N1vXgAwvr1cm5NjAZ2pM5uVx7TvAK8OJ67jf4v4gn0yVCjx9hYkoxSISmXs6v30TIJz+Z7IC6
+	 L5RDTVV0d/5GKiz7U34iVr4iOY8KVcwdVMXdS1CZKJgAo5sbdlqqTLWKwjrv4tSVHbAoLKBhLlLo
+	 7vrZvmEPabxaUsvQnpKBm3qT339DQ8GhpN9Ztnv2XEWdpXiYVuOtrWBAwBR/2hJakQgpKXjdjPX1
+	 pQE97mu5V0lf6u3dYnhVr3M4eGnxBhFbsiUkRbbWKNSWjQ6mm6ohDFBIZxgWhxfNrVUcjR9/KhI6
+	 q7FHppxkYynwxtdtXjNp3x1DSoQlT1AJm+Pz0LedBXnXdWGLcNKHYYKff+3jHb1hE9xvYp0AFYbl
+	 9l2N0d56NfStC+d0NHIiJPG6MqxL/af8zru88V6ENuVoWdVYEfuULc6YRRHMPDjAg6dasMCX6yLc
+	 09nxnPI6pjLCSh+K627UKGBDzaXDr9Psw/NyDUsqAh5gMinYoO4p1KotP0gBrfXeHmFIInHlOq+x
+	 vAlZnDlMJuVc7j/76GsNAZcNWAUnznlExBMoQcJG5POV02Eo83hvvsuNwtI2o=
+X-QQ-XMRINFO: NyFYKkN4Ny6FuXrnB5Ye7Aabb3ujjtK+gg==
+From: Shuai Liu <847807867@qq.com>
+To: dm-devel@lists.linux.dev
+Cc: agk@redhat.com,
+	snitzer@kernel.org,
+	mpatocka@redhat.com,
+	bmarzins@redhat.com,
+	linux-kernel@vger.kernel.org,
+	syzbot+1eda626824b6334f5ad3@syzkaller.appspotmail.com,
+	Shuai Liu <847807867@qq.com>
+Subject: [PATCH] dm snap: clear pointers in alloc_area() error paths
+Date: Fri, 27 Nov 2026 17:58:48 +0800
+X-OQ-MSGID: <20261127095848.769985-1-847807867@qq.com>
+X-Mailer: git-send-email 2.43.0
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Post: <mailto:dm-devel@lists.linux.dev>
@@ -92,102 +81,39 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 List-Owner: <mailto:dm-devel+owner@lists.linux.dev>
 Precedence: list
 MIME-Version: 1.0
-References: <9f8ed9a9-fb35-7a4d-4877-430268010b43@redhat.com>
-In-Reply-To: <9f8ed9a9-fb35-7a4d-4877-430268010b43@redhat.com>
-From: Ming Hung Tsai <mtsai@redhat.com>
-Date: Fri, 27 Nov 2026 17:22:11 +0800
-X-Gm-Features: Aa3M54p8weozP7nNLhXte4wZdNIPdZ0A7Od4Jxg-SfDiuxWDuywv1rf2-K2eld4
-Message-ID: <CALjSBEvigM4pvS-PreuMmqaj1OK_vG53BFSE3rfcaK+ZJ3Qyow@mail.gmail.com>
-Subject: Re: [PATCH] dm persistent data: fix invalid calls to vt->inc and vt->dec
-To: Mikulas Patocka <mpatocka@redhat.com>
-Cc: Alasdair Kergon <agk@redhat.com>, Mike Snitzer <snitzer@kernel.org>, 
-	Benjamin Marzinski <bmarzins@redhat.com>, dm-devel@lists.linux.dev
-X-Mimecast-Spam-Score: 0
-X-Mimecast-MFC-PROC-ID: 23iNoCtqAh7MD8g4mUyhJAF5eLPxPpQWvJjrgBtsQHQ_1795771344
-X-Mimecast-Originator: redhat.com
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+Content-Transfer-Encoding: 8bit
 
-On Tue, Nov 24, 2026 at 4:54=E2=80=AFAM Mikulas Patocka <mpatocka@redhat.co=
-m> wrote:
->
-> The dm-array library called vt->inc and vt->dec with invalid arguments.
-> None of the users of the library actually use the callbacks, so the bug
-> was latent.
->
-> Signed-off-by: Mikulas Patocka <mpatocka@redhat.com>
-> Assisted-by: Claude:claude-opus-5
->
-> ---
->  drivers/md/persistent-data/dm-array.c |   12 ++++++------
->  1 file changed, 6 insertions(+), 6 deletions(-)
->
-> Index: linux-2.6/drivers/md/persistent-data/dm-array.c
-> =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
-> --- linux-2.6.orig/drivers/md/persistent-data/dm-array.c
-> +++ linux-2.6/drivers/md/persistent-data/dm-array.c
-> @@ -196,18 +196,18 @@ static int alloc_ablock(struct dm_array_
->  static void fill_ablock(struct dm_array_info *info, struct array_block *=
-ab,
->                         const void *value, unsigned int new_nr)
->  {
-> -       uint32_t nr_entries, delta, i;
-> +       uint32_t nr_entries, i;
->         struct dm_btree_value_type *vt =3D &info->value_type;
->
->         BUG_ON(new_nr > le32_to_cpu(ab->max_entries));
->         BUG_ON(new_nr < le32_to_cpu(ab->nr_entries));
->
->         nr_entries =3D le32_to_cpu(ab->nr_entries);
-> -       delta =3D new_nr - nr_entries;
-> -       if (vt->inc)
-> -               vt->inc(vt->context, value, delta);
-> -       for (i =3D nr_entries; i < new_nr; i++)
-> +       for (i =3D nr_entries; i < new_nr; i++) {
-> +               if (vt->inc)
-> +                       vt->inc(vt->context, value, 1);
->                 memcpy(element_at(info, ab, i), value, vt->size);
-> +       }
->         ab->nr_entries =3D cpu_to_le32(new_nr);
->  }
->
+alloc_area() vfrees ps->zero_area and ps->area on allocation failure
+but leaves the dangling pointers.  When the snapshot constructor then
+calls free_area() as part of teardown, it vfrees the same buffers
+again, triggering a WARNING in vfree().
 
-I think we can keep the range call from be500ed721a6 instead. Copy the
-values first, then call inc() once on the new entries:
+Set those pointers to NULL after vfree().  vfree(NULL) is a no-op,
+so free_area() is safe to call multiple times.
 
-diff --git a/drivers/md/persistent-data/dm-array.c
-b/drivers/md/persistent-data/dm-array.c
-index 961fa3c1439a..f1afbb89bce6 100644
---- a/drivers/md/persistent-data/dm-array.c
-+++ b/drivers/md/persistent-data/dm-array.c
-@@ -204,10 +204,10 @@ static void fill_ablock(struct dm_array_info
-*info, struct array_block *ab,
+Reported-by: syzbot+1eda626824b6334f5ad3@syzkaller.appspotmail.com
+Fixes: 7c9e6c17325f ("dm exception store: refactor zero_area")
+Signed-off-by: Shuai Liu <847807867@qq.com>
+---
+ drivers/md/dm-snap-persistent.c | 2 ++
+ 1 file changed, 2 insertions(+)
 
-        nr_entries =3D le32_to_cpu(ab->nr_entries);
-        delta =3D new_nr - nr_entries;
--       if (vt->inc)
--               vt->inc(vt->context, value, delta);
-        for (i =3D nr_entries; i < new_nr; i++)
-                memcpy(element_at(info, ab, i), value, vt->size);
-+       if (vt->inc)
-+               vt->inc(vt->context, element_at(info, ab, nr_entries), delt=
-a);
-        ab->nr_entries =3D cpu_to_le32(new_nr);
- }
+diff --git a/drivers/md/dm-snap-persistent.c b/drivers/md/dm-snap-persistent.c
+index b587ee7330562..9f5ade4f51cec 100644
+--- a/drivers/md/dm-snap-persistent.c
++++ b/drivers/md/dm-snap-persistent.c
+@@ -194,9 +194,11 @@ static int alloc_area(struct pstore *ps)
+ 
+ err_header_area:
+ 	vfree(ps->zero_area);
++	ps->zero_area = NULL;
+ 
+ err_zero_area:
+ 	vfree(ps->area);
++	ps->area = NULL;
+ 
+ err_area:
+ 	return r;
+-- 
+2.43.0
 
-
-> @@ -228,7 +228,7 @@ static void trim_ablock(struct dm_array_
->         nr_entries =3D le32_to_cpu(ab->nr_entries);
->         delta =3D nr_entries - new_nr;
->         if (vt->dec)
-> -               vt->dec(vt->context, element_at(info, ab, new_nr - 1), de=
-lta);
-> +               vt->dec(vt->context, element_at(info, ab, new_nr), delta)=
-;
->         ab->nr_entries =3D cpu_to_le32(new_nr);
->  }
-
-The second half looks correct to me. The range to dec starts at
-new_ne, not new_nr - 1.
