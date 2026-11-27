@@ -1,82 +1,48 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=100.103.45.18
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=115.124.28.89
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1795762122;
-	b=wUgYoYYi6w8iXwAzRKkW4lzZ+zinHeip4Fy3YErn+vX/loJuRd+IevuLoXQxRCggX/55
-	 U3eGDCbSvjCZ4a7/aSPPEetvinLsHinjWuh+h7vXZCSpt2Trtp8zLo1kvPUhmlhKGlvdz
-	 GEofM9Xjr8nsQVb54ZyI1cu4XGG6KqBGG/Mw66OP/5XJSHl7UE05R1i1ETBMBXJ0DG5l5
-	 xtLo0IKlFZl8+QeHZ1OCAxjIku8vUqTz2H47ooJRTtY74hTWenx1LufVakSpB9t8iTSek
-	 9LHcjrRh/stCBt3duWi9sQUUPjhbwiOiyhK306EXSXvkxElHFk5dkC1hj0ntUrByHfw==
+	t=1795764928;
+	b=PMV8X58qI3WKFhn8HmALszG1g/Q6bRwkJKNTYLNra9y/JTPieqsCV0nq/18Kz9f0oCrH
+	 DkSuROsWqc2tHMXMWDUaDHLMDDNihDqkIF5BLMGhqXAQ5qAtWEHyc6Wwi+GF7swfKRnLF
+	 ZESrWowkuVJ8CuxHGPpI11DVWI5+rZ/jqGPLj1sM2K3aru1nsHqKdoG1/5E9Tnvkj2QPS
+	 XNVUp8C4Ap+2GAb07KHpLtTe4C0irEZ+hR4yaN7ZbZwagXxRc8Pu4w/5UyMmBmfWqaI2f
+	 K3hMwp3IJ85/YSl+30U6LX56HDjvUP/ulg1S3HgwM1IlYOMT5zQm2OWDwwu5HVQ1m0Q==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1795762122;
-	h=Received:DKIM-Signature:Date:From:To:Cc:Subject:Message-ID:
-	 References:MIME-Version:Content-Type:Content-Disposition:In-Reply-To;
-	bh=D2qAvffQz1/Kmxq2R231WWzgGRVz04WJrtHpdL6qOoA=;
-	b=5chvar1Vx1iXUIWYw32pFN0CKbTgQHak/CHK7fWaFvV3dOppwo1DepFhLxe7OB95CZk6
-	 ytlTTB/eCvJvL3d1VWJr+G2Xfvi9mYAZHKdBIw5tmU8T9ThqV/f2xiZMMDF8y4Dm6ADRf
-	 9pX54PknM491HjUy2+eIdt6SzU60OhW6wi63xFRZNqCyoaCX0E5nqZJuj1qXF4isVhKkv
-	 gb27DizTEbAXYkWbf4xAMjqW0EQVEkB+5o+Ol6uhjjaAUoq2IEZOT7l8RMaC7DdQS5R97
-	 fvBdJd0UWi/xq4Ue9bAbDWp+j5KtDxeZeJQ2GXpHdzPmUWD3QYE7qoI1RhHodpLvuTA==
+	a=rsa-sha256; c=relaxed/relaxed; t=1795764928;
+	h=DMARC-Filter:X-Alimail-AntiSpam:Received:Date:X-Mailer:To:From:
+	 X-Lms-Return-Path:Content-Transfer-Encoding:Subject:Message-Id:
+	 Mime-Version:Received:Cc:X-Original-From:Content-Type;
+	bh=exRdp/EX4S1XNnmQ0lxYZW46n7JXagdYqiAU1dNsEJg=;
+	b=5HTaIl3GEtbLf9ygwJCDMB6o1zplbaczkv878ZXGY3/BX61Yk7f21Drhro5hvp2N9s6w
+	 PVgJBoTD2P0uibgayCySys6P3Zi1WxVOR+zgNXPbob7J4tD/A+ORVj4fOAc0FFkBz9kRD
+	 6h+ntM7nDJAK5wyjreP3tolrxuHYnve2B7ddJ/5k1SKdd+kjGUrxUVjQBWxk9O5yVUdB3
+	 X0Bk9vdaMh1u0XjELqCjyYCIqaMhlxE8zspKtq7RadxXxWfsBdScDZzMUeoD/5OmSML/W
+	 3oN1wSFwbyO+ERGlB+219wXwsSI7nCsqHcAnCMeCT0+xIdYmWQ6igS5h7jiV+nMUZqA==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=V41pLXPv;
-	arc=none smtp.remote-ip=100.103.45.18
-Received: from smtp.kernel.org (quasi.space.kernel.org [100.103.45.18])
+	dmarc=none header.from=kaihong.com;
+	spf=pass smtp.mailfrom=kaihong.com;
+	arc=none smtp.remote-ip=115.124.28.89
+Received: from out28-89.mail.aliyun.com (out28-89.mail.aliyun.com [115.124.28.89])
 	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature ECDSA (prime256v1))
+	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with UTF8SMTPS id CA902606A323;
-	Fri, 27 Nov 2026 06:48:42 +0000 (UTC)
-Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=V41pLXPv
-Received: by smtp.kernel.org (Postfix) with UTF8SMTPSA id 6362B1F00897;
-	Fri, 27 Nov 2026 06:48:41 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
-	s=k20260515; t=1795762122;
-	bh=D2qAvffQz1/Kmxq2R231WWzgGRVz04WJrtHpdL6qOoA=;
-	h=Date:From:To:Cc:Subject:References:In-Reply-To;
-	b=V41pLXPvWT6oPTKTANy9bd9W4sNgLSL+0i5tp/MR1tMtCmOFp0DO9rnlY0D7oe6Rd
-	 /p9O0pctXPxCKz6vB8sw36rTYwcjiY3I1wpHJZXlGKL1e6odFl93Pm8Oij+zz2iYjV
-	 vfDYN4hMkQfIEqhFKoSHexzAN7vjI4Dvy1196UXc9tPVBYWEnJI//51smoO6sd0huz
-	 Wb8NF4Clb4BOC+GUY6ZI2wUdj6W/oMYbV3F6aAzIyZc98DR88EE8s34U13LFq3B+OS
-	 wBMfwkHep26ELC67urdD+x76WHLjeRaXuNC9VzDZJuzE7hiuhHFF9qD9fIdNvv6gEQ
-	 22w29sWexd2Ow==
-Date: Fri, 27 Nov 2026 08:48:38 +0200
-From: Jarkko Sakkinen <jarkko@kernel.org>
-To: keyrings@vger.kernel.org
-Cc: dm-devel@lists.linux.dev, linux-crypto@vger.kernel.org,
-	linux-doc@vger.kernel.org, linux-integrity@vger.kernel.org,
-	linux-kernel@vger.kernel.org, linux-security-module@vger.kernel.org,
-	Ahmad Fatoum <a.fatoum@pengutronix.de>,
-	Alasdair Kergon <agk@redhat.com>,
-	Andrew Morton <akpm@linux-foundation.org>,
-	Benjamin Marzinski <bmarzins@redhat.com>,
-	David Gstir <david@sigma-star.at>,
-	David Howells <dhowells@redhat.com>,
-	David Laight <david.laight.linux@gmail.com>,
-	"David S. Miller" <davem@davemloft.net>,
-	David Woodhouse <dwmw2@infradead.org>,
-	Eric Biggers <ebiggers@kernel.org>,
-	Herbert Xu <herbert@gondor.apana.org.au>,
-	Ignat Korchagin <ignat@linux.win>,
-	James Bottomley <James.Bottomley@hansenpartnership.com>,
-	James Morris <jmorris@namei.org>,
-	James Prestwood <prestwoj@gmail.com>,
-	Jason Gunthorpe <jgg@ziepe.ca>, Jonathan Corbet <corbet@lwn.net>,
-	Jonathan McDowell <noodles@meta.com>,
-	Lukas Wunner <lukas@wunner.de>,
-	Marek =?iso-8859-1?Q?Beh=FAn?= <kabel@kernel.org>,
-	Mike Snitzer <snitzer@kernel.org>,
-	Mikulas Patocka <mpatocka@redhat.com>,
-	Mimi Zohar <zohar@linux.ibm.com>, Paul Moore <paul@paul-moore.com>,
-	Peter Huewe <peterhuewe@gmx.de>,
-	Randy Dunlap <rdunlap@infradead.org>,
-	"Serge E. Hallyn" <serge@hallyn.com>,
-	Shuah Khan <skhan@linuxfoundation.org>,
-	Sumit Garg <sumit.garg@kernel.org>
-Subject: Re: [PATCH v5 17/17] KEYS: trusted: Add asymmetric key support for
- TPM2
-Message-ID: <awknxh-Q0eHKt2ZY@kernel.org>
-References: <20261127055602.2357884-1-jarkko@kernel.org>
- <20261127055602.2357884-18-jarkko@kernel.org>
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 555C3606A31E
+	for <dm-devel@lists.linux.dev>; Fri, 27 Nov 2026 07:35:25 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 555C3606A31E
+Authentication-Results: smtp.subspace.kernel.org; dmarc=none (p=none dis=none) header.from=kaihong.com
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=kaihong.com
+X-Alimail-AntiSpam:AC=CONTINUE;BC=0.08067833|-1;BR=01201311R261S10rulernew998_84748_2000303;CH=blue;DM=|CONTINUE|false|;DS=CONTINUE|ham_regular_dialog|0.00554454-0.000711638-0.993744;FP=14394826012851074287|0|0|0|0|-1|-1|-1;HT=maildocker-contentspam033037034017;MF=haoruiqiang@kaihong.com;NM=1;PH=DS;RN=8;RT=8;SR=0;TI=SMTPD_---.kBFopdZ_1795764914;
+Received: from localhost(mailfrom:haoruiqiang@kaihong.com fp:SMTPD_---.kBFopdZ_1795764914 cluster:ay29)
+          by smtp.aliyun-inc.com;
+          Fri, 27 Nov 2026 15:35:15 +0800
+Date: Fri, 27 Nov 2026 15:35:08 +0800
+X-Mailer: git-send-email 2.43.0
+To: <agk@redhat.com>, <snitzer@kernel.org>, <mpatocka@redhat.com>, 
+	<bmarzins@redhat.com>
+From: "Ruiqiang Hao" <haoruiqiang@kaihong.com>
+X-Lms-Return-Path: <lba+26b0932b0+4b12d6+kernel.org+haoruiqiang@kaihong.com>
+Content-Transfer-Encoding: 7bit
+Subject: [PATCH] dm snapshot: fix double vfree on partial alloc_area failure
+Message-Id: <20261127073508.2506240-1-haoruiqiang@kaihong.com>
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Post: <mailto:dm-devel@lists.linux.dev>
@@ -85,30 +51,50 @@ List-Subscribe: <mailto:dm-devel+subscribe@lists.linux.dev>
 List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 List-Owner: <mailto:dm-devel+owner@lists.linux.dev>
 Precedence: list
-MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <20261127055602.2357884-18-jarkko@kernel.org>
+Mime-Version: 1.0
+Received: from ubuntu24-dev.. ([219.142.21.190]) by smtp.feishu.cn with ESMTPS; Fri, 27 Nov 2026 15:35:11 +0800
+Cc: <dm-devel@lists.linux.dev>, "Ruiqiang Hao" <haoruiqiang@kaihong.com>, 
+	<syzbot+1eda626824b6334f5ad3@syzkaller.appspotmail.com>, 
+	<stable@vger.kernel.org>
+X-Original-From: Ruiqiang Hao <haoruiqiang@kaihong.com>
+Content-Type: text/plain; charset=UTF-8
 
-On Fri, Nov 27, 2026 at 07:56:02AM +0200, Jarkko Sakkinen wrote:
-> Extend the TPM 2.0 trusted key backend to load OID_TPMLoadableKey
-> (2.23.133.10.1.3) RSA (2048/3072/4096) and ECC (NIST P-256/P-384/P-521)
-> keys and wire query, sign, verify, and RSA encrypt/decrypt operations to
-> trusted_key_tpm_ops.
-> 
-> Select HAVE_TRUSTED_KEYS_ASYMMETRIC when CONFIG_TRUSTED_KEYS_TPM is
-> enabled.
-> 
-> Co-developed-by: James Prestwood <prestwoj@gmail.com>
-> Signed-off-by: James Prestwood <prestwoj@gmail.com>
-> Signed-off-by: Jarkko Sakkinen <jarkko@kernel.org>
+alloc_area() frees ps->area and ps->zero_area when a later allocation
+fails, but leaves the pointers set.  persistent_read_metadata() then
+returns -ENOMEM, snapshot_ctr() aborts and dm_exception_store_destroy()
+calls persistent_dtr() -> free_area(), which vfree()s the same areas
+again:
 
-This should be in fairly safe grounds because the patch has been
-manually written (with TCG specs), both TPM2 protocol and ASN.1
-shenanigans, and reviewed and tested countless of times (over the
-years).
+  Trying to vfree() nonexistent vm area (ffffc90024410000)
+  WARNING: mm/vmalloc.c:3539 at vfree+0x463/0x490
 
-Further, it has pretty much passed all Sashiko reviews so far, and
-thus this patch likely is not all that wrong.
+Clear each pointer after freeing it so free_area() is safe on the
+partial-allocation error path.
 
-Br, Jarkko
+Fixes: 7c9e6c17325f ("dm exception store: refactor zero_area")
+Reported-by: syzbot+1eda626824b6334f5ad3@syzkaller.appspotmail.com
+Closes: https://syzkaller.appspot.com/bug?extid=1eda626824b6334f5ad3
+Cc: stable@vger.kernel.org
+Signed-off-by: Ruiqiang Hao <haoruiqiang@kaihong.com>
+---
+ drivers/md/dm-snap-persistent.c | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/drivers/md/dm-snap-persistent.c b/drivers/md/dm-snap-persistent.c
+index b587ee733056..9f5ade4f51ce 100644
+--- a/drivers/md/dm-snap-persistent.c
++++ b/drivers/md/dm-snap-persistent.c
+@@ -194,9 +194,11 @@ static int alloc_area(struct pstore *ps)
+ 
+ err_header_area:
+ 	vfree(ps->zero_area);
++	ps->zero_area = NULL;
+ 
+ err_zero_area:
+ 	vfree(ps->area);
++	ps->area = NULL;
+ 
+ err_area:
+ 	return r;
+-- 
+2.43.0
