@@ -1,84 +1,96 @@
-Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=100.103.45.18
+Authentication-Results: smtp.subspace.kernel.org; arc=none smtp.remote-ip=74.125.82.181
 ARC-Seal: i=1; d=subspace.kernel.org; s=arc20261015; a=rsa-sha256; cv=none;
-	t=1795826600;
-	b=PJbPK+4Bd460fBnApRsbfYGAJQbFjb030bn8b8gPrL2jMAB7W5IuwMikL/tPqn1u1OPk
-	 Exe8hl2Pf5TSBeuiLpjFgGrfoM2B0NrVz7VzYxeCwralp9SOCVI5c8ob9wwS2wrNxgANV
-	 7xJ/PcKGXje+qQr9O7jGoyeFm2bd8PtmWP4Xr/yuz7Me+8EZKpUQXgva/UpYu0lznmZRN
-	 GTKYXKmUKx36TmdMDkk/ZzBaLZL6aWrLcNqZx2fxueqzL9as0eNlWQB/iXmdSzCh3BWaa
-	 tIPYkGW2zKULT4qX57UIpXwI50DQroU14ydAftfRNUkguhSFUL9P4+GjqxnVm56NNCA==
+	t=1795834039;
+	b=ZEvlfb9mt46Bh1c5XjFcLgqizRB1AiqoDi1EXXVQgyEuAdhyFjM6+l+6BDTDQpomX2b0
+	 mG34ovvyhZG27h/CgrOblzlbnL9qPQe3KzdzBqQ0HvJH2e1oHLg8ooYRLKO0pj12hYDc/
+	 QfdHCpV78wAOr+G6qCCsHLRuRBcxPEK1CNlVzD/4rshvcRyIS9Z8mH37dgOt20nrAH1NT
+	 /d6HQGffVBbNFAu4VN+pmSK+D1up0pvzti0A1oyvXPHZsGKUnN2n/K+x6Uy4xpc+Sycjp
+	 yohBz4ksK1SBWmhx9ADo2pYeMTHbI1OrSfnej7YTdKMwJW/rgp1G+xvTdwbsqZ7Sf/Q==
 ARC-Message-Signature: i=1; d=subspace.kernel.org; s=arc20261015;
-	a=rsa-sha256; c=relaxed/relaxed; t=1795826600;
-	h=Received:DKIM-Signature:Date:From:To:Cc:Subject:Message-ID:
-	 References:MIME-Version:Content-Type:Content-Disposition:In-Reply-To;
-	bh=GFNyH0Ir4kVCvrZZWUN3b3y+Hhr3cHiie3fTLT72VVg=;
-	b=5A+AMNKB4mYVm+TVOacoYCe7ON79ktaDa8GKovmYr3POtTSueUbV5jydQqltvigAGJQ+
-	 qDI97mlURPjwRrjnkRszk/Q29l5xXlBJQmZKQx60gGMZF0h+ee3zi9FodljhqM7wj3P5f
-	 yAxRzJNjiAJqqC/Y+K0PX17MSKjiZvcGWOGEUqMrsNltP4O6tt2kXiNnSKm9clKx2dRGf
-	 JSnErV521l4wlNyFMiKLBY5OJAEobDEzPx0kPn3EHdGwFR0LeTRpTXzXoQA7jq15PnKzv
-	 kdrIYS8JTz8PkSJXa/10bIcXAHB+zxEeZ8bGhea22ApsCXW+TwsFNyGZw5UrJUhBCOg==
+	a=rsa-sha256; c=relaxed/relaxed; t=1795834039;
+	h=DMARC-Filter:Received:DKIM-Signature:X-Google-DKIM-Signature:
+	 X-Forwarded-Encrypted:X-Gm-Message-State:X-Gm-Gg:X-Received:Received:
+	 From:To:Cc:In-Reply-To:References:Subject:Message-Id:Date:
+	 MIME-Version:Content-Type:Content-Transfer-Encoding:X-Mailer;
+	bh=6WKT27fdX/tFqhewESdRPtk5HTiyQzUxICUqNBuVX0M=;
+	b=GtT2xsHwZA2RkLon4BbwzSpTOZMshuMoYj/FaUQJBM6P+MJLOL5zi+v4nuxKSIa8my2I
+	 GsBQA2WkA2HugO6NsNfnT9wWyP0Y5F3X0FroCxq5/2EU/NcqQQC2YB2i6CPe4jy7bYHlu
+	 vCs4ybQqfsHGuqiDVrSElRdRON9Tu+onNzV/VRvNN6ycBhBNoy/r+IvakPRYcFDRfO7L0
+	 lakZWedQjQXx7AxB0ycmJmC4ANqUvhDfrhi5t4ACez2yPe5C4yWlG+BlnP2AGIR0gC3EC
+	 DJaIL6kJlMh1SKejI4w5kTg/Wt+Q6Dbt+Fto41KcDwT+2fJMawUnyW+zsGikLPraVXQ==
 ARC-Authentication-Results: i=1; smtp.subspace.kernel.org; 
-	dkim=pass header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=VyEGnqmY;
-	arc=none smtp.remote-ip=100.103.45.18
-Received: from smtp.kernel.org (quasi.space.kernel.org [100.103.45.18])
-	(using TLSv1.3 with cipher TLS_AES_256_GCM_SHA384 (256/256 bits)
-	 key-exchange X25519 server-signature ECDSA (prime256v1))
+	dmarc=pass header.from=kernel.dk;
+	spf=pass smtp.mailfrom=kernel.dk;
+	dkim=pass header.d=kernel.dk header.i=@kernel.dk header.a=rsa-sha256 header.s=google header.b=tKUcTibZ;
+	arc=none smtp.remote-ip=74.125.82.181
+Received: from mail-dy1-f181.google.com (mail-dy1-f181.google.com [74.125.82.181])
+	(using TLSv1.3 with cipher TLS_AES_128_GCM_SHA256 (128/128 bits)
+	 key-exchange X25519 server-signature ECDSA (prime256v1) server-digest SHA256)
 	(No client certificate requested)
-	by smtp.subspace.kernel.org (Postfix) with UTF8SMTPS id A0011606A31C;
-	Sat, 28 Nov 2026 00:43:20 +0000 (UTC)
+	by smtp.subspace.kernel.org (Postfix) with ESMTPS id 3F404606A31C
+	for <dm-devel@lists.linux.dev>; Sat, 28 Nov 2026 02:47:18 +0000 (UTC)
+DMARC-Filter: OpenDMARC Filter v1.4.2 smtp.subspace.kernel.org 3F404606A31C
+Authentication-Results: smtp.subspace.kernel.org; dmarc=pass (p=none dis=none) header.from=kernel.dk
+Authentication-Results: smtp.subspace.kernel.org; spf=pass smtp.mailfrom=kernel.dk
 Authentication-Results: smtp.subspace.kernel.org;
-	dkim=pass (2048-bit key) header.d=kernel.org header.i=@kernel.org header.a=rsa-sha256 header.s=k20260515 header.b=VyEGnqmY
-Received: by smtp.kernel.org (Postfix) with UTF8SMTPSA id 84F131F00893;
-	Sat, 28 Nov 2026 00:43:19 +0000 (UTC)
-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed; d=kernel.org;
-	s=k20260515; t=1795826600;
-	bh=GFNyH0Ir4kVCvrZZWUN3b3y+Hhr3cHiie3fTLT72VVg=;
-	h=Date:From:To:Cc:Subject:References:In-Reply-To;
-	b=VyEGnqmYPetw/50oz5XSjsTb4xi26lMs43Venrqj/HUi95seUUqVD0uzK9hWHnikT
-	 wM2+usQQChXcmo2je9Dk+oIU/OHuQHymSsx9MS6vyNbyCmGwqFAeflmPnuUj4fnwSU
-	 AE+hNJb5JLlh+foTdAxRPHTxwNAXU+8UDdfpTKCd+QQsQeJuxftROt5GlZnClHsY+W
-	 NqS0RyUehuYWXz/roswvNCvYvIov7uvf+KEKMRHVGN6ASi1SD1h8OlwkQSg0Gy97h5
-	 IHOlZcwkv2mVhwd8faWKe9QAauXdix2kby+VdUvM+hDAdTneFfoe1KzwqBQxK4lYA1
-	 kY0RDpASwkwwg==
-Date: Sat, 28 Nov 2026 02:43:16 +0200
-From: Jarkko Sakkinen <jarkko@kernel.org>
-To: Eric Biggers <ebiggers@kernel.org>
-Cc: keyrings@vger.kernel.org, dm-devel@lists.linux.dev,
-	linux-crypto@vger.kernel.org, linux-doc@vger.kernel.org,
-	linux-integrity@vger.kernel.org, linux-kernel@vger.kernel.org,
-	linux-security-module@vger.kernel.org,
-	Ahmad Fatoum <a.fatoum@pengutronix.de>,
-	Alasdair Kergon <agk@redhat.com>,
-	Andrew Morton <akpm@linux-foundation.org>,
-	Benjamin Marzinski <bmarzins@redhat.com>,
-	David Gstir <david@sigma-star.at>,
-	David Howells <dhowells@redhat.com>,
-	David Laight <david.laight.linux@gmail.com>,
-	"David S. Miller" <davem@davemloft.net>,
-	David Woodhouse <dwmw2@infradead.org>,
-	Herbert Xu <herbert@gondor.apana.org.au>,
-	Ignat Korchagin <ignat@linux.win>,
-	James Bottomley <James.Bottomley@hansenpartnership.com>,
-	James Morris <jmorris@namei.org>,
-	James Prestwood <prestwoj@gmail.com>,
-	Jason Gunthorpe <jgg@ziepe.ca>, Jonathan Corbet <corbet@lwn.net>,
-	Jonathan McDowell <noodles@meta.com>,
-	Lukas Wunner <lukas@wunner.de>,
-	Marek =?iso-8859-1?Q?Beh=FAn?= <kabel@kernel.org>,
-	Mike Snitzer <snitzer@kernel.org>,
-	Mikulas Patocka <mpatocka@redhat.com>,
-	Mimi Zohar <zohar@linux.ibm.com>, Paul Moore <paul@paul-moore.com>,
-	Peter Huewe <peterhuewe@gmx.de>,
-	Randy Dunlap <rdunlap@infradead.org>,
-	"Serge E. Hallyn" <serge@hallyn.com>,
-	Shuah Khan <skhan@linuxfoundation.org>,
-	Sumit Garg <sumit.garg@kernel.org>
-Subject: Re: [PATCH v5 00/17] KEYS: trusted: asymmetric keys
-Message-ID: <awojpAZ81dakxfQY@kernel.org>
-References: <20261127055602.2357884-1-jarkko@kernel.org>
- <20261127193133.GE8300@quark>
- <awnrj-s1qL0Bw0nI@kernel.org>
- <awnugO__1DBkLlFe@kernel.org>
- <awn3tIYuqM-J1tXz@kernel.org>
+	dkim=pass (2048-bit key) header.d=kernel.dk header.i=@kernel.dk header.a=rsa-sha256 header.s=google header.b=tKUcTibZ
+Received: by mail-dy1-f181.google.com with SMTP id 5a478bee46e88-380c28f9e35so9526279eec.1
+        for <dm-devel@lists.linux.dev>; Fri, 27 Nov 2026 18:47:18 -0800 (PST)
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=kernel.dk; s=google; t=1795834037; x=1796438837; darn=lists.linux.dev;
+        h=content-transfer-encoding:content-type:mime-version:date:message-id
+         :subject:references:in-reply-to:cc:to:from:from:to:cc:subject:date
+         :message-id:reply-to:content-type;
+        bh=6WKT27fdX/tFqhewESdRPtk5HTiyQzUxICUqNBuVX0M=;
+        b=tKUcTibZZt1XfpNmpb46bQLJr2BWQ8R0wu5S/UvYp8e7MsHp54XDVB45G4m/EVhJ7R
+         Bp9WAQBJnXcYjgDzZg9ImRBlXXvArPTlc+IhtIsXBdQvaN94ItVJDqnF9LCbi7CQS4v8
+         FTCsiJjeC6aAJFBHGfJUw62c+8YCjlhNvyp6dahQoxEaEJIP1gapTO5Tff7ibvQTNdtD
+         b1/ZoVzS5v1LoU2+oeASkmUOe0oJRp6FrXidLy8UKDaslC8hX4AxLnH303uei8svO1fy
+         yWJps2tanT8yKRE6F6Y70J0aNIXaMole1jd3ITvKqJ6L4GFgtz/4lCqCeO2444GmVYZ4
+         NU9A==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20260707; t=1795834037; x=1796438837;
+        h=content-transfer-encoding:content-type:mime-version:date:message-id
+         :subject:references:in-reply-to:cc:to:from:x-gm-gg
+         :x-gm-message-state:from:to:cc:subject:date:message-id:reply-to
+         :content-type;
+        bh=6WKT27fdX/tFqhewESdRPtk5HTiyQzUxICUqNBuVX0M=;
+        b=otc0Uuj+AXWuHqtMDvP/Wgmjy0Hezbg5kzdZPfUuQQh24rQbgTNTPavLu5Icvl4aLj
+         73HouDPrzIcgYZ3oxgTvPMagni5Trl6im4jwuOD2Q3v1gjrZUU6lVLxhPWQj87uqrXbZ
+         u5BuiDLO68WaADBCePODLcRzRH0VKYRsmiAVU87KcMsgR7vdeAxWo0lUJM6nYwJw6784
+         BfOj8X91vuf7atud2mof9q6EJaz6hSVuaGlLOJwzAQf5eR45ayvtwlVWlkyzyVO80knO
+         y9S9hUZWnA4jLytya9TlT7dPUzfxlD9JHPAqATrJG3ZPWfo6ENn6QgsV/Hz08aSL/9Dr
+         23EA==
+X-Forwarded-Encrypted: i=1; AL+hErHW2iTRa4uIEbZzZqGbKvyhyFDd4gH/R8BucFEbBuwhUQp3Q2GeCvlX21/Mh3YA/vlld+/+a7UmCw==@lists.linux.dev
+X-Gm-Message-State: APuU4Z/JAdeR/WuLSbdimFEAaeSbrH0Xm7WkpduVkVoqX0ZIGNPwBYuf
+	Ec6UFzDVlLgl0SWGQngMx7aNHpoh8bf0/byDGtteR210puuQkrL20v5j5/9jnwAhbp8=
+X-Gm-Gg: AZFdTZcgM4es29ntU78fK/x6O8kmLei2AzxfJhSkXQX4nFQtrUQ9KeZK2DIy4qvJwK7
+	xCS7JYorzj8ceIjbREP4T8mCNOLwq6ZS9ur7hTWyALZfwMFDZQJk91WKMeho5+5cr+98OS3OqW6
+	LESwDMqZrcKXumwJWkkH3B5eEGJgG3GtV0nyNE6rS4PBooT3kA2cnqkpmH8ZK57ZPxhuHjtvQy/
+	0jiTojeMLtugT0qD+UmTk05b8baeKjeWbGybaT2otEy/os8rWQUBuCpYtbY1FcTCROgXcqTTqWC
+	o2rbEzkno5h0ckr5Y8XYNcyzkR6QKX3qhuiqWMLlclV6TFMiOBqmadJGTUibV0K5+YUqa5v2H7n
+	lA2SssQe2LzWysxA90bbvC7lHbeFYWxBk5yk7WTu8uGHRwHL6tInuLFwjgbaLRRM1UgGw4Iu4Ja
+	XbWKvCNVXndkreMP87X4U+lt431DsBzM2UX3lKTlHkDl+8k7erUZDE2p4rhJA+U65kmLC1OcbEr
+	dfMUZThcjaanMnHbCi0IJknRVpPU35XHu9w0GiNBLhn0IUSNB2xdKHGDd8STVjRBU4xGHSsxSDT
+	J/j1vWQnD/i818IXxkW4D7+O2hdTJtda5Itz/RCYAjVeug5Wuik0soMITwmiZmbrPSWZshP1eFj
+	C/ElSBzTMhTwvxMEVLw6otl+wP990GK+Tqa2YrNWDWb9/9Kj+
+X-Received: by 2002:a05:693c:88d5:10b0:386:9e9c:867 with SMTP id 5a478bee46e88-3869e9c2df2mr21137020eec.10.1795834037229;
+        Fri, 27 Nov 2026 18:47:17 -0800 (PST)
+Received: from [192.168.1.142] ([198.8.77.135])
+        by smtp.gmail.com with ESMTPSA id 5a478bee46e88-385646633d0sm134059672eec.3.2026.11.27.18.47.16
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Fri, 27 Nov 2026 18:47:16 -0800 (PST)
+From: Jens Axboe <axboe@kernel.dk>
+To: Hungyu Lin <dennylin0707@gmail.com>
+Cc: hch@infradead.org, linux-block@vger.kernel.org, 
+ linux-kernel@vger.kernel.org, dm-devel@lists.linux.dev, mtsai@redhat.com, 
+ stable@vger.kernel.org, hch@lst.de
+In-Reply-To: <20261120101758.45513-1-dennylin0707@gmail.com>
+References: <20261120101758.45513-1-dennylin0707@gmail.com>
+Subject: Re: [PATCH v4] block: fix discard alignment for non-power-of-two
+ granularities
+Message-Id: <179583403624.86956.1820367114895807728.b4-ty@b4>
+Date: Fri, 27 Nov 2026 19:47:16 -0700
 X-Mailing-List: dm-devel@lists.linux.dev
 List-Id: <dm-devel.lists.linux.dev>
 List-Post: <mailto:dm-devel@lists.linux.dev>
@@ -88,178 +100,31 @@ List-Unsubscribe: <mailto:dm-devel+unsubscribe@lists.linux.dev>
 List-Owner: <mailto:dm-devel+owner@lists.linux.dev>
 Precedence: list
 MIME-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-In-Reply-To: <awn3tIYuqM-J1tXz@kernel.org>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 7bit
+X-Mailer: b4 0.15.2
 
-On Fri, Nov 27, 2026 at 11:35:53PM +0200, Jarkko Sakkinen wrote:
-> On Fri, Nov 27, 2026 at 10:56:37PM +0200, Jarkko Sakkinen wrote:
-> > On Fri, Nov 27, 2026 at 10:44:03PM +0200, Jarkko Sakkinen wrote:
-> > > On Fri, Nov 27, 2026 at 11:31:33AM -0800, Eric Biggers wrote:
-> > > > On Fri, Nov 27, 2026 at 07:55:45AM +0200, Jarkko Sakkinen wrote:
-> > > > > OVERVIEW
-> > > > > ========
-> > > > > 
-> > > > > Extend TPM 2.0 trusted keys to load ASN.1 TPMKey [1] asymmetric keys
-> > > > > (OID_TPMLoadableKey, 2.23.133.10.1.3) and expose keyctl pkey-operations
-> > > > > directly on key_type_trusted. In addition there are some TPMKey
-> > > > > interoperability fixes.
-> > > > > 
-> > > > > I.e. this my old series with a twist: instead of introducing a separate
-> > > > > subtype for asymmetric keys, factor out pkey-operations into a separate
-> > > > > CONFIG_KEYCTL_PKEY-feature, and wire asymmetric operations to
-> > > > > key_type_trusted.
-> > > > > 
-> > > > > This work was originally derived from [3], is direct offspring of [2],
-> > > > > and folds in the prerequisite tpm2-sessions and tpm-buf cleanups from
-> > > > > [4].
-> > > > > 
-> > > > > [1] https://www.hansenpartnership.com/draft-bottomley-tpm2-keys.html
-> > > > > [2] https://lore.kernel.org/linux-integrity/20240520184727.22038-1-jarkko@kernel.org/
-> > > > > [3] https://lore.kernel.org/all/20200518172704.29608-1-prestwoj@gmail.com/
-> > > > > [4] https://lore.kernel.org/linux-integrity/20261116005105.1573016-1-jarkko@kernel.org/
-> > > > 
-> > > > Could you describe the motivation for these changes here?  And also
-> > > > include more context directly, for people who aren't already familiar
-> > > > with all the earlier patches linked to above.
-> > > > 
-> > > > Also, this series is missing a base-commit, and I don't know how to
-> > > > apply it for review.
-> > > 
-> > > Sure, I'll do that if this moves forward.
-> > > 
-> > > The feature allows to provision an external key so that private portion
-> > > is secured by TPM, and used for e.g., signing and authentication. One
-> > > example of a program that might use this is iwd.
-> > > 
-> > > First, a parent is needed.
-> > > 
-> > > 0x40000001 (Owner) primary following TCG H-2 ECC P-256 template:
-> > > 
-> > > 	tpm2_createprimary -C o -g sha256 -G ecc256:null:aes128cfb \
-> > >       		-a "fixedtpm|fixedparent|sensitivedataorigin|userwithauth|noda|restricted|decrypt" \
-> > >       		-c primary.ctx
-> > > 
-> > >     	tpm2_import -C primary.ctx -G ecc -i key.pem -u key.pub -r key.priv
-> > >     	tpm2_encodeobject -C primary.ctx -u key.pub -r key.priv -o key.tpm.pem
-> > >     	tpm2_flushcontext primary.ctx
-> > > 	
-> > > Alternatively, a persistent handle can be used. This follows TPMKey
-> > > specification recommendations.
-> > > 
-> > > Then external key can be imported an used as follows:
-> > > 
-> > > 	openssl ecparam -name prime256v1 -genkey -noout -out key.pem
-> > >     	openssl pkey -in key.pem -pubout -out pub.pem
-> > >  	openssl asn1parse -in key.tpm.pem -out key.tpm.der -noout
-> > >     	HEX=$(xxd -p -c 0 key.tpm.der)
-> > >     	TPM_KEY=$(keyctl add trusted tpm-key "load $HEX" @u)
-> > >     	keyctl pkey_query "$TPM_KEY" 0 enc=x962 hash=sha256
-> > > 
-> > > 	echo "secret sauce" > plain.txt
-> > > 	openssl dgst -sha256 -binary -out plain.sha256 plain.txt
-> > > 	keyctl pkey_sign "$TPM_KEY" 0 plain.sha256 enc=x962 hash=sha256 > plain.sig
-> > > 
-> > > > 
-> > > > - Eric
-> > > 
-> > > Another document that is source for what should be supported is:
-> > > 
-> > > https://datatracker.ietf.org/doc/draft-woodhouse-cert-best-practice/
-> > > 
-> > > Althought, I'm not sure how relevant this is anymore.
-> > 
-> > One other thing in addition to decoupling pkey operations that could be
-> > done as part of this would be to modularize the documentation, and use
-> > rst file at Documentation/ to include the snippets.
-> > 
-> > I left documentation part a bit stub as I started considering whether
-> > to do this or not. I.e., do it like some of the GPU drivers manage
-> > documentation.
-> > 
-> > With all these backends it's getting messy.
+
+On Fri, 20 Nov 2026 10:17:58 +0000, Hungyu Lin wrote:
+> bio_discard_limit() uses round_up() and round_down(), which require a
+> power-of-two alignment. However, discard_granularity need not be a power
+> of two. For example, dm-thin supports data block sizes that are arbitrary
+> multiples of 64 KiB and advertises the block size as its granularity.
 > 
-> For tying in PCRs or system state in general it would be best to
-> implement policy command intepreter, which is a blob than can be
-> supplied with TPMKey. It's not a big leap from this.
+> With a 192 KiB granularity, discarding one complete block at offset
+> 384 KiB is split into 128 KiB and 64 KiB bios. Neither covers a complete
+> thin block, so dm-thin ignores both and the mapping remains allocated.
 > 
-> It could be also used for regular trusted keys and benefit over
-> special parameters would be that it keeps the keyctl interface
-> backend agnostic (as e.g., PCRs bindings come with the data).
+> [...]
 
-Not the prettiest script but this is current version of the smoke
-test that I've used to test this:
+Applied, thanks!
 
-#!/bin/sh
-# SPDX-License-Identifier: GPL-2.0-or-later
-# Copyright (C) 2024-2026 Jarkko Sakkinen <jarkko@kernel.org>
-#
-# Cross-verification test for TPM2 asymmetric trusted keys.
+[1/1] block: fix discard alignment for non-power-of-two granularities
+      commit: f6ce3d09d6480b56e357336ac080952f9525eab0
 
-set -e
+Best regards,
+-- 
+Jens Axboe
 
-WORK=$(mktemp -d)
-persistent_handle=
-TPM2_KEY=
-X509_KEY=
-cleanup()
-{
-  rc=$?
-  if [ -n "$TPM2_KEY" ]; then
-    keyctl unlink "$TPM2_KEY" @s >/dev/null 2>&1 || true
-  fi
-  if [ -n "$X509_KEY" ]; then
-    keyctl unlink "$X509_KEY" @s >/dev/null 2>&1 || true
-  fi
-  rm -rf "$WORK"
-  if [ -n "$persistent_handle" ]; then
-    tpm2sh delete "$persistent_handle" || true
-  fi
-  exit "$rc"
-}
-trap cleanup EXIT
 
-openssl ecparam -genkey -name prime256v1 -noout -out "$WORK/ec_key.pem"
 
-handle=$(tpm2sh create-primary ecc-nist-p256:sha256)
-tpm2sh evict "$handle" 81000001
-persistent_handle=81000001
-
-tpm2sh import --loadable 81000001 \
-  -I "$WORK/ec_key.pem" \
-  -O "$WORK/tpm2_key.pem"
-openssl asn1parse -inform pem -in "$WORK/tpm2_key.pem" \
-  -noout -out "$WORK/tpm2_key.der"
-TPM2_HEX=$(od -An -tx1 "$WORK/tpm2_key.der" | tr -d ' \n')
-
-openssl req -new -x509 -key "$WORK/ec_key.pem" \
-  -out "$WORK/cert.pem" -days 1 \
-  -subj "/CN=tpm2_asymmetric_test" -sha256
-openssl x509 -in "$WORK/cert.pem" -outform der -out "$WORK/cert.der"
-
-TPM2_KEY=$(keyctl add trusted "tpm2_asymmetric" "load $TPM2_HEX" @s)
-X509_KEY=$(keyctl padd asymmetric "x509_ecdsa" @s < "$WORK/cert.der")
-
-keyctl pkey_query "$TPM2_KEY" 0 enc=x962 hash=sha256 >/dev/null
-
-printf "tpm2 asymmetric cross-verification test data" > "$WORK/testdata"
-openssl dgst -sha256 -binary "$WORK/testdata" > "$WORK/hash.bin"
-
-keyctl pkey_sign "$TPM2_KEY" 0 "$WORK/hash.bin" enc=x962 hash=sha256 \
-  > "$WORK/sig_tpm.der"
-keyctl pkey_verify "$X509_KEY" 0 "$WORK/hash.bin" "$WORK/sig_tpm.der" \
-  enc=x962 hash=sha256
-echo "PASS: TPM2 key signed, X.509 key verified"
-
-openssl dgst -sha256 -sign "$WORK/ec_key.pem" \
-  -out "$WORK/sig_sw.der" "$WORK/testdata"
-keyctl pkey_verify "$TPM2_KEY" 0 "$WORK/hash.bin" "$WORK/sig_sw.der" \
-  enc=x962 hash=sha256
-echo "PASS: OpenSSL signed, TPM2 key verified"
-
-I should add RSA signing/encryption test to this tho (which is working but
-test cases are missing).
-
-Perhaps this could be used to derive a kselftest.
-
-Br, Jarkko
